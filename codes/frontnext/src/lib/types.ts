@@ -158,3 +158,34 @@ export interface CloseSessionResponse {
   summary: SessionSummary;
   adjustments: string[];
 }
+
+export type SupportVerdict =
+  | 'supports'
+  | 'partially_supports'
+  | 'does_not_support'
+  | 'unrelated'
+  | 'cannot_tell';
+
+export interface CitedSource {
+  title: string;
+  authors: string;
+  year: string;
+  doi: string;
+  text: string;
+}
+
+export interface ClaimSupportCheck {
+  verdict: SupportVerdict;
+  reasoning: string;
+  source_quote: string;
+  scope_mismatch: string;
+  question_for_author: string;
+  quote_verified: boolean;
+}
+
+export interface ClaimSupportResult {
+  check: ClaimSupportCheck;
+  /** Verdicts the backend overruled, and why. Shown, never hidden. */
+  adjustments: string[];
+  model: string;
+}

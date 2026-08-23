@@ -10,12 +10,16 @@ from __future__ import annotations
 
 from collections.abc import Iterator
 from contextlib import contextmanager
+from typing import Annotated
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, File, HTTPException, UploadFile
 from pydantic import BaseModel, Field
 
+from app.agents.claim_support import check_claim_support
 from app.auth import CurrentUser
 from app.config import get_settings
+from app.ingest.extract import ExtractionError, extract_draft
+from app.models.claim_support import CitedSource, ClaimSupportResult
 from app.models.question_strategy import StrategyResult
 from app.models.session import SessionState, SessionSummary, SessionTurnResult
 from app.models.weakness_map import AnalysisResult
@@ -84,6 +88,16 @@ class StartSessionResponse(BaseModel):
     strategy: StrategyResult
 
 
+class ExtractDraftResponse(BaseModel):
+    text: str = Field(description="The manuscript as text, for the student to review.")
+    page_count: int = 0
+    characters: int = 0
+    notes: list[str] = Field(
+        default_factory=list,
+        description="What extraction changed, so nothing is altered silently.",
+    )
+
+
 class AnswerRequest(BaseModel):
     answer: str = Field(description="What the student said.")
 
@@ -116,6 +130,33 @@ def analyze_draft_endpoint(request: AnalyzeDraftRequest, user: CurrentUser) -> A
             draft_id=request.draft_id,
             persist=request.persist,
         )
+
+
+@router.post("/api/drafts/extract", response_model=ExtractDraftResponse)
+async def extract_draft_endpoint(
+    user: CurrentUser, file: Annotated[UploadFile, File()]
+) -> ExtractDraftResponse:
+    """Turn an uploaded PDF, DOCX, or text file into text.
+
+    The text is returned rather than analysed. The student reads it, corrects
+    it if extraction got something wrong, and submits it deliberately, which is
+    what keeps every verified quote checkable against a document they have
+    actually seen.
+
+    Nothing is stored. The file is read into memory and discarded.
+    """
+    data = await file.read()
+    try:
+        extracted = extract_draft(file.filename or "", data)
+    except ExtractionError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    return ExtractDraftResponse(
+        text=extracted.text,
+        page_count=extracted.page_count,
+        characters=len(extracted.text),
+        notes=extracted.notes,
+    )
 
 
 @router.post("/api/sessions/prepare", response_model=PrepareSessionResponse)
@@ -175,6 +216,25 @@ def close_session_endpoint(session_id: str, user: CurrentUser) -> CloseSessionRe
         summary=closing.summary,
         adjustments=closing.adjustments,
     )
+
+
+class CheckClaimRequest(BaseModel):
+    claim: str = Field(description="The sentence as written in the manuscript.")
+    source: CitedSource = Field(
+        description="The cited source, including whatever text is available to read."
+    )
+
+
+@router.post("/api/claims/check", response_model=ClaimSupportResult)
+def check_claim_endpoint(request: CheckClaimRequest, user: CurrentUser) -> ClaimSupportResult:
+    """Judge whether a cited source carries the specific claim it was cited for.
+
+    A supporting layer rather than one of the four defense sub-agents. It never
+    marks a citation wrong on its own: a negative verdict has to come with a
+    question the author can answer.
+    """
+    with _translated_errors():
+        return check_claim_support(request.claim, request.source)
 
 
 @router.get("/api/sessions/{session_id}", response_model=SessionState)

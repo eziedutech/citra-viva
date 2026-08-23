@@ -45,14 +45,21 @@ async function authorization(): Promise<Record<string, string>> {
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
+/** Drop headers explicitly set to undefined, so a caller can remove one. */
+function cleanHeaders(headers: Record<string, string | undefined>): Record<string, string> {
+  return Object.fromEntries(
+    Object.entries(headers).filter(([, value]) => value !== undefined),
+  ) as Record<string, string>;
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`${baseUrl()}${path}`, {
     ...init,
-    headers: {
+    headers: cleanHeaders({
       'Content-Type': 'application/json',
       ...(await authorization()),
-      ...(init?.headers ?? {}),
-    },
+      ...((init?.headers ?? {}) as Record<string, string | undefined>),
+    }),
     cache: 'no-store',
     signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
   });
@@ -78,6 +85,22 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
 export function post<T>(path: string, body: unknown): Promise<T> {
   return request<T>(path, { method: 'POST', body: JSON.stringify(body ?? {}) });
+}
+
+/**
+ * Forward a multipart upload.
+ *
+ * `Content-Type` is passed as undefined on purpose. A multipart body needs a
+ * boundary parameter in that header, and only fetch knows the boundary it
+ * generated. Setting the header by hand produces a request the server cannot
+ * parse, and the error it returns says nothing about why.
+ */
+export function postForm<T>(path: string, form: FormData): Promise<T> {
+  return request<T>(path, {
+    method: 'POST',
+    body: form,
+    headers: { 'Content-Type': undefined as unknown as string },
+  });
 }
 
 export function get<T>(path: string): Promise<T> {

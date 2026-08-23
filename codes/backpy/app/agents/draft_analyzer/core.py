@@ -10,13 +10,15 @@ before anything downstream is allowed to use it.
 
 from __future__ import annotations
 
-import re
-from difflib import SequenceMatcher
-
 from pydantic import ValidationError
 
 from app.agents.draft_analyzer.prompt import build_prompt
-from app.common.text import normalize_text, parse_json_object
+from app.common.text import (
+    candidate_spans,
+    normalize_text,
+    parse_json_object,
+    verify_quote,
+)
 from app.llm.client import ModelRunner
 from app.models.weakness_map import (
     AnalysisResult,
@@ -28,53 +30,9 @@ from app.models.weakness_map import (
 )
 
 MIN_DRAFT_CHARS = 200
-QUOTE_MATCH_THRESHOLD = 0.85
-MIN_QUOTE_CHARS = 20
 MAX_FINDINGS = 12
 
 _SEVERITY_ORDER = {Severity.HIGH: 0, Severity.MEDIUM: 1, Severity.LOW: 2}
-
-
-# --------------------------------------------------------------------------- #
-# Normalization and quote verification
-# --------------------------------------------------------------------------- #
-
-
-def _candidate_spans(draft_text: str) -> list[str]:
-    """Split the draft into sentences, plus every consecutive sentence pair.
-
-    Pairs are included because a legitimate quote may run two sentences long.
-    """
-    sentences = [s.strip() for s in re.split(r"(?<=[.!?])\s+|\n+", draft_text) if s.strip()]
-    spans = list(sentences)
-    spans += [f"{a} {b}" for a, b in zip(sentences, sentences[1:], strict=False)]
-    return spans
-
-
-def _verify_quote(quote: str, draft_text: str, spans: list[str]) -> str | None:
-    """Return the original draft text matching `quote`, or None if there is none.
-
-    A matching quote is snapped back to the manuscript's own wording, so small
-    transcription differences from the model do not break traceability.
-    """
-    norm_quote = normalize_text(quote)
-    if len(norm_quote) < MIN_QUOTE_CHARS:
-        return None
-
-    if norm_quote in normalize_text(draft_text):
-        for span in spans:
-            if norm_quote in normalize_text(span):
-                return span
-        return quote
-
-    best_span, best_ratio = None, 0.0
-    for span in spans:
-        ratio = SequenceMatcher(None, norm_quote, normalize_text(span)).ratio()
-        if ratio > best_ratio:
-            best_span, best_ratio = span, ratio
-    if best_span is not None and best_ratio >= QUOTE_MATCH_THRESHOLD:
-        return best_span
-    return None
 
 
 # --------------------------------------------------------------------------- #
@@ -133,7 +91,7 @@ def _clean_findings(
     if not isinstance(raw_findings, list):
         return findings, ["The model did not return a list of findings."]
 
-    spans = _candidate_spans(draft_text)
+    spans = candidate_spans(draft_text)
     seen_quotes: set[str] = set()
 
     for index, item in enumerate(raw_findings, start=1):
@@ -155,7 +113,7 @@ def _clean_findings(
             dropped.append(f"{label}: no supporting quote, dropped.")
             continue
 
-        matched = _verify_quote(quote, draft_text, spans)
+        matched = verify_quote(quote, draft_text, spans)
         if matched is None:
             dropped.append(
                 f"{label}: quote not found in the draft, dropped (quote: {quote[:60]!r})."

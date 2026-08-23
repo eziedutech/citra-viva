@@ -87,7 +87,7 @@ A longer discussion of the design decisions is in [docs/architecture.md](docs/ar
 | **Examiner Session Agent** | Implemented and tested |
 | **Session Reflection Agent** | Implemented and tested |
 
-All four sub-agents run, and a full mock defense goes from raw draft text to a closing report in one command. Draft input is plain text for now; PDF and DOCX parsing follows.
+All four sub-agents run, and a full mock defense goes from raw draft text to a closing report in one command. PDF, DOCX, and plain text are accepted. The Claim-Support Checker runs as a supporting layer alongside them.
 
 ### Technology
 
@@ -430,6 +430,47 @@ None of those four is a secret. A Firebase web API key identifies the project to
 
 ---
 
+## Reading an uploaded manuscript
+
+PDF, DOCX, and plain text. The extracted text is **returned to the student and shown to them** rather than analysed straight away, and that is the whole design rather than a convenience.
+
+Every finding must quote the draft verbatim, and every quote is verified against the text we were given. If extraction happened invisibly, those quotes would be checked against a version of the manuscript the student has never seen: a two column layout read in the wrong order, a running header repeated on every page, a ligature that arrived as a character they cannot type. They would be shown a quote they cannot find in their own document, and told an examiner will attack it.
+
+So the text lands in an editable field. The student reads it, fixes anything extraction got wrong, and submits deliberately. What the analyzer reads is what they saw.
+
+| Case | What happens |
+|---|---|
+| Scanned PDF with no text layer | Refused with "this PDF has no selectable text", not "your draft is too short", which would send a student hunting for a problem in their writing |
+| Password protected PDF | Named as such. An empty password is tried, because it unlocks many "protected" files; nothing else is guessed |
+| Running headers and page numbers | Removed when a short line repeats on more than half the pages, and the removal is reported. A line repeated across only two pages survives, because two pages is not evidence of a header |
+| Tables in a DOCX | Kept. Methodology and results live in tables in most theses, and those are the sections an examiner presses hardest on |
+| Hyphenated line breaks, ligatures | Normalised, so a quote does not contain characters the student cannot type |
+| A file that is not what it claims | One readable sentence, never a stack trace about zip files |
+
+Nothing is persisted. The file is read into memory and discarded, and only the text the student chose to submit goes any further.
+
+---
+
+## The Claim-Support Checker
+
+A supporting layer, not one of the four defense sub-agents.
+
+Mechanical citation verification, matching a DOI against Crossref or OpenAlex, belongs to a separate project and is **deliberately outside this submission**. It answers a different question anyway: whether the source exists and the metadata is real.
+
+What runs here is the question a supervisor actually asks. The source exists, the DOI resolves, but does it carry the specific sentence it was cited for, or is it merely about the same topic? Topical relevance passes every mechanical check ever written, and it is the most common way a citation misleads.
+
+Two rules are enforced in code, and both exist because this feature tells a student something about their own work:
+
+**A verdict of support must point at the passage it rests on**, verified verbatim against the source text supplied. A model asserting support it cannot locate is precisely the failure this feature exists to catch, so it is not permitted to commit that failure itself. When it does, the verdict falls to `cannot_tell` and the reason is recorded.
+
+**A verdict that a citation does not hold must come with a question for the author.** Marking a citation wrong with no way to answer is an accusation, and a student may have a reason no abstract could show. Without a question, that verdict also falls to `cannot_tell`.
+
+Neither rule invents content. "We could not settle this from the text supplied" is an honest answer; a manufactured judgment is not.
+
+Against the live model, the same source produces three different verdicts depending on how far the claim reaches: a causal claim gets `partially_supports` with the association-versus-cause gap named, an honestly worded claim still gets `partially_supports` because the source studied one country and one age band, and an off-topic claim gets `does_not_support` with a question rather than a verdict.
+
+---
+
 ## Repository layout
 
 ```
@@ -443,6 +484,8 @@ codes/backpy/                     Python backend
     agents/question_strategy/     same shape, one responsibility further down the chain
     agents/examiner_session/      judges one answer, decides what happens next
     agents/session_reflection/    turns a finished transcript into carry-forward patterns
+    agents/claim_support/         does this source carry this specific claim?
+    ingest/extract.py             PDF, DOCX, and text into reviewable text
     orchestrator/orchestrator.py  coordination between sub-agents
     api/routes.py                 FastAPI endpoints
     models/                       weakness_map.py, question_strategy.py, session.py

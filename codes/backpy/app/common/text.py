@@ -11,6 +11,12 @@ from __future__ import annotations
 import json
 import re
 import unicodedata
+from difflib import SequenceMatcher
+
+# How close a quote must be to a passage before it counts as the same sentence.
+QUOTE_MATCH_THRESHOLD = 0.85
+# Shorter than this, a "quote" matches too much to prove anything.
+MIN_QUOTE_CHARS = 20
 
 
 def normalize_text(text: str) -> str:
@@ -55,3 +61,46 @@ def parse_json_object(raw: str) -> dict:
     if not isinstance(data, dict):
         raise ValueError("Model response is not a JSON object.")
     return data
+
+
+def candidate_spans(source_text: str) -> list[str]:
+    """Split text into sentences, plus every consecutive sentence pair.
+
+    Pairs are included because a legitimate quote may run two sentences long.
+    """
+    sentences = [s.strip() for s in re.split(r"(?<=[.!?])\s+|\n+", source_text) if s.strip()]
+    spans = list(sentences)
+    spans += [f"{a} {b}" for a, b in zip(sentences, sentences[1:], strict=False)]
+    return spans
+
+
+def verify_quote(quote: str, source_text: str, spans: list[str] | None = None) -> str | None:
+    """Return the original text matching `quote`, or None if there is none.
+
+    A matching quote is snapped back to the source's own wording, so small
+    transcription differences from a model do not break traceability.
+
+    Used wherever a claim has to point at evidence: findings against the
+    student's manuscript, and support judgments against a cited source. The
+    rule is the same in both places, so it lives in one.
+    """
+    spans = spans if spans is not None else candidate_spans(source_text)
+
+    norm_quote = normalize_text(quote)
+    if len(norm_quote) < MIN_QUOTE_CHARS:
+        return None
+
+    if norm_quote in normalize_text(source_text):
+        for span in spans:
+            if norm_quote in normalize_text(span):
+                return span
+        return quote
+
+    best_span, best_ratio = None, 0.0
+    for span in spans:
+        ratio = SequenceMatcher(None, norm_quote, normalize_text(span)).ratio()
+        if ratio > best_ratio:
+            best_span, best_ratio = span, ratio
+    if best_span is not None and best_ratio >= QUOTE_MATCH_THRESHOLD:
+        return best_span
+    return None

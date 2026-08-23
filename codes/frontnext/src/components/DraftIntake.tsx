@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 
@@ -30,6 +31,11 @@ export function DraftIntake({ dict, locale }: Props) {
   const [busy, setBusy] = useState(false);
   const [stage, setStage] = useState(0);
   const [error, setError] = useState('');
+  const [reading, setReading] = useState(false);
+  const [source, setSource] = useState<{ name: string; pages: number; notes: string[] } | null>(
+    null,
+  );
+  const fileInput = useRef<HTMLInputElement>(null);
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
@@ -45,6 +51,29 @@ export function DraftIntake({ dict, locale }: Props) {
   // whether to hand it their manuscript.
   const needsSignIn = auth.enabled && auth.ready && !auth.user;
   const canStart = length >= MIN_DRAFT_CHARS && !busy && !needsSignIn;
+
+  async function upload(file: File) {
+    setReading(true);
+    setError('');
+    setSource(null);
+    try {
+      const form = new FormData();
+      form.append('file', file, file.name);
+      const response = await fetch('/api/drafts/extract', { method: 'POST', body: form });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error ?? dict.intake.uploadFailed);
+
+      // The text goes into the editable field rather than straight into a
+      // session. What the analyzer reads has to be what the student saw.
+      setDraft(data.text);
+      setSource({ name: file.name, pages: data.page_count ?? 0, notes: data.notes ?? [] });
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : dict.intake.uploadFailed);
+    } finally {
+      setReading(false);
+      if (fileInput.current) fileInput.current.value = '';
+    }
+  }
 
   async function start() {
     setBusy(true);
@@ -92,6 +121,12 @@ export function DraftIntake({ dict, locale }: Props) {
               <span className="text-body-sm font-medium">{dict.app.name}</span>
             </div>
             <span className="flex items-center gap-3">
+              <Link
+                href="/klaim"
+                className="text-caption text-[color:var(--color-primary-700)] underline underline-offset-2"
+              >
+                {dict.claims.nav}
+              </Link>
               <AccountButton dict={dict} />
               <LocaleSwitch locale={locale} dict={dict} />
             </span>
@@ -107,7 +142,26 @@ export function DraftIntake({ dict, locale }: Props) {
             <label htmlFor="draft" className="text-body-sm font-medium">
               {dict.intake.draftLabel}
             </label>
-            <span className="flex gap-4">
+            <span className="flex flex-wrap items-center gap-4">
+              <button
+                type="button"
+                onClick={() => fileInput.current?.click()}
+                disabled={busy || reading}
+                className="text-caption flex items-center gap-[6px] rounded-[var(--radius-action)] border border-[color:var(--color-line)] px-3 py-1 transition-colors duration-150 hover:bg-[color:var(--color-hover)] disabled:text-[color:var(--color-ink-400)]"
+              >
+                <Icon name="file" size={16} />
+                {reading ? dict.intake.uploading : dict.intake.upload}
+              </button>
+              <input
+                ref={fileInput}
+                type="file"
+                accept=".pdf,.docx,.txt,.md"
+                className="sr-only"
+                onChange={(event) => {
+                  const file = event.target.files?.[0];
+                  if (file) void upload(file);
+                }}
+              />
               <button
                 type="button"
                 onClick={() => setDraft(SAMPLE_DRAFT_EN)}
@@ -137,6 +191,25 @@ export function DraftIntake({ dict, locale }: Props) {
             placeholder={dict.intake.draftPlaceholder}
             className="text-editor w-full resize-y border border-[color:var(--color-line)] bg-[color:var(--color-surface)] p-4 font-[family-name:var(--font-serif)] outline-none focus:border-[color:var(--color-primary-500)] disabled:bg-[color:var(--color-primary-050)]"
           />
+
+          {source ? (
+            <div className="text-caption mt-2 border-l-2 border-[color:var(--color-primary-500)] bg-[color:var(--color-primary-050)] py-2 pl-3">
+              <p className="font-medium">
+                {fill(dict.intake.uploadedFrom, { name: source.name })}
+                {source.pages
+                  ? ` · ${fill(dict.intake.uploadedPages, { count: source.pages })}`
+                  : ''}
+              </p>
+              <p className="mt-1 text-[color:var(--color-ink-600)]">
+                {dict.intake.reviewExtracted}
+              </p>
+              {source.notes.map((note) => (
+                <p key={note} className="mt-1 text-[color:var(--color-ink-600)]">
+                  {note}
+                </p>
+              ))}
+            </div>
+          ) : null}
 
           <p className="text-caption mt-2 text-[color:var(--color-ink-600)]">
             {length.toLocaleString(locale)} {dict.intake.characters}
