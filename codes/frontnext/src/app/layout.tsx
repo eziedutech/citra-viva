@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
 import { Inter, JetBrains_Mono, Source_Serif_4 } from 'next/font/google';
 
+import { currentLocale } from '@/lib/locale';
+
 import './globals.css';
 
 // Loaded through next/font so the files are self hosted. Nothing is fetched
@@ -27,12 +29,17 @@ const jetbrains = JetBrains_Mono({
 export const metadata: Metadata = {
   title: 'CITRA Viva',
   description:
-    'Simulator sidang skripsi yang membaca draf riset Anda dan menguji titik terlemah argumennya.',
+    'A thesis defense simulator that reads your research draft and tests the weakest points of your argument.',
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const locale = await currentLocale();
+
   return (
-    <html lang="id" className={`${inter.variable} ${sourceSerif.variable} ${jetbrains.variable}`}>
+    <html
+      lang={locale}
+      className={`${inter.variable} ${sourceSerif.variable} ${jetbrains.variable}`}
+    >
       <body>{children}</body>
     </html>
   );

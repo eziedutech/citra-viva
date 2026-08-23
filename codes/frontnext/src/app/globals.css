@@ -170,6 +170,22 @@
   .panel-scroll::-webkit-scrollbar-thumb:active {
     background-color: rgba(90, 100, 115, 0.7);
   }
+
+  /* The liveness cue on the AI working bar. Opacity only: nothing moves, so
+     it stays quiet next to text a person is trying to read. */
+  .ai-pulse {
+    animation: ai-pulse 1.2s ease-in-out infinite;
+  }
+
+  @keyframes ai-pulse {
+    0%,
+    100% {
+      opacity: 0.25;
+    }
+    50% {
+      opacity: 1;
+    }
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

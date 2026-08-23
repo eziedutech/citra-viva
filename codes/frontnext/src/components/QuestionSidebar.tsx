@@ -1,19 +1,14 @@
 'use client';
 
 import { Icon } from '@/components/Icon';
+import type { Dictionary } from '@/lib/i18n';
 import type { PlannedQuestion, QuestionProgress } from '@/lib/types';
-
-const TYPE_LABEL: Record<string, string> = {
-  opening: 'Pembuka',
-  probe: 'Pendalaman',
-  methodological: 'Metodologi',
-  closing: 'Penutup',
-};
 
 interface Props {
   questions: PlannedQuestion[];
   progress: QuestionProgress[];
   currentIndex: number;
+  dict: Dictionary;
 }
 
 /**
@@ -23,16 +18,16 @@ interface Props {
  * that is still ahead cannot be clicked: the point of a defense is that the
  * student does not get to see what is coming.
  */
-export function QuestionSidebar({ questions, progress, currentIndex }: Props) {
+export function QuestionSidebar({ questions, progress, currentIndex, dict }: Props) {
   return (
     <nav
-      aria-label="Daftar pertanyaan sidang"
+      aria-label={dict.sidebar.plan}
       className="panel-scroll border-r border-[color:var(--color-line)] bg-[color:var(--color-primary-050)]"
       tabIndex={0}
     >
       <div className="px-5 py-4">
         <h2 className="text-caption mb-3 font-medium text-[color:var(--color-ink-600)]">
-          Rencana pengujian
+          {dict.sidebar.plan}
         </h2>
 
         <ol className="space-y-1">
@@ -59,7 +54,7 @@ export function QuestionSidebar({ questions, progress, currentIndex }: Props) {
                       <Icon
                         name="check"
                         size={18}
-                        label={gap ? 'Selesai, tercatat sebagai celah' : 'Selesai'}
+                        label={gap ? dict.sidebar.doneWithGap : dict.sidebar.done}
                         className={
                           gap
                             ? 'text-[color:var(--color-warning)]'
@@ -70,11 +65,11 @@ export function QuestionSidebar({ questions, progress, currentIndex }: Props) {
                       <Icon
                         name="dot"
                         size={18}
-                        label="Sedang diuji"
+                        label={dict.sidebar.active}
                         className="text-[color:var(--color-primary-500)]"
                       />
                     ) : (
-                      <Icon name="lock" size={18} label="Belum dibuka" />
+                      <Icon name="lock" size={18} label={dict.sidebar.locked} />
                     )}
                   </span>
 
@@ -82,13 +77,13 @@ export function QuestionSidebar({ questions, progress, currentIndex }: Props) {
                     <span className="text-body-sm block font-medium">
                       {question.id}
                       <span className="ml-2 font-normal text-[color:var(--color-ink-600)]">
-                        {TYPE_LABEL[question.question_type] ?? question.question_type}
+                        {dict.sidebar.types[question.question_type] ?? question.question_type}
                       </span>
                     </span>
 
                     {question.targets_recurring_gap ? (
                       <span className="text-micro mt-1 inline-block rounded-[var(--radius-chip)] bg-[color:var(--color-tint-warn)] px-2 py-[2px] font-medium text-[color:var(--color-warning)]">
-                        Celah berulang
+                        {dict.sidebar.recurringGap}
                       </span>
                     ) : null}
 

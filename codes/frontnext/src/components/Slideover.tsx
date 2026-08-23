@@ -3,39 +3,12 @@
 import { useState } from 'react';
 
 import { Icon } from '@/components/Icon';
+import type { Dictionary } from '@/lib/i18n';
 import type {
   AnswerEvaluation,
   SessionSummary,
   WeaknessFinding,
 } from '@/lib/types';
-
-const CATEGORY_LABEL: Record<string, string> = {
-  unsupported_claim: 'Klaim tanpa dukungan',
-  causal_language_non_experimental: 'Bahasa kausal, desain non-eksperimen',
-  overgeneralization: 'Generalisasi berlebihan',
-  unaddressed_limitation: 'Batasan tidak dijawab',
-  other: 'Lainnya',
-};
-
-const SEVERITY_LABEL: Record<string, string> = {
-  high: 'Tinggi',
-  medium: 'Sedang',
-  low: 'Rendah',
-};
-
-const STRENGTH_LABEL: Record<string, string> = {
-  strong: 'Bertahan',
-  partial: 'Bertahan sebagian',
-  weak: 'Lemah',
-  evasive: 'Menghindar',
-};
-
-const DECISION_LABEL: Record<string, string> = {
-  press_deeper: 'Ditekan lebih dalam',
-  ask_clarification: 'Diberi kesempatan klarifikasi',
-  move_on: 'Lanjut ke topik berikutnya',
-  record_gap: 'Dicatat sebagai celah',
-};
 
 /**
  * Severity is how hard an examiner is likely to press, not a grade for the
@@ -59,7 +32,7 @@ function AiLabel({ children }: { children: React.ReactNode }) {
   );
 }
 
-function FindingCard({ finding }: { finding: WeaknessFinding }) {
+function FindingCard({ finding, dict }: { finding: WeaknessFinding; dict: Dictionary }) {
   return (
     <article className="border border-[color:var(--color-line)] bg-[color:var(--color-surface)] p-4">
       <header className="mb-2 flex flex-wrap items-center gap-2">
@@ -67,10 +40,10 @@ function FindingCard({ finding }: { finding: WeaknessFinding }) {
         <span
           className={`text-micro rounded-[var(--radius-chip)] px-2 py-[2px] font-medium ${severityTone(finding.severity)}`}
         >
-          {SEVERITY_LABEL[finding.severity] ?? finding.severity}
+          {dict.slideover.severity[finding.severity] ?? finding.severity}
         </span>
         <span className="text-micro text-[color:var(--color-ink-600)]">
-          {CATEGORY_LABEL[finding.category] ?? finding.category}
+          {dict.slideover.category[finding.category] ?? finding.category}
         </span>
       </header>
 
@@ -79,7 +52,7 @@ function FindingCard({ finding }: { finding: WeaknessFinding }) {
         {finding.quote_verified ? (
           <p className="text-micro mt-2 flex items-center gap-[6px] text-[color:var(--color-success)]">
             <Icon name="check" size={14} />
-            Kutipan terverifikasi ada di naskah Anda
+            {dict.slideover.quoteVerified}
           </p>
         ) : null}
       </blockquote>
@@ -89,32 +62,38 @@ function FindingCard({ finding }: { finding: WeaknessFinding }) {
   );
 }
 
-function EvaluationPanel({ evaluation }: { evaluation: AnswerEvaluation | null }) {
+function EvaluationPanel({
+  evaluation,
+  dict,
+}: {
+  evaluation: AnswerEvaluation | null;
+  dict: Dictionary;
+}) {
   if (!evaluation) {
     return (
       <p className="text-body-sm text-[color:var(--color-ink-600)]">
-        Penilaian jawaban akan muncul di sini setelah Anda menjawab pertanyaan pertama.
+        {dict.slideover.noEvaluation}
       </p>
     );
   }
 
   return (
     <div className="border border-[color:var(--color-line)] bg-[color:var(--color-surface)] p-4">
-      <AiLabel>Penilaian oleh agent penguji</AiLabel>
+      <AiLabel>{dict.slideover.evaluationIntro}</AiLabel>
 
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <span className="text-body-sm font-medium">
-          {STRENGTH_LABEL[evaluation.strength] ?? evaluation.strength}
+          {dict.slideover.strength[evaluation.strength] ?? evaluation.strength}
         </span>
         <span className="text-micro rounded-[var(--radius-chip)] bg-[color:var(--color-tint-ai)] px-2 py-[2px] font-medium text-[color:var(--color-ai)]">
-          {DECISION_LABEL[evaluation.decision] ?? evaluation.decision}
+          {dict.slideover.decision[evaluation.decision] ?? evaluation.decision}
         </span>
       </div>
 
       {evaluation.criteria_met.length > 0 ? (
         <section className="mb-4">
           <h4 className="text-caption mb-1 font-medium text-[color:var(--color-success)]">
-            Yang Anda penuhi
+            {dict.slideover.criteriaMet}
           </h4>
           <ul className="text-body-sm space-y-1">
             {evaluation.criteria_met.map((item) => (
@@ -134,7 +113,7 @@ function EvaluationPanel({ evaluation }: { evaluation: AnswerEvaluation | null }
       {evaluation.criteria_missed.length > 0 ? (
         <section className="mb-4">
           <h4 className="text-caption mb-1 font-medium text-[color:var(--color-warning)]">
-            Yang belum tersentuh
+            {dict.slideover.criteriaMissed}
           </h4>
           <ul className="text-body-sm space-y-1">
             {evaluation.criteria_missed.map((item) => (
@@ -165,19 +144,21 @@ function ReportPanel({
   onClose,
   closing,
   canClose,
+  dict,
 }: {
   summary: SessionSummary | null;
   onClose: () => void;
   closing: boolean;
   canClose: boolean;
+  dict: Dictionary;
 }) {
   if (!summary) {
     return (
       <div>
         <p className="text-body-sm mb-4 text-[color:var(--color-ink-600)]">
           {canClose
-            ? 'Sidang selesai. Susun laporan untuk melihat apa yang bertahan, apa yang masih terbuka, dan pola yang dibawa ke sesi berikutnya.'
-            : 'Laporan tersedia setelah seluruh pertanyaan selesai dijawab.'}
+            ? dict.slideover.reportPending
+            : dict.slideover.reportLocked}
         </p>
         <button
           type="button"
@@ -185,7 +166,7 @@ function ReportPanel({
           disabled={!canClose || closing}
           className="h-10 rounded-[var(--radius-action)] bg-[color:var(--color-primary-700)] px-4 text-body-sm font-medium text-white transition-colors duration-150 hover:bg-[color:var(--color-primary-900)] disabled:bg-[color:var(--color-ink-400)]"
         >
-          {closing ? 'Menyusun laporan' : 'Susun laporan sesi'}
+          {closing ? dict.room.buildingReport : dict.slideover.writeReport}
         </button>
       </div>
     );
@@ -193,11 +174,11 @@ function ReportPanel({
 
   return (
     <div className="space-y-6">
-      <AiLabel>Laporan disusun oleh agent refleksi</AiLabel>
+      <AiLabel>{dict.slideover.reportIntro}</AiLabel>
 
       <section>
         <h4 className="text-caption mb-2 font-medium text-[color:var(--color-success)]">
-          Berhasil dipertahankan
+          {dict.slideover.defended}
         </h4>
         {summary.strong_points.length > 0 ? (
           <ul className="text-body-sm space-y-2">
@@ -209,14 +190,14 @@ function ReportPanel({
           </ul>
         ) : (
           <p className="text-body-sm text-[color:var(--color-ink-600)]">
-            Tidak ada poin yang bertahan pada sesi ini.
+            {dict.slideover.nothingDefended}
           </p>
         )}
       </section>
 
       <section>
         <h4 className="text-caption mb-2 font-medium text-[color:var(--color-warning)]">
-          Masih belum terjawab
+          {dict.slideover.stillOpen}
         </h4>
         <ul className="text-body-sm space-y-2">
           {summary.remaining_gaps.map((item) => (
@@ -230,7 +211,7 @@ function ReportPanel({
       <section>
         <h4 className="text-caption mb-2 flex items-center gap-[6px] font-medium">
           <Icon name="history" size={16} />
-          Pola yang dibawa ke sesi berikutnya
+          {dict.slideover.patterns}
         </h4>
         <ul className="text-body-sm space-y-2">
           {summary.recurring_gap_patterns.map((item) => (
@@ -243,14 +224,14 @@ function ReportPanel({
           ))}
         </ul>
         <p className="text-caption mt-2 text-[color:var(--color-ink-600)]">
-          Tempelkan poin ini saat memulai sesi berikutnya agar diuji lebih dulu.
+          {dict.slideover.patternsHelp}
         </p>
       </section>
 
       {summary.closing_remark ? (
         <section>
           <h4 className="text-caption mb-2 font-medium text-[color:var(--color-ink-600)]">
-            Penutup penguji
+            {dict.slideover.closingRemark}
           </h4>
           <p className="text-body-sm font-[family-name:var(--font-serif)]">
             {summary.closing_remark}
@@ -272,6 +253,7 @@ interface Props {
   onClose: () => void;
   activeTab: Tab;
   onTabChange: (tab: Tab) => void;
+  dict: Dictionary;
 }
 
 export function Slideover({
@@ -283,16 +265,17 @@ export function Slideover({
   onClose,
   activeTab,
   onTabChange,
+  dict,
 }: Props) {
   const tabs: Array<{ id: Tab; label: string }> = [
-    { id: 'weakness', label: 'Peta kelemahan' },
-    { id: 'evaluation', label: 'Penilaian' },
-    { id: 'report', label: 'Laporan' },
+    { id: 'weakness', label: dict.slideover.tabs.weakness },
+    { id: 'evaluation', label: dict.slideover.tabs.evaluation },
+    { id: 'report', label: dict.slideover.tabs.report },
   ];
 
   return (
     <aside
-      aria-label="Panel kontekstual"
+      aria-label={dict.slideover.label}
       className="grid min-h-0 grid-rows-[auto_1fr] border-l border-[color:var(--color-line)] bg-[color:var(--color-surface)]"
     >
       {/* The tab strip stays put; only the panel body scrolls, so reading a
@@ -320,14 +303,16 @@ export function Slideover({
       <div className="panel-scroll p-5" tabIndex={0}>
         {activeTab === 'weakness' ? (
           <div className="space-y-3">
-            <AiLabel>Peta kelemahan hasil analisis draf</AiLabel>
+            <AiLabel>{dict.slideover.weaknessIntro}</AiLabel>
             {findings.map((finding) => (
-              <FindingCard key={finding.id} finding={finding} />
+              <FindingCard key={finding.id} finding={finding} dict={dict} />
             ))}
           </div>
         ) : null}
 
-        {activeTab === 'evaluation' ? <EvaluationPanel evaluation={evaluation} /> : null}
+        {activeTab === 'evaluation' ? (
+          <EvaluationPanel evaluation={evaluation} dict={dict} />
+        ) : null}
 
         {activeTab === 'report' ? (
           <ReportPanel
@@ -335,6 +320,7 @@ export function Slideover({
             onClose={onClose}
             closing={closing}
             canClose={finished}
+            dict={dict}
           />
         ) : null}
       </div>

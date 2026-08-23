@@ -2,6 +2,8 @@ import { notFound } from 'next/navigation';
 
 import { DefenseRoom } from '@/components/DefenseRoom';
 import { ApiError, get } from '@/lib/api';
+import { dictionaryFor } from '@/lib/i18n';
+import { currentLocale } from '@/lib/locale';
 import { normalizeSession } from '@/lib/session';
 import type { SessionState } from '@/lib/types';
 
@@ -11,6 +13,7 @@ export const dynamic = 'force-dynamic';
 
 export default async function SessionPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  const locale = await currentLocale();
 
   let session: SessionState;
   try {
@@ -20,5 +23,11 @@ export default async function SessionPage({ params }: { params: Promise<{ id: st
     throw error;
   }
 
-  return <DefenseRoom initial={normalizeSession(session)} />;
+  return (
+    <DefenseRoom
+      initial={normalizeSession(session)}
+      dict={dictionaryFor(locale)}
+      locale={locale}
+    />
+  );
 }
