@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
 import { Inter, JetBrains_Mono, Source_Serif_4 } from 'next/font/google';
 
+import { AuthProvider } from '@/components/AuthProvider';
+import { firebaseConfigFromEnv } from '@/lib/firebase-config';
 import { currentLocale } from '@/lib/locale';
 
 import './globals.css';
@@ -34,13 +36,18 @@ export const metadata: Metadata = {
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const locale = await currentLocale();
+  // Read on the server and handed down, because Cloud Run supplies environment
+  // variables at runtime and NEXT_PUBLIC_ values are frozen at build time.
+  const firebase = firebaseConfigFromEnv();
 
   return (
     <html
       lang={locale}
       className={`${inter.variable} ${sourceSerif.variable} ${jetbrains.variable}`}
     >
-      <body>{children}</body>
+      <body>
+        <AuthProvider config={firebase}>{children}</AuthProvider>
+      </body>
     </html>
   );
 }

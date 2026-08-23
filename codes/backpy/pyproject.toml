@@ -12,6 +12,8 @@ dependencies = [
     "google-genai>=1.0",
     "google-cloud-firestore>=2.19",
     "google-cloud-storage>=2.18",
+    "google-auth>=2.38",
+    "requests>=2.32",
 ]
 
 [project.optional-dependencies]

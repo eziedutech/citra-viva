@@ -97,6 +97,7 @@ All four sub-agents run, and a full mock defense goes from raw draft text to a c
 | Agent framework | **Google ADK**, `google-cloud-aiplatform[agent_engines,adk]` |
 | Backend | Python 3.12, FastAPI |
 | Frontend | Next.js 16, React 19, Tailwind 4, TypeScript |
+| Sign-in | Firebase Authentication, Google provider |
 | Database | Firestore, native mode |
 | Draft storage | Cloud Storage |
 | Deployment | Cloud Run for the API and the web app, Agent Runtime for the ADK agents |
@@ -391,6 +392,44 @@ cd codes/frontnext && gcloud run deploy citra-viva-web --source . --region=asia-
 
 ---
 
+## Identity, and who may open a session
+
+A session carries a student's manuscript and the map of where their argument gives way. Before sign-in existed, a guessed session id was enough to read both. For a product whose premise is research integrity that is not a missing feature, it is a contradiction, so it is closed.
+
+**Firebase ID tokens, verified against Google's public keys.** The backend verifies every token before trusting a single claim in it, and keys ownership on the Firebase subject rather than the email, because an email can change hands and a subject cannot.
+
+**A session can only be opened by the account that created it.** The refusal is `404`, not `403`. Telling a stranger that a session exists but is not theirs confirms the id is real, which is the one useful thing an id guesser could learn.
+
+**The token never reaches any script on the page.** After sign-in the browser posts it to a route handler that stores it in an HttpOnly cookie, and everything else reads it from there: server rendered pages, route handlers, and the calls they forward. An injected script cannot read it, the session page can still render on the server, and no component has to remember to attach a header, which is how one endpoint ends up unauthenticated while the rest are fine.
+
+**Sessions with no owner stay readable.** Those were created before sign-in existed, or while it is switched off. Orphaning them would punish a user for a change they did not make.
+
+`AUTH_REQUIRED=false` turns the whole check off, so the test suite and a bare local backend run without a Firebase project. Every deployment sets it explicitly, because with it off a session id is the only thing standing between a stranger and someone's manuscript.
+
+### Setting up sign-in for your own deployment
+
+Firebase must be attached to your Google Cloud project through the console. The terms have to be accepted by a person, and enabling the Google provider is what creates the OAuth client, which no API will do for you.
+
+1. In the [Firebase console](https://console.firebase.google.com), click through to create a project, then use **Add Firebase to Google Cloud project** at the bottom of the page and pick your existing project. This does not create a second project.
+2. **Authentication → Sign-in method → Google → Enable**.
+3. **Authentication → Settings → Authorized domains**, add your Cloud Run web domain.
+
+The rest is scriptable. Create a web app and read its config:
+
+```bash
+curl -X POST -H "Authorization: Bearer $(gcloud auth print-access-token)" -H "x-goog-user-project: YOUR_PROJECT_ID" -H "Content-Type: application/json" -d "{\"displayName\":\"CITRA Viva Web\"}" "https://firebase.googleapis.com/v1beta1/projects/YOUR_PROJECT_ID/webApps"
+```
+
+```bash
+curl -H "Authorization: Bearer $(gcloud auth print-access-token)" -H "x-goog-user-project: YOUR_PROJECT_ID" "https://firebase.googleapis.com/v1beta1/projects/YOUR_PROJECT_ID/webApps/YOUR_APP_ID/config"
+```
+
+Put those four values into the web service as `FIREBASE_API_KEY`, `FIREBASE_AUTH_DOMAIN`, `FIREBASE_PROJECT_ID`, and `FIREBASE_APP_ID`, and set `AUTH_REQUIRED=true` plus `FIREBASE_PROJECT_ID` on the API service.
+
+None of those four is a secret. A Firebase web API key identifies the project to Google's endpoints and authorises nothing on its own, which is exactly why access is enforced by verifying ID tokens in the backend rather than by hiding a key. They are deliberately **not** `NEXT_PUBLIC_` variables: those are frozen into the bundle at build time, while Cloud Run supplies environment to the running container, so the config would be empty in production and correct on every developer machine.
+
+---
+
 ## Repository layout
 
 ```
@@ -412,6 +451,7 @@ codes/backpy/                     Python backend
     common/text.py                helpers shared by agents, so no agent imports another
     llm/client.py                 Gemini access through Agent Platform
     storage/firestore.py          the only module that talks to the database
+    auth.py                       token verification and who the caller is
     config.py                     all configuration from environment variables
     main.py
   tests/                          offline tests, plus live tests skipped by default

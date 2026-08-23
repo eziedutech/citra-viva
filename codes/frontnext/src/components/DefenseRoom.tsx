@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 
+import { AccountButton } from '@/components/AccountButton';
 import { AiWorking } from '@/components/AiWorking';
 import { Icon } from '@/components/Icon';
 import { LocaleSwitch } from '@/components/LocaleSwitch';
@@ -139,6 +140,7 @@ export function DefenseRoom({ initial, dict, locale }: Props) {
           <span className="text-caption text-[color:var(--color-ink-400)]">
             {fill(dict.room.answersSaved, { count: answered })}
           </span>
+          <AccountButton dict={dict} />
           <LocaleSwitch locale={locale} dict={dict} />
         </div>
       </header>

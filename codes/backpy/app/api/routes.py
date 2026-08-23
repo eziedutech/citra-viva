@@ -14,6 +14,7 @@ from contextlib import contextmanager
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
+from app.auth import CurrentUser
 from app.config import get_settings
 from app.models.question_strategy import StrategyResult
 from app.models.session import SessionState, SessionSummary, SessionTurnResult
@@ -48,7 +49,6 @@ def _orchestrator() -> Orchestrator:
 
 class AnalyzeDraftRequest(BaseModel):
     draft_text: str = Field(description="Research draft text, plain text for now.")
-    user_id: str = ""
     draft_id: str = ""
     persist: bool = Field(
         default=False,
@@ -102,29 +102,32 @@ def health() -> dict:
         "status": "ok",
         "model": settings.gemini_model,
         "project_configured": bool(settings.google_cloud_project),
+        "auth_required": settings.auth_required,
         "env": settings.app_env,
     }
 
 
 @router.post("/api/drafts/analyze", response_model=AnalysisResult)
-def analyze_draft_endpoint(request: AnalyzeDraftRequest) -> AnalysisResult:
+def analyze_draft_endpoint(request: AnalyzeDraftRequest, user: CurrentUser) -> AnalysisResult:
     with _translated_errors():
         return _orchestrator().run_draft_analysis(
             draft_text=request.draft_text,
-            user_id=request.user_id,
+            user_id=user.uid,
             draft_id=request.draft_id,
             persist=request.persist,
         )
 
 
 @router.post("/api/sessions/prepare", response_model=PrepareSessionResponse)
-def prepare_session_endpoint(request: PrepareSessionRequest) -> PrepareSessionResponse:
+def prepare_session_endpoint(
+    request: PrepareSessionRequest, user: CurrentUser
+) -> PrepareSessionResponse:
     """Analyze a draft and plan the examination, without starting it."""
     with _translated_errors():
         preparation = _orchestrator().prepare_session(
             draft_text=request.draft_text,
             recurring_gaps=request.recurring_gaps,
-            user_id=request.user_id,
+            user_id=user.uid,
             draft_id=request.draft_id,
             persist=request.persist,
         )
@@ -132,13 +135,13 @@ def prepare_session_endpoint(request: PrepareSessionRequest) -> PrepareSessionRe
 
 
 @router.post("/api/sessions/start", response_model=StartSessionResponse)
-def start_session_endpoint(request: StartSessionRequest) -> StartSessionResponse:
+def start_session_endpoint(request: StartSessionRequest, user: CurrentUser) -> StartSessionResponse:
     """Prepare an examination and open it with the first question."""
     with _translated_errors():
         start = _orchestrator().start_session(
             draft_text=request.draft_text,
             recurring_gaps=request.recurring_gaps,
-            user_id=request.user_id,
+            user_id=user.uid,
             draft_id=request.draft_id,
             session_id=request.session_id,
             persist_draft=request.persist,
@@ -154,17 +157,19 @@ def start_session_endpoint(request: StartSessionRequest) -> StartSessionResponse
 
 
 @router.post("/api/sessions/{session_id}/answer", response_model=SessionTurnResult)
-def answer_endpoint(session_id: str, request: AnswerRequest) -> SessionTurnResult:
+def answer_endpoint(
+    session_id: str, request: AnswerRequest, user: CurrentUser
+) -> SessionTurnResult:
     """Submit one answer and receive what the examiner says next."""
     with _translated_errors():
-        return _orchestrator().submit_answer(session_id, request.answer)
+        return _orchestrator().submit_answer(session_id, request.answer, actor_id=user.uid)
 
 
 @router.post("/api/sessions/{session_id}/close", response_model=CloseSessionResponse)
-def close_session_endpoint(session_id: str) -> CloseSessionResponse:
+def close_session_endpoint(session_id: str, user: CurrentUser) -> CloseSessionResponse:
     """Reflect on a finished session and store the summary."""
     with _translated_errors():
-        closing = _orchestrator().close_session(session_id)
+        closing = _orchestrator().close_session(session_id, actor_id=user.uid)
     return CloseSessionResponse(
         session_id=closing.session_id,
         summary=closing.summary,
@@ -173,7 +178,7 @@ def close_session_endpoint(session_id: str) -> CloseSessionResponse:
 
 
 @router.get("/api/sessions/{session_id}", response_model=SessionState)
-def get_session_endpoint(session_id: str) -> SessionState:
+def get_session_endpoint(session_id: str, user: CurrentUser) -> SessionState:
     """Read the full session state, including the transcript so far."""
     with _translated_errors():
-        return _orchestrator().store.load(session_id)
+        return _orchestrator().load_session(session_id, actor_id=user.uid)

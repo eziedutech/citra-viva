@@ -2,9 +2,12 @@
 # no source, no dev dependencies, no package manager.
 FROM node:22-alpine AS deps
 WORKDIR /app
+# corepack picks the version pinned in package.json. Without that pin it
+# downloads whatever is newest, and a lockfile written by one pnpm being
+# installed by another is a failure that only ever shows up in CI.
 RUN corepack enable
 COPY package.json pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile
+RUN pnpm install --frozen-lockfile --reporter=append-only
 
 FROM node:22-alpine AS builder
 WORKDIR /app

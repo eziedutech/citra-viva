@@ -9,6 +9,10 @@
 
 import 'server-only';
 
+import { cookies } from 'next/headers';
+
+import { ID_TOKEN_COOKIE } from '@/lib/auth-cookie';
+
 const DEFAULT_BASE_URL = 'http://localhost:8080';
 
 // A defense turn is two model calls deep and regularly takes half a minute.
@@ -29,10 +33,26 @@ function baseUrl(): string {
   return (process.env.CITRA_API_BASE_URL || DEFAULT_BASE_URL).replace(/\/+$/, '');
 }
 
+/**
+ * The caller's credential, from the HttpOnly cookie the auth provider set.
+ *
+ * Taking it from the cookie rather than from an argument means no call site can
+ * forget to pass it, which is how one endpoint ends up unauthenticated while
+ * every other one is fine.
+ */
+async function authorization(): Promise<Record<string, string>> {
+  const token = (await cookies()).get(ID_TOKEN_COOKIE)?.value;
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`${baseUrl()}${path}`, {
     ...init,
-    headers: { 'Content-Type': 'application/json', ...(init?.headers ?? {}) },
+    headers: {
+      'Content-Type': 'application/json',
+      ...(await authorization()),
+      ...(init?.headers ?? {}),
+    },
     cache: 'no-store',
     signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
   });

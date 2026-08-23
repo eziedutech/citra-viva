@@ -38,7 +38,11 @@ from app.models.session import (
 )
 from app.models.weakness_map import AnalysisResult
 from app.storage.firestore import save_weakness_map
-from app.storage.session_store import InMemorySessionStore, SessionStore
+from app.storage.session_store import (
+    InMemorySessionStore,
+    SessionNotFoundError,
+    SessionStore,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -217,13 +221,29 @@ class Orchestrator:
             preparation=preparation,
         )
 
-    def submit_answer(self, session_id: str, answer: str) -> SessionTurnResult:
+    def load_session(self, session_id: str, actor_id: str = "") -> SessionState:
+        """Read a session, refusing one that belongs to somebody else.
+
+        The refusal is a `SessionNotFoundError` rather than a distinct
+        "forbidden", so a stranger guessing ids learns nothing from the
+        difference between an id that exists and one that does not.
+
+        A session with no owner stays readable. Those were created before
+        authentication existed, or while it is switched off, and orphaning them
+        would punish the user for a change they did not make.
+        """
+        state = self.store.load(session_id)
+        if state.user_id and actor_id and state.user_id != actor_id:
+            raise SessionNotFoundError(f"Session {session_id!r} does not exist.")
+        return state
+
+    def submit_answer(self, session_id: str, answer: str, actor_id: str = "") -> SessionTurnResult:
         """Judge one answer and advance the session.
 
         The whole session is read from storage at the start and written back at
         the end. Nothing is carried in process memory between turns.
         """
-        state = self.store.load(session_id)
+        state = self.load_session(session_id, actor_id)
         if state.status is SessionStatus.COMPLETED:
             raise ValueError(f"Session {session_id!r} has already finished.")
 
@@ -286,9 +306,9 @@ class Orchestrator:
             adjustments=adjustments,
         )
 
-    def close_session(self, session_id: str) -> SessionClosing:
+    def close_session(self, session_id: str, actor_id: str = "") -> SessionClosing:
         """Reflect on a finished session and store the summary."""
-        state = self.store.load(session_id)
+        state = self.load_session(session_id, actor_id)
         summary, adjustments = reflect_on_session(state, runner=self.runner)
 
         state.summary = summary

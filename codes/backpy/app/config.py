@@ -37,6 +37,12 @@ class Settings(BaseSettings):
     # Agent Runtime
     agent_staging_bucket: str = ""
 
+    # Authentication
+    # Off by default so the test suite and a bare local backend run without a
+    # Firebase project. Every deployment sets it explicitly.
+    auth_required: bool = False
+    firebase_project_id: str = ""
+
     # Application
     app_env: str = "local"
     log_level: str = "INFO"

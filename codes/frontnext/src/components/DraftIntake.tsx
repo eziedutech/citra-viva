@@ -3,7 +3,9 @@
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 
+import { AccountButton } from '@/components/AccountButton';
 import { AiWorking } from '@/components/AiWorking';
+import { useAuth } from '@/components/AuthProvider';
 import { Icon } from '@/components/Icon';
 import { LocaleSwitch } from '@/components/LocaleSwitch';
 import { fill, type Dictionary, type Locale } from '@/lib/i18n';
@@ -22,6 +24,7 @@ interface Props {
 
 export function DraftIntake({ dict, locale }: Props) {
   const router = useRouter();
+  const auth = useAuth();
   const [draft, setDraft] = useState('');
   const [gaps, setGaps] = useState('');
   const [busy, setBusy] = useState(false);
@@ -37,7 +40,11 @@ export function DraftIntake({ dict, locale }: Props) {
 
   const length = draft.trim().length;
   const tooShort = length > 0 && length < MIN_DRAFT_CHARS;
-  const canStart = length >= MIN_DRAFT_CHARS && !busy;
+  // Sign-in gates starting a defense, not reading the page. Someone who has
+  // landed here should be able to see what the product is before deciding
+  // whether to hand it their manuscript.
+  const needsSignIn = auth.enabled && auth.ready && !auth.user;
+  const canStart = length >= MIN_DRAFT_CHARS && !busy && !needsSignIn;
 
   async function start() {
     setBusy(true);
@@ -84,7 +91,10 @@ export function DraftIntake({ dict, locale }: Props) {
               <Icon name="shield" size={20} />
               <span className="text-body-sm font-medium">{dict.app.name}</span>
             </div>
-            <LocaleSwitch locale={locale} dict={dict} />
+            <span className="flex items-center gap-3">
+              <AccountButton dict={dict} />
+              <LocaleSwitch locale={locale} dict={dict} />
+            </span>
           </div>
           <h1 className="text-display mb-3">{dict.intake.heading}</h1>
           <p className="text-body-lg max-w-[60ch] text-[color:var(--color-ink-600)]">
@@ -162,6 +172,22 @@ export function DraftIntake({ dict, locale }: Props) {
             <Icon name="alert" size={18} className="mt-[2px] shrink-0" />
             <span>{error}</span>
           </p>
+        ) : null}
+
+        {needsSignIn ? (
+          <section className="mt-6 border border-[color:var(--color-line)] bg-[color:var(--color-surface)] p-5">
+            <h2 className="text-h3 mb-2">{dict.auth.required}</h2>
+            <p className="text-body-sm mb-4 max-w-[60ch] text-[color:var(--color-ink-600)]">
+              {dict.auth.requiredHelp}
+            </p>
+            <button
+              type="button"
+              onClick={() => void auth.signIn()}
+              className="text-body-sm h-10 rounded-[var(--radius-action)] bg-[color:var(--color-primary-700)] px-5 font-medium text-white transition-colors duration-150 hover:bg-[color:var(--color-primary-900)]"
+            >
+              {dict.auth.signIn}
+            </button>
+          </section>
         ) : null}
 
         <div className="mt-6">
