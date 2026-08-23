@@ -50,25 +50,44 @@ def collect_recorded_gaps(state: SessionState) -> list[str]:
     return [p.gap_recorded for p in state.progress if p.gap_recorded]
 
 
-def _restore_missing_gaps(reported: list[str], recorded: list[str]) -> tuple[list[str], list[str]]:
-    """Put back any recorded gap the model left out of its summary.
+def collect_defended_points(state: SessionState) -> list[str]:
+    """Every rubric point the examiner judged satisfied, in order.
+
+    The mirror image of `collect_recorded_gaps`, and written in the examiner's
+    own words at the moment the point was conceded.
+    """
+    points: list[str] = []
+    seen: set[str] = set()
+    for progress in state.progress:
+        for point in progress.defended_points:
+            key = normalize_text(point)
+            if key and key not in seen:
+                seen.add(key)
+                points.append(point)
+    return points
+
+
+def _restore_missing(
+    reported: list[str], recorded: list[str], label: str
+) -> tuple[list[str], list[str]]:
+    """Put back any recorded item the model left out of its summary.
 
     Matching is lexical and loose on purpose: the model is expected to rephrase,
-    and a rephrased gap is fine. What is not fine is a gap disappearing.
+    and a rephrased item is fine. What is not fine is an item disappearing.
     """
     adjustments: list[str] = []
     reported_words = [set(normalize_text(item).split()) for item in reported]
 
-    for gap in recorded:
-        gap_words = {word for word in normalize_text(gap).split() if len(word) >= 5}
-        if not gap_words:
+    for item in recorded:
+        item_words = {word for word in normalize_text(item).split() if len(word) >= 5}
+        if not item_words:
             continue
-        covered = any(len(gap_words & words) / len(gap_words) >= 0.4 for words in reported_words)
+        covered = any(len(item_words & words) / len(item_words) >= 0.4 for words in reported_words)
         if not covered:
-            reported.append(gap)
+            reported.append(item)
             adjustments.append(
-                f"A gap recorded during the session was missing from the summary and "
-                f"was restored: {gap[:70]!r}"
+                f"{label} recorded during the session was missing from the summary "
+                f"and was restored: {item[:70]!r}"
             )
     return reported, adjustments
 
@@ -81,18 +100,35 @@ def build_summary(data: dict, state: SessionState) -> tuple[SessionSummary, list
     remaining_gaps = _as_str_list(data.get("remaining_gaps"))
     patterns = _as_str_list(data.get("recurring_gap_patterns"))
 
-    # Praise has to correspond to something that actually happened. If no answer
-    # held up, a list of strengths is flattery, and flattery here sends a student
-    # into a real defense believing they are ready.
+    # Reconciliation runs in both directions, because a summary that contradicts
+    # its own transcript is wrong whichever way it leans.
+    #
+    # Understating is the more dangerous direction, so it is handled first: a
+    # student who is told nothing held will not trust the report that tells them
+    # what did not.
+    defended = collect_defended_points(state)
     held = any(p.final_strength in {"strong", "partial"} for p in state.progress)
-    if strong_points and not held:
+
+    if held:
+        strong_points, restored_points = _restore_missing(
+            strong_points, defended, "A point defended successfully"
+        )
+        adjustments.extend(restored_points)
+        if not strong_points:
+            adjustments.append(
+                "The session recorded answers that held, but neither the summary nor "
+                "the examiner's own notes named a point to credit."
+            )
+    elif strong_points:
+        # Overstating is the other direction. If no answer held, a list of
+        # strengths is flattery, and flattery here is a false readiness signal.
         adjustments.append(
             "strong_points were dropped: no answer in this session was judged strong or partial."
         )
         strong_points = []
 
     recorded = collect_recorded_gaps(state)
-    remaining_gaps, restored = _restore_missing_gaps(remaining_gaps, recorded)
+    remaining_gaps, restored = _restore_missing(remaining_gaps, recorded, "A gap")
     adjustments.extend(restored)
 
     if len(patterns) > MAX_RECURRING_PATTERNS:
@@ -128,6 +164,7 @@ def reflect_on_session(
         language=state.language,
         transcript=format_transcript(state.transcript),
         recorded_gaps=collect_recorded_gaps(state),
+        defended_points=collect_defended_points(state),
     )
     raw = runner(prompt=prompt, response_schema=SessionSummary)
     return build_summary(parse_json_object(raw), state)

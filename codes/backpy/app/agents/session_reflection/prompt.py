@@ -20,8 +20,11 @@ write what the student should take away from it.
 ## What you write
 
 - `strong_points`: the objections the student genuinely met, stated as what they
-  successfully defended. Only points that actually held. If nothing held, return
-  an empty list rather than inventing encouragement.
+  successfully defended. Every point the examiner marked as satisfied during the
+  session belongs here, listed below. Omitting one is as wrong as inventing one:
+  a student told that nothing held will not trust the rest of the report either.
+  If genuinely nothing held, return an empty list rather than inventing
+  encouragement.
 - `remaining_gaps`: what is still undefended, one line each, describing the gap
   and not its remedy.
 - `recurring_gap_patterns`: the underlying habit behind the gaps, phrased so it
@@ -46,13 +49,33 @@ Return JSON matching the provided schema. Nothing else.
 """
 
 
-def build_prompt(*, language: str, transcript: str, recorded_gaps: list[str]) -> str:
+def build_prompt(
+    *,
+    language: str,
+    transcript: str,
+    recorded_gaps: list[str],
+    defended_points: list[str] | None = None,
+) -> str:
     """Assemble the reflection prompt from a finished session."""
     sections = [
         SYSTEM_INSTRUCTION,
         f"\n\n## Session language\n\n{language}\n",
         f"\n## Transcript\n\n<transcript>\n{transcript}\n</transcript>\n",
     ]
+
+    if defended_points:
+        listed = "\n".join(f"- {point}" for point in defended_points)
+        sections.append(
+            "\n## Points the examiner marked as satisfied during the session\n\n"
+            "The student met these under questioning. Every one of them must be "
+            "reflected in `strong_points`.\n\n"
+            f"{listed}\n"
+        )
+    else:
+        sections.append(
+            "\n## Points the examiner marked as satisfied during the session\n\n"
+            "None. No answer was judged to have met its objection.\n"
+        )
 
     if recorded_gaps:
         listed = "\n".join(f"- {gap}" for gap in recorded_gaps)

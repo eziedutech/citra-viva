@@ -286,9 +286,13 @@ The session loop is in the Orchestrator, not in the agent. Every turn reads the 
 
 Input: a finished transcript. Output: what held, what is still undefended, and the recurring habits behind the gaps.
 
-**A gap recorded during the session cannot vanish from the summary.** Summarizers smooth things over, and a student who reads that a point is settled when the examiner recorded it as undefended walks into the real defense unprepared. Recorded gaps are reconciled against the model's list and anything missing is restored, with the restoration logged.
+**The summary cannot contradict its own transcript, in either direction.** Both are reconciled against what the examiner actually recorded during the session, and every correction is logged.
 
-**Praise has to correspond to something that happened.** If no answer in the session was judged strong or partial, a list of strengths is flattery, and it is dropped.
+*Understating* is the more dangerous direction and is checked first. A point the examiner marked as satisfied cannot vanish from `strong_points`. This is not hypothetical: a live run produced a report saying nothing held while the transcript recorded two answers judged strong, and a student who is told nothing held will not trust the part of the report that says what did not.
+
+*Overstating* is the other direction. If no answer held at all, a list of strengths is flattery, and flattery here is a false readiness signal.
+
+Restoration always uses the examiner's own words, captured at the moment the point was conceded. Our code never writes prose crediting or blaming the student. When something held but the examiner never named what, the contradiction is logged rather than papered over.
 
 `recurring_gap_patterns` is the field that makes the next session sharper than this one. It is written to be recognisable in a different manuscript months later, so "treats correlational findings as causal when writing conclusions" rather than "question 3 was weak". Feed it back in through `recurring_gaps` and the next examination attacks those points first.
 

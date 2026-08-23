@@ -26,6 +26,7 @@ The same discipline runs through both agents built so far, at different levels.
 | Draft Analyzer | "an examiner will attack this" | A verbatim quote from the manuscript |
 | Question Strategy | "so I will ask this" | A finding in the Weakness Map |
 | Session Reflection | "this is what you still owe" | A gap actually recorded during the session |
+| Session Reflection | "this is what you defended" | A rubric point the examiner marked satisfied |
 
 In both cases an unanchored item is dropped and the reason is recorded. The motivation is the same at both levels: when a student asks why a question was asked, the chain has to run all the way back to a sentence they actually wrote. A tool built on research integrity cannot answer that question with "the model felt like it".
 
@@ -49,6 +50,7 @@ A prompt is a request. Where being wrong would harm the student, the rule is enf
 | One question cannot absorb the session through endless follow-ups | A session stuck on question two tests nothing else |
 | A second clarification on an already clarified point becomes a recorded gap | Otherwise the loop never terminates |
 | A recorded gap cannot disappear from the session summary | A student who believes a gap is closed walks into the real defense unprepared |
+| A point the examiner marked satisfied cannot disappear either | A live run reported that nothing held while the transcript recorded two strong answers; a report that contradicts its own transcript is not believed at all |
 | Praise requires an answer that actually held | Flattery here is not kindness, it is a false readiness signal |
 
 Unknown enum values fall to whichever option cannot harm the student: an unrecognized answer strength becomes `partial` rather than `weak`, and an unrecognized examiner decision becomes `ask_clarification`, which neither abandons a point nor logs a weakness against anyone.

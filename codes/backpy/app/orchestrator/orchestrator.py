@@ -27,6 +27,7 @@ from app.llm.client import ModelRunner
 from app.models.question_strategy import StrategyResult
 from app.models.session import (
     AnswerEvaluation,
+    AnswerStrength,
     ExaminerDecision,
     QuestionProgress,
     SessionState,
@@ -341,4 +342,8 @@ class Orchestrator:
         progress.closed = True
         if evaluation.decision is ExaminerDecision.RECORD_GAP:
             progress.gap_recorded = evaluation.gap_note
+        elif evaluation.strength in {AnswerStrength.STRONG, AnswerStrength.PARTIAL}:
+            # Recorded in the examiner's own words, at the moment the point was
+            # conceded. Restoring it later needs no prose written by our code.
+            progress.defended_points = list(evaluation.criteria_met)
         state.current_index += 1

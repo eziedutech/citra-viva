@@ -297,7 +297,9 @@ def test_closing_a_session_produces_a_summary_and_patterns():
 # --------------------------------------------------------------------------- #
 
 
-def finished_state(*, gap: str = "", strength: str = "strong") -> SessionState:
+def finished_state(
+    *, gap: str = "", strength: str = "strong", defended: list[str] | None = None
+) -> SessionState:
     return SessionState(
         session_id="s-reflect",
         language="id",
@@ -307,6 +309,7 @@ def finished_state(*, gap: str = "", strength: str = "strong") -> SessionState:
                 question_id="Q1",
                 final_strength=strength,
                 gap_recorded=gap,
+                defended_points=defended or [],
                 closed=True,
             )
         ],
@@ -380,3 +383,67 @@ def test_reflection_on_an_empty_transcript_is_refused():
 
     with pytest.raises(ValueError, match="empty transcript"):
         reflect_on_session(state, runner=lambda **_: "{}")
+
+
+def test_a_defended_point_cannot_disappear_from_the_summary():
+    """The mirror of the gap rule, and the direction that actually failed in a
+    live run: the transcript recorded two answers that held, and the summary
+    reported that nothing held at all."""
+    defended = "Mengakui bahwa desain potong lintang tidak menegakkan urutan waktu."
+    payload = dict(REFLECTION_PAYLOAD, strong_points=[])
+
+    summary, adjustments = reflect_on_session(
+        finished_state(strength="strong", defended=[defended]),
+        runner=lambda **_: json.dumps(payload, ensure_ascii=False),
+    )
+
+    assert defended in summary.strong_points
+    assert any("defended successfully" in note for note in adjustments)
+
+
+def test_a_rephrased_strength_is_accepted_rather_than_duplicated():
+    defended = "Mengakui bahwa desain potong lintang tidak menegakkan urutan waktu."
+    payload = dict(
+        REFLECTION_PAYLOAD,
+        strong_points=["Mengakui desain potong lintang tidak dapat menegakkan urutan waktu."],
+    )
+
+    summary, adjustments = reflect_on_session(
+        finished_state(strength="strong", defended=[defended]),
+        runner=lambda **_: json.dumps(payload, ensure_ascii=False),
+    )
+
+    assert len(summary.strong_points) == 1
+    assert not any("defended successfully" in note for note in adjustments)
+
+
+def test_an_unnameable_strength_is_reported_rather_than_invented():
+    """Our code will not write prose crediting the student. If the examiner never
+    named what was met, the contradiction is logged instead of papered over."""
+    payload = dict(REFLECTION_PAYLOAD, strong_points=[])
+
+    summary, adjustments = reflect_on_session(
+        finished_state(strength="partial", defended=[]),
+        runner=lambda **_: json.dumps(payload, ensure_ascii=False),
+    )
+
+    assert summary.strong_points == []
+    assert any("neither the summary nor" in note for note in adjustments)
+
+
+def test_defended_points_are_recorded_when_a_question_closes_well():
+    runner = ScriptedRunner(
+        [
+            evaluation(criteria_met=["Mengakui keterbatasan desain."]),
+            evaluation(strength="weak", decision="move_on", criteria_met=[]),
+        ]
+    )
+    orchestrator = Orchestrator(runner=runner)
+    orchestrator.start_session(DRAFT, session_id="s7")
+    orchestrator.submit_answer("s7", "Jawaban yang bertahan.")
+    orchestrator.submit_answer("s7", "Jawaban yang tidak bertahan.")
+
+    state = orchestrator.store.load("s7")
+    assert state.progress[0].defended_points == ["Mengakui keterbatasan desain."]
+    # A weak answer records nothing to credit, even when the examiner moved on.
+    assert state.progress[1].defended_points == []

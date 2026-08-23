@@ -103,6 +103,14 @@ class QuestionProgress(BaseModel):
     clarifications_offered: int = 0
     final_strength: str = ""
     gap_recorded: str = ""
+    defended_points: list[str] = Field(
+        default_factory=list,
+        description=(
+            "Rubric points the examiner judged satisfied when this question "
+            "closed. The mirror image of `gap_recorded`, and the reason a "
+            "successful defense cannot silently vanish from the summary either."
+        ),
+    )
     closed: bool = False
 
 
