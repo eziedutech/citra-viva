@@ -13,7 +13,30 @@ CITRA Viva is four narrow agents and one coordinator, not one large agent with m
 | Examiner Session | A question and the student's answer | A decision: press deeper, move on, or record a gap |
 | Session Reflection | The full transcript | An updated cross-session weakness profile |
 
+The first two stages are implemented.
+
 The Weakness Map is the interesting artifact. It is not a summary of the draft; the student already knows what they wrote. It is a synthesis nobody has ever written down, including the student's own supervisor: an explicit map of where the argument gives way under pressure.
+
+## Anchoring, applied twice
+
+The same discipline runs through both agents built so far, at different levels.
+
+| Agent | Claim it makes | What it must be anchored to |
+|---|---|---|
+| Draft Analyzer | "an examiner will attack this" | A verbatim quote from the manuscript |
+| Question Strategy | "so I will ask this" | A finding in the Weakness Map |
+
+In both cases an unanchored item is dropped and the reason is recorded. The motivation is the same at both levels: when a student asks why a question was asked, the chain has to run all the way back to a sentence they actually wrote. A tool built on research integrity cannot answer that question with "the model felt like it".
+
+There is a deliberate exception. Opening and closing questions address the work as a whole, so they are allowed to stand without a finding behind them. An unrecognized question type falls back to `probe` rather than to `opening`, which keeps it inside the anchoring requirement instead of letting an unknown label become an escape hatch.
+
+## What cannot be verified is bounded instead
+
+Not every model claim can be checked. Whether a question revisits a gap from an earlier session is a semantic judgment, and no string comparison settles it.
+
+The response is to bound the damage rather than pretend to verify. The model may assert `targets_recurring_gap`, and a content word overlap check offers a second route to the same conclusion. The one part that is genuinely verifiable is enforced absolutely: if no prior gaps were supplied, nothing can target one, whatever the model says. And the flag only reorders questions, so a wrong answer costs a position in the sequence rather than a false accusation.
+
+This is the general shape: verify what can be verified, bound what cannot, and never let an unverifiable claim reach a place where being wrong would harm the student.
 
 ## Separation of concerns is enforced, not requested
 
@@ -30,7 +53,9 @@ LlmAgent(
 )
 ```
 
-ADK itself refuses a handoff from the Draft Analyzer to the Examiner Session Agent. The isolation does not depend on whoever writes the next module remembering the rule.
+ADK itself refuses a handoff from the Draft Analyzer to the Examiner Session Agent, and the Question Strategy Agent is locked down the same way. The isolation does not depend on whoever writes the next module remembering the rule.
+
+The rule extends to plain Python too. When both agents needed the same text helpers, those helpers went into `app/common/text.py` rather than one agent importing from the other, because a shared utility is not a reason to create exactly the coupling the architecture forbids.
 
 A useful side effect: an ADK agent bound to an `output_schema` is not allowed to hold tools. The Draft Analyzer needs no tools, so that restriction costs nothing and buys a tighter blast radius.
 

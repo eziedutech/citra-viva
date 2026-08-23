@@ -17,6 +17,7 @@ from typing import Any
 
 from app.agents.draft_analyzer.core import build_weakness_map
 from app.agents.draft_analyzer.prompt import SYSTEM_INSTRUCTION
+from app.common.text import parse_json_object
 from app.config import get_settings
 from app.models.weakness_map import AnalysisResult, WeaknessMap
 
@@ -66,9 +67,7 @@ def finalize_agent_output(state: dict, draft_text: str) -> AnalysisResult:
     if isinstance(raw, WeaknessMap):
         data = raw.model_dump(mode="json")
     elif isinstance(raw, str):
-        from app.agents.draft_analyzer.core import _parse_json
-
-        data = _parse_json(raw)
+        data = parse_json_object(raw)
     else:
         data = dict(raw)
 

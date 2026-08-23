@@ -62,7 +62,7 @@ flowchart TD
     ORCH -.->|"traces"| OT["Cloud Trace"]
 
     style DA fill:#E8F0FE,stroke:#1A73E8
-    style QS fill:#F5F5F5,stroke:#9AA0A6,stroke-dasharray: 4 4
+    style QS fill:#E8F0FE,stroke:#1A73E8
     style EX fill:#F5F5F5,stroke:#9AA0A6,stroke-dasharray: 4 4
     style SR fill:#F5F5F5,stroke:#9AA0A6,stroke-dasharray: 4 4
     style GEM fill:#F3E8FD,stroke:#7B4FBF
@@ -70,14 +70,14 @@ flowchart TD
 
 Solid blue is implemented. Dashed grey is specified and not yet built. A longer discussion of the design decisions is in [docs/architecture.md](docs/architecture.md).
 
-**Sub-agents never call one another.** Every exchange goes through the Orchestrator and through state in Firestore. On the Draft Analyzer this is enforced at the framework level, not by convention: `disallow_transfer_to_parent` and `disallow_transfer_to_peers` are both set, so ADK itself refuses a handoff to the Examiner Session Agent.
+**Sub-agents never call one another.** Every exchange goes through the Orchestrator and through state in Firestore. This is enforced at the framework level rather than by convention: every agent sets `disallow_transfer_to_parent` and `disallow_transfer_to_peers`, so ADK itself refuses a handoff between them. The Question Strategy Agent receives a Weakness Map as data, never a reference to the agent that produced it.
 
 ### Build status
 
 | Sub-agent | Status |
 |---|---|
 | **Draft Analyzer Agent** | Implemented and tested |
-| Question Strategy Agent | Specified, not yet built |
+| **Question Strategy Agent** | Implemented and tested |
 | Examiner Session Agent | Specified, not yet built |
 | Session Reflection Agent | Specified, not yet built |
 
@@ -167,8 +167,10 @@ cd codes/backpy && uv run uvicorn app.main:app --reload --port 8080
 Interactive documentation at `http://localhost:8080/docs`.
 
 ```bash
-curl -X POST http://localhost:8080/api/drafts/analyze -H "Content-Type: application/json" -d "{\"draft_text\":\"your research draft text here\"}"
+curl -X POST http://localhost:8080/api/sessions/prepare -H "Content-Type: application/json" -d "{\"draft_text\":\"your research draft text here\"}"
 ```
+
+`/api/drafts/analyze` runs the Draft Analyzer alone. `/api/sessions/prepare` runs the full preparation chain: analyze the draft, then plan the examination that follows from it.
 
 ### 8. Deploy to Cloud Run
 
@@ -211,15 +213,39 @@ Every rejected finding is **recorded with its reason** in the `dropped` field ra
 
 ---
 
+## The Question Strategy Agent
+
+Input: a Weakness Map. Output: an ordered examination plan, five to eight questions including an opening and a closing.
+
+### Every question is anchored to a finding
+
+The Draft Analyzer had to prove each finding against the manuscript. This agent has to prove each question against the Weakness Map. A probing question that cites no finding, or cites one that does not exist, is **dropped with its reason recorded**. The reason is the same in both cases: when a student asks why they were asked something, "the model felt like it" is not an answer a research integrity tool can give.
+
+Opening and closing questions address the work as a whole and are the only ones allowed to stand without an anchor. An unrecognized question type falls back to `probe`, which deliberately keeps it inside the anchoring requirement rather than letting an unknown label become a loophole.
+
+### Memory changes the order, not the content
+
+When prior-session gaps are supplied, questions attacking them are asked first even when their finding carries lower severity. A weakness the student already failed to fix once is the most valuable thing to test again.
+
+Whether a question addresses a previously recorded gap is a semantic judgment that cannot be proven from text, so the model may assert it and a lexical check offers a second route to the same conclusion. The part that *is* verifiable is enforced strictly: with no prior gaps supplied, nothing can be targeting one, whatever the model claims. The flag only affects ordering, so being wrong costs a position in the sequence rather than a false accusation.
+
+### The rubric is not an answer
+
+Each question carries `evaluation_criteria`, describing what the Examiner Session Agent should listen for when judging a reply. It is written as things to check for, never as a model answer, and it is never shown to the student. That distinction is what keeps the "agent never writes the student's argument" rule intact once the session loop is built on top of it.
+
+---
+
 ## Repository layout
 
 ```
 codes/backpy/                     Python backend
   app/
     agents/draft_analyzer/        prompt.py, core.py (pure logic), adk_agent.py (ADK wrapper)
+    agents/question_strategy/     same shape, one responsibility further down the chain
     orchestrator/orchestrator.py  coordination between sub-agents
     api/routes.py                 FastAPI endpoints
-    models/                       weakness_map.py, firestore_schemas.py
+    models/                       weakness_map.py, question_strategy.py, firestore_schemas.py
+    common/text.py                helpers shared by agents, so no agent imports another
     llm/client.py                 Gemini access through Agent Platform
     storage/firestore.py          the only module that talks to the database
     config.py                     all configuration from environment variables

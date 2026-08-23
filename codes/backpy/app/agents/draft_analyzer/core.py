@@ -10,14 +10,13 @@ before anything downstream is allowed to use it.
 
 from __future__ import annotations
 
-import json
 import re
-import unicodedata
 from difflib import SequenceMatcher
 
 from pydantic import ValidationError
 
 from app.agents.draft_analyzer.prompt import build_prompt
+from app.common.text import normalize_text, parse_json_object
 from app.llm.client import ModelRunner
 from app.models.weakness_map import (
     AnalysisResult,
@@ -41,16 +40,6 @@ _SEVERITY_ORDER = {Severity.HIGH: 0, Severity.MEDIUM: 1, Severity.LOW: 2}
 # --------------------------------------------------------------------------- #
 
 
-def _normalize(text: str) -> str:
-    """Flatten cosmetic differences so they cannot break quote matching."""
-    text = unicodedata.normalize("NFKC", text)
-    text = text.replace("‘", "'").replace("’", "'")  # curly single quotes
-    text = text.replace("“", '"').replace("”", '"')  # curly double quotes
-    text = text.replace("–", "-").replace("—", "-")  # en dash, em dash
-    text = re.sub(r"\s+", " ", text)
-    return text.strip().casefold()
-
-
 def _candidate_spans(draft_text: str) -> list[str]:
     """Split the draft into sentences, plus every consecutive sentence pair.
 
@@ -68,19 +57,19 @@ def _verify_quote(quote: str, draft_text: str, spans: list[str]) -> str | None:
     A matching quote is snapped back to the manuscript's own wording, so small
     transcription differences from the model do not break traceability.
     """
-    norm_quote = _normalize(quote)
+    norm_quote = normalize_text(quote)
     if len(norm_quote) < MIN_QUOTE_CHARS:
         return None
 
-    if norm_quote in _normalize(draft_text):
+    if norm_quote in normalize_text(draft_text):
         for span in spans:
-            if norm_quote in _normalize(span):
+            if norm_quote in normalize_text(span):
                 return span
         return quote
 
     best_span, best_ratio = None, 0.0
     for span in spans:
-        ratio = SequenceMatcher(None, norm_quote, _normalize(span)).ratio()
+        ratio = SequenceMatcher(None, norm_quote, normalize_text(span)).ratio()
         if ratio > best_ratio:
             best_span, best_ratio = span, ratio
     if best_span is not None and best_ratio >= QUOTE_MATCH_THRESHOLD:
@@ -89,30 +78,8 @@ def _verify_quote(quote: str, draft_text: str, spans: list[str]) -> str | None:
 
 
 # --------------------------------------------------------------------------- #
-# Parsing the model response
+# Coercing the model response
 # --------------------------------------------------------------------------- #
-
-
-def _strip_code_fence(raw: str) -> str:
-    raw = raw.strip()
-    if raw.startswith("```"):
-        raw = re.sub(r"^```[a-zA-Z]*\s*", "", raw)
-        raw = re.sub(r"\s*```$", "", raw)
-    return raw.strip()
-
-
-def _parse_json(raw: str) -> dict:
-    text = _strip_code_fence(raw)
-    try:
-        data = json.loads(text)
-    except json.JSONDecodeError as exc:
-        start, end = text.find("{"), text.rfind("}")
-        if start == -1 or end <= start:
-            raise ValueError(f"Model response is not valid JSON: {exc}") from exc
-        data = json.loads(text[start : end + 1])
-    if not isinstance(data, dict):
-        raise ValueError("Model response is not a JSON object.")
-    return data
 
 
 def _coerce_summary(data: dict) -> DraftSummary:
@@ -195,7 +162,7 @@ def _clean_findings(
             )
             continue
 
-        dedupe_key = _normalize(matched)
+        dedupe_key = normalize_text(matched)
         if dedupe_key in seen_quotes:
             dropped.append(f"{label}: duplicate quote, dropped.")
             continue
@@ -268,4 +235,4 @@ def analyze_draft(draft_text: str, runner: ModelRunner | None = None) -> Analysi
         runner = gemini
 
     raw = runner(prompt=build_prompt(draft_text), response_schema=WeaknessMap)
-    return build_weakness_map(_parse_json(raw), draft_text, model_name)
+    return build_weakness_map(parse_json_object(raw), draft_text, model_name)
