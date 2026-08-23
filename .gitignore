@@ -1,0 +1,46 @@
+# --- Secrets. Never commit anything under here. ------------------------------
+credentials/
+*.pem
+*.key
+id_ed25519*
+id_rsa*
+.env
+.env.*
+!.env.example
+service-account*.json
+
+# --- Working material that is not part of the codebase -----------------------
+# Leading slashes anchor these to the repository root, so application packages
+# such as codes/backpy/app/agents/ are not caught by them.
+/agents/
+/resources/
+/kickoff-prompt.md
+/CITRA-Viva-Product-Technical-Doc.md
+/read_folder.md
+/docs/rencana-pembangunan.md
+/docs/contoh-weakness-map.json
+
+# --- Python -------------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# --- Node (frontend, once it exists) ------------------------------------------
+node_modules/
+.next/
+dist/
+build/
+
+# --- Editors and OS -----------------------------------------------------------
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.swp

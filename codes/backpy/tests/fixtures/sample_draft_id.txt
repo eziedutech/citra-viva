@@ -1,0 +1,21 @@
+BAB I PENDAHULUAN
+
+Perkembangan media sosial dalam satu dekade terakhir telah mengubah cara mahasiswa mengelola waktu belajar. Banyak dosen melaporkan menurunnya konsentrasi mahasiswa di kelas. Media sosial jelas merupakan penyebab utama menurunnya kualitas pendidikan tinggi di Indonesia saat ini.
+
+Rumusan masalah penelitian ini adalah: bagaimana hubungan antara intensitas penggunaan media sosial dengan prestasi akademik mahasiswa Fakultas Ekonomi Universitas Nusantara?
+
+BAB III METODOLOGI PENELITIAN
+
+Penelitian ini menggunakan pendekatan kuantitatif dengan desain survei potong lintang. Data dikumpulkan satu kali pada bulan Maret 2026 melalui kuesioner daring yang disebarkan kepada mahasiswa aktif Fakultas Ekonomi Universitas Nusantara. Sampel berjumlah 120 responden yang dipilih menggunakan teknik accidental sampling. Intensitas penggunaan media sosial diukur melalui laporan mandiri responden mengenai rata-rata durasi penggunaan harian. Prestasi akademik diukur menggunakan Indeks Prestasi Kumulatif yang dilaporkan sendiri oleh responden. Analisis data dilakukan dengan uji korelasi Pearson dan regresi linier sederhana.
+
+BAB IV HASIL DAN PEMBAHASAN
+
+Hasil uji korelasi menunjukkan hubungan negatif yang signifikan antara durasi penggunaan media sosial dengan Indeks Prestasi Kumulatif (r = -0,42; p < 0,05). Temuan ini membuktikan bahwa penggunaan media sosial menurunkan prestasi akademik mahasiswa. Semakin lama seorang mahasiswa menggunakan media sosial, semakin rendah prestasi akademik yang akan dicapainya.
+
+Dengan demikian dapat disimpulkan bahwa media sosial berdampak negatif terhadap prestasi akademik seluruh mahasiswa di Indonesia. Hasil ini sejalan dengan konsensus para ahli pendidikan di seluruh dunia yang telah lama menyatakan hal serupa.
+
+Temuan ini juga menunjukkan bahwa pembatasan akses media sosial di lingkungan kampus merupakan kebijakan yang efektif untuk meningkatkan mutu lulusan perguruan tinggi.
+
+BAB V PENUTUP
+
+Penelitian ini memiliki keterbatasan pada jumlah sampel yang relatif kecil sehingga hasilnya perlu diinterpretasikan dengan hati-hati. Penelitian selanjutnya disarankan menggunakan sampel yang lebih besar.
