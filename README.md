@@ -126,7 +126,9 @@ gcloud services enable aiplatform.googleapis.com firestore.googleapis.com --proj
 cd codes/backpy && cp .env.example .env
 ```
 
-Open `.env` and set two values at minimum: `GOOGLE_CLOUD_PROJECT` and `GOOGLE_CLOUD_LOCATION`. No credential is hardcoded anywhere in the source, and `.env` is never committed.
+Open `.env` and set one value at minimum: `GOOGLE_CLOUD_PROJECT`. No credential is hardcoded anywhere in the source, and `.env` is never committed.
+
+Leave `GOOGLE_CLOUD_LOCATION` at `global`. Recent Gemini models are served from the global endpoint first, so a regional value such as `us-central1` fails with `404 NOT_FOUND` for a model that has not been regionalized yet.
 
 ### 4. Install dependencies
 
