@@ -14,6 +14,7 @@ from enum import StrEnum
 from pydantic import BaseModel, Field
 
 from app.models.question_strategy import PlannedQuestion
+from app.models.weakness_map import WeaknessFinding
 
 
 class SessionStatus(StrEnum):
@@ -131,6 +132,15 @@ class SessionState(BaseModel):
     language: str = "id"
     opening_remark: str = ""
     questions: list[PlannedQuestion] = Field(default_factory=list)
+    findings: list[WeaknessFinding] = Field(
+        default_factory=list,
+        description=(
+            "The Weakness Map this examination was planned from. Stored with the "
+            "session so a resumed one can still show the evidence behind every "
+            "question, and so the examiner keeps the quoted passage as context "
+            "after a restart."
+        ),
+    )
     progress: list[QuestionProgress] = Field(default_factory=list)
     current_index: int = 0
     transcript: list[TranscriptTurn] = Field(default_factory=list)
@@ -142,6 +152,12 @@ class SessionState(BaseModel):
         if 0 <= self.current_index < len(self.questions):
             return self.questions[self.current_index]
         return None
+
+    def finding_for(self, finding_id: str) -> WeaknessFinding | None:
+        """The finding a question attacks, or None for opening and closing."""
+        if not finding_id:
+            return None
+        return next((f for f in self.findings if f.id == finding_id), None)
 
     def current_progress(self) -> QuestionProgress | None:
         if 0 <= self.current_index < len(self.progress):

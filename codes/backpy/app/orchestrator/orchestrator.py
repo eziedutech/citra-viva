@@ -36,7 +36,7 @@ from app.models.session import (
     SessionTurnResult,
     TranscriptTurn,
 )
-from app.models.weakness_map import AnalysisResult, WeaknessFinding
+from app.models.weakness_map import AnalysisResult
 from app.storage.firestore import save_weakness_map
 from app.storage.session_store import InMemorySessionStore, SessionStore
 
@@ -83,13 +83,6 @@ class Orchestrator:
     runner: ModelRunner | None = None
     firestore_client: Any | None = None
     store: SessionStore = field(default_factory=InMemorySessionStore)
-
-    # Findings are cached only to give the examiner the quoted passage as extra
-    # context. See `_finding_for`: a resumed session finds nothing here, and that
-    # must never be a problem.
-    _findings_cache: dict[str, dict[str, WeaknessFinding]] = field(
-        default_factory=dict, init=False, repr=False
-    )
 
     # ---------------------------------------------------------------- #
     # Preparation
@@ -197,6 +190,7 @@ class Orchestrator:
             language=strategy.language,
             opening_remark=strategy.opening_remark,
             questions=list(strategy.questions),
+            findings=list(preparation.analysis.weakness_map.findings),
             progress=[QuestionProgress(question_id=q.id) for q in strategy.questions],
             current_index=0,
             created_at=now,
@@ -214,9 +208,6 @@ class Orchestrator:
             )
         )
         self.store.save(state)
-        self._findings_cache[session_id] = {
-            f.id: f for f in preparation.analysis.weakness_map.findings
-        }
 
         return SessionStart(
             session_id=session_id,
@@ -262,7 +253,7 @@ class Orchestrator:
             answer=answer,
             progress=progress,
             language=state.language,
-            finding=self._finding_for(session_id, question.finding_id),
+            finding=state.finding_for(question.finding_id),
             transcript=state.transcript,
             next_question=next_question,
             runner=self.runner,
@@ -313,17 +304,6 @@ class Orchestrator:
     # ---------------------------------------------------------------- #
     # Internals
     # ---------------------------------------------------------------- #
-
-    def _finding_for(self, session_id: str, finding_id: str) -> WeaknessFinding | None:
-        """Look up the finding a question attacks, if it is still in memory.
-
-        The cache is a convenience, not a dependency. A session resumed in a new
-        process finds nothing here, and the examiner simply judges the answer
-        against the question alone. Losing context must never break a resume.
-        """
-        if not finding_id:
-            return None
-        return self._findings_cache.get(session_id, {}).get(finding_id)
 
     @staticmethod
     def _apply_decision(

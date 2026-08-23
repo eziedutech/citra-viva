@@ -447,3 +447,23 @@ def test_defended_points_are_recorded_when_a_question_closes_well():
     assert state.progress[0].defended_points == ["Mengakui keterbatasan desain."]
     # A weak answer records nothing to credit, even when the examiner moved on.
     assert state.progress[1].defended_points == []
+
+
+def test_the_weakness_map_travels_with_the_session():
+    """The evidence behind each question has to survive a restart too. Without
+    it, a resumed session shows questions with nothing to justify them."""
+    store = InMemorySessionStore()
+    runner = ScriptedRunner([evaluation(), evaluation()])
+
+    first_process = Orchestrator(runner=runner, store=store)
+    first_process.start_session(DRAFT, session_id="s8")
+    del first_process
+
+    state = Orchestrator(runner=runner, store=store).store.load("s8")
+
+    assert [f.id for f in state.findings] == ["W1", "W2"]
+    assert state.finding_for("W1").quote.startswith("Temuan ini membuktikan")
+    # Opening and closing questions have no finding, and asking for one is not an
+    # error, it simply has no answer.
+    assert state.finding_for("") is None
+    assert state.finding_for("W99") is None

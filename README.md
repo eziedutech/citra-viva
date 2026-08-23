@@ -4,7 +4,8 @@
 
 Built for the **All Things Agentic Hackathon** (Google / Devpost), category *Collaborative Partner*.
 
-**Live API:** https://citra-viva-api-40911677848.asia-southeast2.run.app/docs
+**Try it:** https://citra-viva-web-40911677848.asia-southeast2.run.app
+**API:** https://citra-viva-api-40911677848.asia-southeast2.run.app/docs
 
 ---
 
@@ -38,6 +39,8 @@ flowchart TD
     U["Student"] -->|"research draft"| GCS[("Cloud Storage")]
     U -->|"answers during the session"| API
 
+    WEB["Next.js on Cloud Run"] --> API
+    U --> WEB
     API["FastAPI on Cloud Run"] --> ORCH
 
     ORCH["Orchestrator<br/>Google ADK"]
@@ -68,6 +71,7 @@ flowchart TD
     style EX fill:#E8F0FE,stroke:#1A73E8
     style SR fill:#E8F0FE,stroke:#1A73E8
     style GEM fill:#F3E8FD,stroke:#7B4FBF
+    style WEB fill:#E8F0FE,stroke:#1A73E8
 ```
 
 A longer discussion of the design decisions is in [docs/architecture.md](docs/architecture.md).
@@ -92,9 +96,10 @@ All four sub-agents run, and a full mock defense goes from raw draft text to a c
 | Model | `gemini-3.5-flash` on **Gemini Enterprise Agent Platform** (formerly Vertex AI) |
 | Agent framework | **Google ADK**, `google-cloud-aiplatform[agent_engines,adk]` |
 | Backend | Python 3.12, FastAPI |
+| Frontend | Next.js 16, React 19, Tailwind 4, TypeScript |
 | Database | Firestore, native mode |
 | Draft storage | Cloud Storage |
-| Deployment | Cloud Run for the API, Agent Runtime for the ADK agent |
+| Deployment | Cloud Run for the API and the web app, Agent Runtime for the ADK agents |
 | Observability | OpenTelemetry to Cloud Trace |
 
 ---
@@ -340,9 +345,59 @@ Restoration always uses the examiner's own words, captured at the moment the poi
 
 ---
 
+## The web interface
+
+Three screens: paste a draft, defend it, read the report.
+
+```
++----------------------------------------------------------------+
+| HEADER   CITRA Viva  ·  Pertanyaan 3 dari 7  ·  4 jawaban       |
++----------+---------------------------+-------------------------+
+| SIDEBAR  |  DEFENSE ROOM             |  SLIDEOVER              |
+| 240px    |                           |  380px                  |
+|          |  Examiner asks            |  Weakness Map           |
+| Q1 done  |  Student answers          |  Judgment of the answer |
+| Q2 done  |  Examiner presses         |  Session report         |
+| Q3 now   |                           |                         |
+| Q4 lock  |  [answer box, sticky]     |  AI territory in purple |
++----------+---------------------------+-------------------------+
+```
+
+The interface follows the CITRA design system without reinterpreting it: blue is the human domain and purple marks every AI contribution, corners are square except buttons and chips, font weight never reaches 700, icons are inline SVG from one set, and emoji appear nowhere. Each of the three panels scrolls independently, so reading a finding on the right never moves the transcript in the middle.
+
+Three decisions are worth naming.
+
+**The browser never talks to the API.** Every call goes through a Next route handler, so the API URL is not shipped to the client, there is no CORS to configure, and the API can be locked down later without touching the interface.
+
+**Nothing about a session lives in the tab.** The room reads its state from the server on every visit, which is what makes a refresh mid-defense harmless. That mirrors the backend rule: the session lives in Firestore, not in a process or a page.
+
+**The boundary is treated as untrusted even though it is our own service.** A session created by an older API revision came back without its Weakness Map and took the whole room to an error page over one missing array. During a real defense that is the worst possible trade, so missing fields are now filled in at the boundary. A panel with nothing in it is a bad panel; a blank screen is a broken product.
+
+### Running the web app
+
+```bash
+cd codes/frontnext && pnpm install && cp .env.example .env.local
+```
+
+```bash
+cd codes/frontnext && pnpm dev
+```
+
+It expects the API at `CITRA_API_BASE_URL`, which defaults to the deployed service. Point it at `http://localhost:8080` to develop against a local backend.
+
+```bash
+cd codes/frontnext && gcloud run deploy citra-viva-web --source . --region=asia-southeast2 --allow-unauthenticated --memory=1Gi --set-env-vars="CITRA_API_BASE_URL=YOUR_API_URL"
+```
+
+---
+
 ## Repository layout
 
 ```
+codes/frontnext/                  Next.js web app
+  src/app/                        pages, plus route handlers acting as the BFF
+  src/components/                 app shell, defense room, slideover, icons
+  src/lib/                        API client, shared types, boundary normalizer
 codes/backpy/                     Python backend
   app/
     agents/draft_analyzer/        prompt.py, core.py (pure logic), adk_agent.py (ADK wrapper)

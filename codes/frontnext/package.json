@@ -1,0 +1,26 @@
+{
+  "name": "citra-viva-web",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --turbopack --port 3100",
+    "build": "next build && node scripts/copy-standalone-assets.mjs",
+    "start": "node .next/standalone/server.js",
+    "typecheck": "tsc --noEmit",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "next": "16.3.0",
+    "react": "19.0.0",
+    "react-dom": "19.0.0",
+    "server-only": "0.0.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "4.3.3",
+    "@types/node": "22.10.5",
+    "@types/react": "19.0.7",
+    "@types/react-dom": "19.0.3",
+    "tailwindcss": "4.3.3",
+    "typescript": "5.7.3"
+  }
+}
