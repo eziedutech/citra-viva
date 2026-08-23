@@ -4,6 +4,8 @@
 
 Built for the **All Things Agentic Hackathon** (Google / Devpost), category *Collaborative Partner*.
 
+**Live API:** https://citra-viva-api-40911677848.asia-southeast2.run.app/docs
+
 ---
 
 ## The problem
@@ -194,8 +196,48 @@ curl -X POST http://localhost:8080/api/sessions/prepare -H "Content-Type: applic
 
 ### 8. Deploy to Cloud Run
 
+The service is already deployed and running at the URL above. To deploy your own:
+
 ```bash
-cd codes/backpy && gcloud run deploy citra-viva-api --source . --region us-central1 --allow-unauthenticated
+gcloud services enable run.googleapis.com cloudbuild.googleapis.com aiplatform.googleapis.com firestore.googleapis.com --project=YOUR_PROJECT_ID
+```
+
+```bash
+gcloud firestore databases create --location=asia-southeast2 --type=firestore-native --project=YOUR_PROJECT_ID
+```
+
+The Cloud Run service account needs to reach Gemini and Firestore. Grant it both, replacing `PROJECT_NUMBER` with the number from `gcloud projects describe`:
+
+```bash
+gcloud projects add-iam-policy-binding YOUR_PROJECT_ID --member="serviceAccount:PROJECT_NUMBER-compute@developer.gserviceaccount.com" --role="roles/aiplatform.user"
+```
+
+```bash
+gcloud projects add-iam-policy-binding YOUR_PROJECT_ID --member="serviceAccount:PROJECT_NUMBER-compute@developer.gserviceaccount.com" --role="roles/datastore.user"
+```
+
+```bash
+cd codes/backpy && gcloud run deploy citra-viva-api --source . --region=asia-southeast2 --allow-unauthenticated --memory=1Gi --timeout=600 --set-env-vars="GOOGLE_CLOUD_PROJECT=YOUR_PROJECT_ID,GOOGLE_CLOUD_LOCATION=global,GOOGLE_GENAI_USE_VERTEXAI=true,GEMINI_MODEL=gemini-3.5-flash"
+```
+
+No secret is passed on the command line. The service reads Gemini and Firestore through its own service identity, so there is no key file anywhere in the deployment.
+
+### 9. Drive a full defense against the deployed service
+
+```bash
+curl -s -X POST https://citra-viva-api-40911677848.asia-southeast2.run.app/api/sessions/start -H "Content-Type: application/json" -d "{\"draft_text\":\"your research draft text here\"}"
+```
+
+Then answer, using the `session_id` the previous call returned:
+
+```bash
+curl -s -X POST https://citra-viva-api-40911677848.asia-southeast2.run.app/api/sessions/SESSION_ID/answer -H "Content-Type: application/json" -d "{\"answer\":\"your defense\"}"
+```
+
+Repeat until the response reports `"finished": true`, then close the session to get the report:
+
+```bash
+curl -s -X POST https://citra-viva-api-40911677848.asia-southeast2.run.app/api/sessions/SESSION_ID/close
 ```
 
 ---

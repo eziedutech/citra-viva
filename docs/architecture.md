@@ -137,10 +137,13 @@ Manuscript text is never written to Firestore, only its character count. The doc
 
 ## Deployment
 
-Two targets, not one:
+The API runs on Cloud Run at `asia-southeast2`, with Firestore in the same region. Two decisions there are worth stating.
 
-- **Cloud Run** hosts the FastAPI service. `codes/backpy/Dockerfile` builds it.
-- **Agent Runtime** hosts the ADK agent through `agent_engines.AdkApp`, which is a separate path and not the same container image.
+**No key file exists anywhere in the deployment.** The service reaches Gemini and Firestore through its own service identity, granted `roles/aiplatform.user` and `roles/datastore.user`. Nothing is passed on the command line and nothing is baked into the image.
+
+**The container binds to `$PORT`, not to 8080.** Cloud Run injects the port and does not promise 8080. A hardcoded port is a common way to produce a container that runs locally and refuses to start in Cloud Run.
+
+Agent Runtime remains the second target for the ADK agents themselves, through `agent_engines.AdkApp`, which is a separate path and not this container image.
 
 ## Cross-session memory
 
