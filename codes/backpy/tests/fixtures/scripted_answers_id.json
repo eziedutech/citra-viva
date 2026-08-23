@@ -1,0 +1,15 @@
+{
+  "description": "Scripted student answers for a non-interactive demo run against sample_draft_id.txt. The student side is fixed so a recording is repeatable; the examiner side is the real model. Answers deliberately vary in quality: some hold, some are evasive, so the adaptive behaviour is visible in one take.",
+  "language": "id",
+  "answers": [
+    "Penelitian saya menguji hubungan antara intensitas penggunaan media sosial dengan prestasi akademik mahasiswa Fakultas Ekonomi. Kontribusinya adalah memberikan bukti empiris di konteks Indonesia yang selama ini jarang diteliti.",
+    "Saya menggunakan kata membuktikan karena hasil uji korelasi saya signifikan secara statistik dengan p kurang dari 0,05. Nilai r sebesar minus 0,42 juga tergolong kuat, jadi hubungannya jelas ada.",
+    "Baik, saya mengerti maksud Bapak. Desain potong lintang saya memang hanya mengukur pada satu titik waktu, sehingga saya tidak dapat memastikan mana yang lebih dulu terjadi. Seharusnya saya menulis bahwa terdapat asosiasi negatif, bukan bahwa media sosial menurunkan prestasi.",
+    "Untuk generalisasi ke tingkat nasional, saya memang mengambil 120 mahasiswa dari satu fakultas. Tetapi karena karakteristik mahasiswa Indonesia relatif seragam, saya rasa hasilnya masih dapat berlaku secara umum.",
+    "Saya akui teknik accidental sampling tidak memungkinkan inferensi ke populasi yang lebih luas. Klaim tentang seluruh mahasiswa Indonesia sebaiknya saya batasi hanya pada populasi mahasiswa Fakultas Ekonomi di universitas tempat penelitian dilakukan.",
+    "Mengenai data laporan mandiri, responden mengisi IPK dan durasi penggunaan media sosial sendiri melalui kuesioner daring. Saya percaya mereka mengisi dengan jujur karena kuesionernya anonim.",
+    "Untuk konsensus para ahli itu, saya membacanya dari beberapa artikel populer di media daring. Memang saya belum menyertakan sitasi akademik untuk pernyataan tersebut.",
+    "Rekomendasi pembatasan akses memang tidak saya uji dalam penelitian ini. Saya menuliskannya sebagai saran praktis, bukan sebagai temuan.",
+    "Kontribusi penelitian saya terletak pada penyediaan data empiris awal mengenai asosiasi antara penggunaan media sosial dan prestasi akademik pada konteks fakultas ekonomi di Indonesia. Saya menyadari penelitian ini tidak dapat menegakkan kausalitas maupun digeneralisasi secara nasional, dan itu menjadi keterbatasan yang perlu saya nyatakan secara eksplisit."
+  ]
+}

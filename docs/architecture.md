@@ -13,7 +13,7 @@ CITRA Viva is four narrow agents and one coordinator, not one large agent with m
 | Examiner Session | A question and the student's answer | A decision: press deeper, move on, or record a gap |
 | Session Reflection | The full transcript | An updated cross-session weakness profile |
 
-The first two stages are implemented.
+All four stages are implemented.
 
 The Weakness Map is the interesting artifact. It is not a summary of the draft; the student already knows what they wrote. It is a synthesis nobody has ever written down, including the student's own supervisor: an explicit map of where the argument gives way under pressure.
 
@@ -25,6 +25,7 @@ The same discipline runs through both agents built so far, at different levels.
 |---|---|---|
 | Draft Analyzer | "an examiner will attack this" | A verbatim quote from the manuscript |
 | Question Strategy | "so I will ask this" | A finding in the Weakness Map |
+| Session Reflection | "this is what you still owe" | A gap actually recorded during the session |
 
 In both cases an unanchored item is dropped and the reason is recorded. The motivation is the same at both levels: when a student asks why a question was asked, the chain has to run all the way back to a sentence they actually wrote. A tool built on research integrity cannot answer that question with "the model felt like it".
 
@@ -37,6 +38,38 @@ Not every model claim can be checked. Whether a question revisits a gap from an 
 The response is to bound the damage rather than pretend to verify. The model may assert `targets_recurring_gap`, and a content word overlap check offers a second route to the same conclusion. The one part that is genuinely verifiable is enforced absolutely: if no prior gaps were supplied, nothing can target one, whatever the model says. And the flag only reorders questions, so a wrong answer costs a position in the sequence rather than a false accusation.
 
 This is the general shape: verify what can be verified, bound what cannot, and never let an unverifiable claim reach a place where being wrong would harm the student.
+
+## Rules the prompt is not trusted to keep
+
+A prompt is a request. Where being wrong would harm the student, the rule is enforced in code instead, and every override is recorded rather than applied silently.
+
+| Rule | Why code and not prompt |
+|---|---|
+| A gap cannot be recorded before a clarification was offered | Giving up the first time a student stumbles is ambush, not examination |
+| One question cannot absorb the session through endless follow-ups | A session stuck on question two tests nothing else |
+| A second clarification on an already clarified point becomes a recorded gap | Otherwise the loop never terminates |
+| A recorded gap cannot disappear from the session summary | A student who believes a gap is closed walks into the real defense unprepared |
+| Praise requires an answer that actually held | Flattery here is not kindness, it is a false readiness signal |
+
+Unknown enum values fall to whichever option cannot harm the student: an unrecognized answer strength becomes `partial` rather than `weak`, and an unrecognized examiner decision becomes `ask_clarification`, which neither abandons a point nor logs a weakness against anyone.
+
+## The session loop lives outside the agent
+
+The Examiner Session Agent judges one answer. It holds no conversation and no history. The loop is in the Orchestrator, and every turn reads the whole `SessionState` from storage and writes it back.
+
+An ADK agent owning the loop would have been less code. It would also have held the defense in framework memory, and a session interrupted at question four would be gone. What this arrangement buys:
+
+- A restart mid-defense costs the student their place in the conversation and nothing else.
+- The API scales horizontally with no sticky sessions, because no request depends on which process served the last one.
+- The loop is testable one turn at a time, which is why the session tests run without a network.
+
+`QuestionProgress` carries the follow-up and clarification counters alongside the transcript, so the fairness rules survive a restart too. A student who was already offered a clarification before the server died does not get the offer again on resume, and a student who was not, still gets it.
+
+## Transient failures are absorbed, not surfaced
+
+A demo run died mid-session on a `429 RESOURCE_EXHAUSTED` and printed a provider traceback. That is fatal twice over: a recording made in one take cannot survive it, and a student halfway through a defense should not lose the session to a momentary quota spike.
+
+Quota exhaustion, service unavailability, and deadline exceeded are now retried with exponential backoff. Everything else is raised immediately, because repeating a request the provider rejected on its merits is only a slower failure. When retries run out the error says quota rather than showing a stack trace, and the session state is already on disk, so the defense resumes.
 
 ## Separation of concerns is enforced, not requested
 
@@ -53,7 +86,7 @@ LlmAgent(
 )
 ```
 
-ADK itself refuses a handoff from the Draft Analyzer to the Examiner Session Agent, and the Question Strategy Agent is locked down the same way. The isolation does not depend on whoever writes the next module remembering the rule.
+ADK itself refuses a handoff from the Draft Analyzer to the Examiner Session Agent, and all four agents are locked down the same way. The isolation does not depend on whoever writes the next module remembering the rule.
 
 The rule extends to plain Python too. When both agents needed the same text helpers, those helpers went into `app/common/text.py` rather than one agent importing from the other, because a shared utility is not a reason to create exactly the coupling the architecture forbids.
 
@@ -88,17 +121,13 @@ So the pipeline assumes the model can be wrong and is built to contain it:
 
 Every rejection is recorded with its reason in `dropped`. Silent filtering would break auditability: the system must be able to say what the model claimed and why we refused it.
 
-## State that survives a restart
-
-A defense session that drops halfway must resume from where it stopped rather than starting over. `VivaSessionDoc` carries `current_question_index` alongside the transcript and the strategy, so resumption needs no in-memory context.
-
-Persistence is also non-fatal by design. `Orchestrator.run_draft_analysis` logs a Firestore write failure and still returns the analysis. During a live, unedited demo, a database hiccup must not throw away a result that is already in hand.
+## Persistence is non-fatal by design. `Orchestrator.run_draft_analysis` logs a Firestore write failure and still returns the analysis. During a live, unedited demo, a database hiccup must not throw away a result that is already in hand.
 
 ## Model access
 
 Calls go through `client.models.generate_content` with a Pydantic `response_schema`. Google's documentation names this the recommended path for stable deployments, and stability outranks novelty for a demo recorded in one take.
 
-The newer Interactions API keeps conversation state server-side through `previous_interaction_id`, which maps closely onto what the Examiner Session Agent will need. It is worth reconsidering at that point. The Draft Analyzer is a single-shot call and gains nothing from it.
+The newer Interactions API keeps conversation state server-side through `previous_interaction_id`. It was considered for the session loop and not adopted: server-held conversation state is the thing this design deliberately avoids, since it puts the session somewhere a restart cannot reach. Every call here is single-shot, and the conversation lives in Firestore where it can be read, resumed, and audited.
 
 ## Data handling
 
@@ -113,4 +142,6 @@ Two targets, not one:
 
 ## Cross-session memory
 
-Agent Platform provides a managed **Memory Bank** service with a dedicated ADK quickstart. That is exactly the cross-session memory the product calls for, so the intent is to evaluate the managed service before hand-rolling anything on top of Firestore.
+Memory currently flows through `recurring_gap_patterns`: the Session Reflection Agent writes them at the end of a defense, and passing them back as `recurring_gaps` makes the next examination attack those points first, ahead of higher severity findings. A weakness the student already failed to fix once is the most valuable thing to test again.
+
+Agent Platform also provides a managed **Memory Bank** service (`VertexAiMemoryBankService` in `google.adk.memory`) with a dedicated ADK quickstart. It generates memories from session events and retrieves them per user. Adopting it would replace the manual pattern hand-off with a managed store, and it is the natural next step. The pattern field was built first because it is testable offline and demonstrable without a second live service in the path.

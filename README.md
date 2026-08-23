@@ -63,12 +63,12 @@ flowchart TD
 
     style DA fill:#E8F0FE,stroke:#1A73E8
     style QS fill:#E8F0FE,stroke:#1A73E8
-    style EX fill:#F5F5F5,stroke:#9AA0A6,stroke-dasharray: 4 4
-    style SR fill:#F5F5F5,stroke:#9AA0A6,stroke-dasharray: 4 4
+    style EX fill:#E8F0FE,stroke:#1A73E8
+    style SR fill:#E8F0FE,stroke:#1A73E8
     style GEM fill:#F3E8FD,stroke:#7B4FBF
 ```
 
-Solid blue is implemented. Dashed grey is specified and not yet built. A longer discussion of the design decisions is in [docs/architecture.md](docs/architecture.md).
+A longer discussion of the design decisions is in [docs/architecture.md](docs/architecture.md).
 
 **Sub-agents never call one another.** Every exchange goes through the Orchestrator and through state in Firestore. This is enforced at the framework level rather than by convention: every agent sets `disallow_transfer_to_parent` and `disallow_transfer_to_peers`, so ADK itself refuses a handoff between them. The Question Strategy Agent receives a Weakness Map as data, never a reference to the agent that produced it.
 
@@ -78,10 +78,10 @@ Solid blue is implemented. Dashed grey is specified and not yet built. A longer 
 |---|---|
 | **Draft Analyzer Agent** | Implemented and tested |
 | **Question Strategy Agent** | Implemented and tested |
-| Examiner Session Agent | Specified, not yet built |
-| Session Reflection Agent | Specified, not yet built |
+| **Examiner Session Agent** | Implemented and tested |
+| **Session Reflection Agent** | Implemented and tested |
 
-Draft input is plain text for now. PDF and DOCX parsing follows.
+All four sub-agents run, and a full mock defense goes from raw draft text to a closing report in one command. Draft input is plain text for now; PDF and DOCX parsing follows.
 
 ### Technology
 
@@ -156,7 +156,27 @@ The unit tests run **fully offline** against a fake model: no credentials, no ne
 cd codes/backpy && uv run python ../../scripts/run_draft_analyzer.py tests/fixtures/sample_draft_id.txt
 ```
 
-The sample draft is in Indonesian on purpose. Findings come back in the language of the draft, which is what a defense in an Indonesian university actually needs.
+The sample draft is in Indonesian on purpose. Findings come back in the language of the draft, which is what a defense in an Indonesian university actually needs. An English draft is in `tests/fixtures/sample_draft_en.txt`.
+
+### 6b. Run a full mock defense
+
+Interactive, you answer as the student:
+
+```bash
+cd codes/backpy && uv run python ../../scripts/run_viva_session.py tests/fixtures/sample_draft_id.txt
+```
+
+Scripted, so a recording is repeatable. The student side is fixed and the examiner side is the live model:
+
+```bash
+cd codes/backpy && uv run python ../../scripts/run_viva_session.py tests/fixtures/sample_draft_id.txt --answers tests/fixtures/scripted_answers_id.json
+```
+
+Simulate a second defense that remembers the first, by passing gaps the student left unresolved:
+
+```bash
+cd codes/backpy && uv run python ../../scripts/run_viva_session.py tests/fixtures/sample_draft_id.txt --gaps "generalisasi berlebihan ke populasi yang lebih luas"
+```
 
 ### 7. Run the API
 
@@ -235,6 +255,45 @@ Each question carries `evaluation_criteria`, describing what the Examiner Sessio
 
 ---
 
+## The Examiner Session Agent
+
+Input: one question and one answer. Output: a judgment and a decision about what happens next.
+
+| Decision | When |
+|---|---|
+| `press_deeper` | The answer held. A student who defends well earns a harder question, not a pass. |
+| `ask_clarification` | The answer was weak or evasive, but may have been badly expressed. One chance to say it properly. |
+| `move_on` | The point is settled, or pressing again would only repeat what is established. |
+| `record_gap` | The student had a fair chance and the point is still undefended. |
+
+### Two rules the prompt is not trusted to keep
+
+A prompt is a request, not a guarantee, so both of these are enforced in code and every override is recorded:
+
+**A gap cannot be recorded before the student has been offered a clarification.** Giving up the first time someone stumbles is ambush, not examination. When the model reaches for `record_gap` too early, the decision is downgraded and the gap note is cleared with it.
+
+**One question cannot swallow the session.** Follow-ups are capped, and a second request for clarification on a point already clarified becomes a recorded gap rather than an infinite loop.
+
+Unknown enum values fall to the option that cannot harm the student: an unrecognized strength becomes `partial` rather than `weak`, and an unrecognized decision becomes `ask_clarification`, which neither abandons the point nor logs a weakness.
+
+### State lives outside the agent
+
+The session loop is in the Orchestrator, not in the agent. Every turn reads the entire session from storage and writes it back, so the process holds nothing between turns. A server restart mid-defense costs the student their place in the conversation and nothing else, and the API scales horizontally without sticky sessions.
+
+---
+
+## The Session Reflection Agent
+
+Input: a finished transcript. Output: what held, what is still undefended, and the recurring habits behind the gaps.
+
+**A gap recorded during the session cannot vanish from the summary.** Summarizers smooth things over, and a student who reads that a point is settled when the examiner recorded it as undefended walks into the real defense unprepared. Recorded gaps are reconciled against the model's list and anything missing is restored, with the restoration logged.
+
+**Praise has to correspond to something that happened.** If no answer in the session was judged strong or partial, a list of strengths is flattery, and it is dropped.
+
+`recurring_gap_patterns` is the field that makes the next session sharper than this one. It is written to be recognisable in a different manuscript months later, so "treats correlational findings as causal when writing conclusions" rather than "question 3 was weak". Feed it back in through `recurring_gaps` and the next examination attacks those points first.
+
+---
+
 ## Repository layout
 
 ```
@@ -242,9 +301,13 @@ codes/backpy/                     Python backend
   app/
     agents/draft_analyzer/        prompt.py, core.py (pure logic), adk_agent.py (ADK wrapper)
     agents/question_strategy/     same shape, one responsibility further down the chain
+    agents/examiner_session/      judges one answer, decides what happens next
+    agents/session_reflection/    turns a finished transcript into carry-forward patterns
     orchestrator/orchestrator.py  coordination between sub-agents
     api/routes.py                 FastAPI endpoints
-    models/                       weakness_map.py, question_strategy.py, firestore_schemas.py
+    models/                       weakness_map.py, question_strategy.py, session.py
+    storage/session_store.py      session persistence, Firestore and in-memory
+    llm/retry.py                  backoff for quota and availability failures
     common/text.py                helpers shared by agents, so no agent imports another
     llm/client.py                 Gemini access through Agent Platform
     storage/firestore.py          the only module that talks to the database

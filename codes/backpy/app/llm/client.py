@@ -17,6 +17,7 @@ from typing import Protocol
 from pydantic import BaseModel
 
 from app.config import get_settings
+from app.llm.retry import call_with_retry
 
 
 class ModelRunner(Protocol):
@@ -56,15 +57,19 @@ class GeminiRunner:
         from google.genai import types
 
         client = get_genai_client()
-        response = client.models.generate_content(
-            model=self.model,
-            contents=prompt,
-            config=types.GenerateContentConfig(
-                temperature=self._settings.gemini_temperature,
-                max_output_tokens=self._settings.gemini_max_output_tokens,
-                response_mime_type="application/json",
-                response_schema=response_schema,
+        config = types.GenerateContentConfig(
+            temperature=self._settings.gemini_temperature,
+            max_output_tokens=self._settings.gemini_max_output_tokens,
+            response_mime_type="application/json",
+            response_schema=response_schema,
+        )
+
+        response = call_with_retry(
+            lambda: client.models.generate_content(
+                model=self.model, contents=prompt, config=config
             ),
+            max_attempts=self._settings.gemini_max_retries,
+            base_delay=self._settings.gemini_retry_base_delay,
         )
         text = response.text
         if not text:

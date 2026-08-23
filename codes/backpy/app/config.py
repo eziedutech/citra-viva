@@ -25,6 +25,8 @@ class Settings(BaseSettings):
     gemini_model: str = "gemini-3.5-flash"
     gemini_temperature: float = 0.2
     gemini_max_output_tokens: int = 16384
+    gemini_max_retries: int = 4
+    gemini_retry_base_delay: float = 2.0
 
     # Firestore
     firestore_database: str = "(default)"

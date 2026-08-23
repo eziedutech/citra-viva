@@ -1,0 +1,40 @@
+CHAPTER I INTRODUCTION
+
+Remote work has reshaped how knowledge workers experience their jobs. Since 2020,
+organisations worldwide have adopted hybrid arrangements at unprecedented scale.
+Remote work is clearly the decisive factor behind the decline in workplace
+collaboration reported across the technology sector.
+
+The research question guiding this study is: how do software engineers at a single
+mid-sized technology company describe their experience of collaboration under a
+hybrid work arrangement?
+
+CHAPTER III METHODOLOGY
+
+This study adopts a qualitative interpretive design. Data were gathered through
+semi-structured interviews with fourteen software engineers at one technology
+company in Jakarta, recruited through an internal announcement inviting volunteers.
+Interviews lasted between forty and sixty minutes and were conducted over video
+call. Transcripts were analysed using thematic analysis following an inductive
+coding process carried out by the researcher alone.
+
+CHAPTER IV FINDINGS AND DISCUSSION
+
+Three themes emerged from the analysis: fragmented awareness of colleagues' work,
+a decline in spontaneous problem solving, and increased reliance on scheduled
+meetings. Participants consistently described difficulty knowing what their
+teammates were working on.
+
+These findings demonstrate that hybrid work arrangements cause a measurable
+decline in collaboration quality among software engineers. The evidence therefore
+establishes that organisations adopting hybrid models will experience reduced
+innovation output over time.
+
+Because all fourteen participants reported similar experiences, the findings can
+be generalised to knowledge workers in hybrid arrangements more broadly.
+
+CHAPTER V CONCLUSION
+
+This study concludes that hybrid work reduces collaboration. Organisations should
+therefore require a minimum of four days of office attendance per week to protect
+collaborative capacity.
