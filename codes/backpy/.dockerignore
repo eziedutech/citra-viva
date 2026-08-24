@@ -3,5 +3,11 @@ __pycache__/
 *.pyc
 .pytest_cache/
 .ruff_cache/
+
+# A Next.js build directory has landed here once, from a frontend build run
+# in the wrong working directory. The Dockerfile copies only app/, so it never
+# reached an image, but it did travel to Cloud Build on every backend deploy.
+.next/
+node_modules/
 .env
 tests/

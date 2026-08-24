@@ -70,7 +70,7 @@ Built for the **All Things Agentic Hackathon** (Google and Devpost), category *C
 | **Google agent framework** | **Google ADK** and the **Google GenAI SDK** |
 | **Google Cloud services** | Cloud Run, Firestore, Firebase Authentication, Cloud Trace, Cloud Build, Artifact Registry |
 | **Additional Google AI models** | `gemini-2.5-flash-tts` for the examiner's voice, `gemini-live-2.5-flash-native-audio` for streaming transcription of the student's |
-| **Project started** | 23 August 2026, inside the submission period. First commit 24 August 2026 |
+| **Project started** | 20 August 2026, inside the submission period. Planning and architecture first, so the first commit is dated 24 August |
 | **Hosted** | Yes, both the web app and the API |
 | **Repository** | Public |
 
@@ -746,7 +746,7 @@ scripts/                          tooling outside the application
 
 ## Disclosure
 
-CITRA Viva was built entirely within the Submission Period for this hackathon, starting 23 August 2026. No pre-existing code was incorporated.
+CITRA Viva was built entirely within the Submission Period for this hackathon, starting 20 August 2026. The first four days went to planning and architecture, which is why the first commit is dated 24 August. No pre-existing code was incorporated.
 
 It is a companion to [C.I.T.R.A](https://citra.eziedutech.dev), an existing research integrity application by the same author, in pre-development status. The two share a design system and a name. They share no code, and nothing from that project was reused here. One module was deliberately kept out of scope for exactly this reason: basic mechanical citation verification against Crossref and OpenAlex already exists in that other project, so it is **not** part of this submission, in compliance with the New Projects Only rule.
 
