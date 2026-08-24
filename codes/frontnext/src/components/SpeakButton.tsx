@@ -25,7 +25,8 @@ interface Props {
  * and should not pay for one either.
  */
 export function SpeakButton({ text, dict, autoPlay = false }: Props) {
-  const { authedFetch } = useAuth();
+  const auth = useAuth();
+  const { authedFetch } = auth;
   const [busy, setBusy] = useState(false);
   const [playing, setPlaying] = useState(false);
   const [error, setError] = useState('');
@@ -91,14 +92,22 @@ export function SpeakButton({ text, dict, autoPlay = false }: Props) {
     setPlaying(false);
   }
 
+  // Waits for the credential, not just for the user.
+  //
+  // Reading aloud is on by default, so the first question asks to be spoken the
+  // moment the room appears. Firebase resolves who this is in the browser and
+  // only then posts the token to the server, and asking in between produced a
+  // 401 for a student who was plainly signed in.
+  const ready = !auth.enabled || (auth.ready && Boolean(auth.user) && auth.sessionReady);
+
   useEffect(() => {
     // Once only. A re-render must not restart a question a student is already
     // listening to, or one they deliberately stopped.
-    if (!autoPlay || played.current) return;
+    if (!autoPlay || !ready || played.current) return;
     played.current = true;
     void play(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [autoPlay]);
+  }, [autoPlay, ready]);
 
   return (
     <span className="inline-flex items-center gap-2">

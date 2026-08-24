@@ -241,7 +241,7 @@ export function DefenseRoom({ initial, dict, locale }: Props) {
         dict={dict}
       />
 
-      <div className="grid min-h-0 grid-cols-[280px_1fr_380px]">
+      <div className="grid min-h-0 grid-cols-[300px_1fr_400px]">
         <QuestionSidebar
           questions={session.questions}
           progress={session.progress}

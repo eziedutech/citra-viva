@@ -96,7 +96,11 @@ export function QuestionSidebar({ questions, progress, currentIndex, dict }: Pro
                     ) : null}
 
                     {active ? (
-                      <span className="text-caption mt-1 block text-[color:var(--color-ink-600)]">
+                      // Clamped rather than shown whole. This is a reminder of
+                      // what is being asked, and the question itself is in the
+                      // transcript in full; letting it run to nine lines turns
+                      // the plan into a wall of small text.
+                      <span className="text-caption mt-1 line-clamp-4 block text-[color:var(--color-ink-600)]">
                         {question.question}
                       </span>
                     ) : null}
