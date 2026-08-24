@@ -22,6 +22,13 @@ interface Props {
   dict: Dictionary;
   /** Hand the transcript back for the student to read, edit, and send. */
   onTranscript: (text: string) => void;
+  /**
+   * Told when transcription starts and stops, so the room can raise the same
+   * working bar it raises for everything else. A wait with no indicator is
+   * indistinguishable from a broken button, and this one lasts several
+   * seconds after the student has already stopped speaking.
+   */
+  onWorkingChange?: (working: boolean) => void;
   disabled?: boolean;
 }
 
@@ -35,7 +42,12 @@ interface Props {
  * of one. It also keeps the spoken path on the same endpoint as the typed one,
  * which is what keeps every session rule applying equally to both.
  */
-export function VoiceInput({ dict, onTranscript, disabled = false }: Props) {
+export function VoiceInput({
+  dict,
+  onTranscript,
+  onWorkingChange,
+  disabled = false,
+}: Props) {
   const { authedFetch } = useAuth();
   const [recording, setRecording] = useState(false);
   const [working, setWorking] = useState(false);
@@ -44,6 +56,7 @@ export function VoiceInput({ dict, onTranscript, disabled = false }: Props) {
   const [supported, setSupported] = useState(true);
 
   const [level, setLevel] = useState(0);
+  const [elapsed, setElapsed] = useState(0);
   const recorder = useRef<Recorder | null>(null);
 
   // Checked after mount, not during render: these APIs do not exist on the
@@ -81,6 +94,7 @@ export function VoiceInput({ dict, onTranscript, disabled = false }: Props) {
     if (!active) return;
 
     setWorking(true);
+    onWorkingChange?.(true);
     try {
       const { wav, seconds: length, peak } = await active.stop();
       setLevel(0);
@@ -105,8 +119,23 @@ export function VoiceInput({ dict, onTranscript, disabled = false }: Props) {
       setError(caught instanceof Error ? caught.message : dict.voice.failed);
     } finally {
       setWorking(false);
+      onWorkingChange?.(false);
     }
   }
+
+  // Counts through the transcription, not the recording. The student has
+  // stopped speaking by then and is waiting on something they cannot see.
+  useEffect(() => {
+    if (!working) {
+      setElapsed(0);
+      return;
+    }
+    const started = Date.now();
+    const timer = setInterval(() => {
+      setElapsed(Math.floor((Date.now() - started) / 1000));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [working]);
 
   useEffect(() => {
     if (!recording || seconds < MAX_RECORDING_SECONDS) return;
@@ -181,6 +210,21 @@ export function VoiceInput({ dict, onTranscript, disabled = false }: Props) {
               />
             ))}
           </span>
+        </span>
+      ) : null}
+
+      {working ? (
+        <span className="text-micro flex items-center gap-2 text-[color:var(--color-ai)]">
+          <span className="flex gap-1" aria-hidden="true">
+            {[0, 1, 2].map((index) => (
+              <span
+                key={index}
+                className="ai-pulse block h-[5px] w-[5px] rounded-[var(--radius-chip)] bg-[color:var(--color-ai)]"
+                style={{ animationDelay: `${index * 160}ms` }}
+              />
+            ))}
+          </span>
+          <span className="tabular-nums">{fill(dict.ai.elapsed, { seconds: elapsed })}</span>
         </span>
       ) : null}
 

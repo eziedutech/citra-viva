@@ -55,6 +55,7 @@ export function DefenseRoom({ initial, dict, locale }: Props) {
   // it speaks on arrival.
   const [readAloud, setReadAloud] = useState(true);
   const [focusFinding, setFocusFinding] = useState('');
+  const [transcribing, setTranscribing] = useState(false);
   const [voiceNote, setVoiceNote] = useState(false);
   const transcriptEnd = useRef<HTMLDivElement>(null);
   const answerBox = useRef<HTMLTextAreaElement>(null);
@@ -230,10 +231,16 @@ export function DefenseRoom({ initial, dict, locale }: Props) {
       </header>
 
       <AiWorking
-        active={thinking || closing}
-        label={closing ? dict.room.buildingReport : dict.room.thinking}
+        active={thinking || closing || transcribing}
+        label={
+          transcribing
+            ? dict.voice.transcribing
+            : closing
+              ? dict.room.buildingReport
+              : dict.room.thinking
+        }
         dict={dict}
-        reassure
+        reassure={!transcribing}
       />
       <AgentOverlay
         active={thinking || closing}
@@ -409,6 +416,7 @@ export function DefenseRoom({ initial, dict, locale }: Props) {
                     <VoiceInput
                       dict={dict}
                       disabled={thinking}
+                      onWorkingChange={setTranscribing}
                       onTranscript={(text) => {
                         // Added to whatever is already there rather than
                         // replacing it, so a second attempt at a sentence does
