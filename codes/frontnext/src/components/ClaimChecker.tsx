@@ -44,9 +44,11 @@ function verdictTone(verdict: SupportVerdict): string {
 interface Props {
   dict: Dictionary;
   locale: Locale;
+  /** Inside the signed-in workspace, which already carries the shell. */
+  embedded?: boolean;
 }
 
-export function ClaimChecker({ dict, locale }: Props) {
+export function ClaimChecker({ dict, locale, embedded = false }: Props) {
   const { authedFetch } = useAuth();
   const [claim, setClaim] = useState('');
   const [source, setSource] = useState({ title: '', authors: '', year: '', doi: '', text: '' });
@@ -103,22 +105,41 @@ export function ClaimChecker({ dict, locale }: Props) {
   }
 
   return (
-    <div className="flex min-h-dvh flex-col">
-      <AppHeader dict={dict} locale={locale} current="claims" />
+    <div className={embedded ? 'flex min-h-full flex-col' : 'flex min-h-dvh flex-col'}>
+      {embedded ? null : <AppHeader dict={dict} locale={locale} current="claims" />}
       <AiWorking active={busy} label={dict.claims.checking} dict={dict} />
       <AgentOverlay active={busy} stage="citation" dict={dict} />
 
       <div className="flex-1">
-        <section className="border-b border-[color:var(--color-line)] bg-[color:var(--color-surface)]">
-          <div className="mx-auto w-full max-w-[880px] px-6 pt-12 pb-10">
-            <h1 className="text-display mb-4 max-w-[28ch]">{dict.claims.heading}</h1>
-            <p className="text-body-lg max-w-[64ch] text-[color:var(--color-ink-600)]">
+        <section
+          className={
+            embedded
+              ? ''
+              : 'border-b border-[color:var(--color-line)] bg-[color:var(--color-surface)]'
+          }
+        >
+          <div
+            className={
+              embedded
+                ? 'mx-auto w-full max-w-[880px] px-6 pt-8'
+                : 'mx-auto w-full max-w-[880px] px-6 pt-12 pb-10'
+            }
+          >
+            <h1 className={embedded ? 'text-h1 mb-2 max-w-[32ch]' : 'text-display mb-4 max-w-[28ch]'}>
+              {dict.claims.heading}
+            </h1>
+            <p
+              className={[
+                'max-w-[64ch] text-[color:var(--color-ink-600)]',
+                embedded ? 'text-body-sm' : 'text-body-lg',
+              ].join(' ')}
+            >
               {dict.claims.lede}
             </p>
           </div>
         </section>
 
-        <div className="mx-auto w-full max-w-[880px] px-6 py-10">
+        <div className="mx-auto w-full max-w-[880px] px-6 py-8">
           <section className="border border-[color:var(--color-line)] bg-[color:var(--color-surface)] p-5">
             <div className="mb-2 flex items-end justify-between gap-3">
               <span className="inline-flex items-center gap-[6px]">

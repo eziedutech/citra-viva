@@ -7,6 +7,8 @@ import type { Dictionary, Locale } from '@/lib/i18n';
 interface Props {
   dict: Dictionary;
   locale: Locale;
+  /** What fills the working column. The intake form when nothing is given. */
+  children?: React.ReactNode;
 }
 
 /**
@@ -19,13 +21,13 @@ interface Props {
  * the page scrolls normally: a fixed sidebar on a phone is a sidebar that eats
  * the screen.
  */
-export function Workspace({ dict, locale }: Props) {
+export function Workspace({ dict, locale, children }: Props) {
   return (
     <div className="flex flex-col lg:grid lg:h-dvh lg:grid-cols-[288px_1fr] lg:overflow-hidden">
       <HistorySidebar dict={dict} locale={locale} />
 
       <div className="panel-scroll min-h-0 bg-[color:var(--color-canvas)]">
-        <DraftIntake dict={dict} locale={locale} embedded />
+        {children ?? <DraftIntake dict={dict} locale={locale} embedded />}
       </div>
     </div>
   );

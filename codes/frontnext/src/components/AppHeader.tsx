@@ -3,6 +3,7 @@
 import Link from 'next/link';
 
 import { AccountButton } from '@/components/AccountButton';
+import { useAuth } from '@/components/AuthProvider';
 import { LocaleSwitch } from '@/components/LocaleSwitch';
 import { Wordmark } from '@/components/Wordmark';
 import type { Dictionary, Locale } from '@/lib/i18n';
@@ -27,6 +28,12 @@ interface Props {
  * things, and two navigations for one screen is one too many.
  */
 export function AppHeader({ dict, locale, current }: Props) {
+  // The citation checker needs an account. Offering it to a signed-out visitor
+  // means letting them fill in a claim and a source and only then telling them
+  // to sign in, which is the kind of thing an interface should never do.
+  const { enabled, ready, user } = useAuth();
+  const signedIn = !enabled || (ready && Boolean(user));
+
   const tab = (href: string, label: string, active: boolean) => (
     <Link
       href={href}
@@ -51,7 +58,7 @@ export function AppHeader({ dict, locale, current }: Props) {
 
         <nav aria-label={dict.nav.label} className="flex items-center gap-6">
           {tab('/', dict.nav.defense, current === 'defense')}
-          {tab('/klaim', dict.nav.claims, current === 'claims')}
+          {signedIn ? tab('/klaim', dict.nav.claims, current === 'claims') : null}
           {tab('/panduan', dict.guide.nav, current === 'guide')}
         </nav>
 
