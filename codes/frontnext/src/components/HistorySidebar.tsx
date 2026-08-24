@@ -7,6 +7,7 @@ import { useAuth } from '@/components/AuthProvider';
 import { Hint } from '@/components/Hint';
 import { Icon } from '@/components/Icon';
 import { LocaleSwitch } from '@/components/LocaleSwitch';
+import { Wordmark } from '@/components/Wordmark';
 import { fill, type Dictionary, type Locale } from '@/lib/i18n';
 import type { SessionDigest, SessionHistory } from '@/lib/types';
 
@@ -145,9 +146,8 @@ export function HistorySidebar({ dict, locale }: Props) {
       className="grid min-h-0 grid-rows-[auto_auto_1fr_auto] border-r border-[color:var(--color-line)] bg-[color:var(--color-surface)]"
     >
       <div className="flex h-14 items-center border-b border-[color:var(--color-line)] px-4">
-        <Link href="/" className="flex items-center gap-2 text-[color:var(--color-primary-700)]">
-          <Icon name="shield" size={20} />
-          <span className="text-body-sm font-medium tracking-[-0.01em]">{dict.app.name}</span>
+        <Link href="/" className="flex items-center">
+          <Wordmark height={22} />
         </Link>
       </div>
 

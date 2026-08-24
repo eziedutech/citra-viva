@@ -3,8 +3,8 @@
 import Link from 'next/link';
 
 import { AccountButton } from '@/components/AccountButton';
-import { Icon } from '@/components/Icon';
 import { LocaleSwitch } from '@/components/LocaleSwitch';
+import { Wordmark } from '@/components/Wordmark';
 import type { Dictionary, Locale } from '@/lib/i18n';
 
 interface Props {
@@ -45,12 +45,8 @@ export function AppHeader({ dict, locale, current }: Props) {
   return (
     <header className="sticky top-0 z-40 border-b border-[color:var(--color-line)] bg-[color:var(--color-surface)]">
       <div className="mx-auto flex h-14 w-full max-w-[1120px] items-center gap-8 px-6">
-        <Link
-          href="/"
-          className="flex shrink-0 items-center gap-2 text-[color:var(--color-primary-700)]"
-        >
-          <Icon name="shield" size={20} />
-          <span className="text-body-sm font-medium tracking-[-0.01em]">{dict.app.name}</span>
+        <Link href="/" className="flex shrink-0 items-center">
+          <Wordmark height={22} />
         </Link>
 
         <nav aria-label={dict.nav.label} className="flex items-center gap-6">

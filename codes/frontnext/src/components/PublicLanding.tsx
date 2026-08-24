@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { useAuth } from '@/components/AuthProvider';
 import { Icon } from '@/components/Icon';
 import { LocaleSwitch } from '@/components/LocaleSwitch';
+import { Wordmark } from '@/components/Wordmark';
 import type { Dictionary, Locale } from '@/lib/i18n';
 
 /** The parent product. Not translated: an address is an address. */
@@ -155,10 +156,7 @@ export function PublicLanding({ dict, locale }: Props) {
     <div className="flex min-h-dvh flex-col">
       <header className="border-b border-[color:var(--color-line)] bg-[color:var(--color-surface)]">
         <div className="mx-auto flex h-14 w-full max-w-[1180px] items-center px-6">
-          <span className="flex items-center gap-2 text-[color:var(--color-primary-700)]">
-            <Icon name="shield" size={20} />
-            <span className="text-body-sm font-medium tracking-[-0.01em]">{dict.app.name}</span>
-          </span>
+          <Wordmark height={26} />
           <span className="ml-auto flex items-center gap-4">
             <Link
               href="/panduan"
@@ -276,7 +274,6 @@ export function PublicLanding({ dict, locale }: Props) {
 
       <footer className="border-t border-[color:var(--color-line)] bg-[color:var(--color-surface)]">
         <div className="text-caption mx-auto flex w-full max-w-[1180px] flex-wrap items-center gap-x-6 gap-y-1 px-6 py-4 text-[color:var(--color-ink-400)]">
-          <span>{dict.app.name}</span>
           <span>{dict.landing.footer}</span>
           <Link href="/panduan" className="ml-auto underline underline-offset-2">
             {dict.guide.nav}

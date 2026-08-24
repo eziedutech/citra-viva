@@ -13,6 +13,7 @@ import { QuestionSidebar } from '@/components/QuestionSidebar';
 import { Slideover, type Tab } from '@/components/Slideover';
 import { SpeakButton } from '@/components/SpeakButton';
 import { VoiceInput } from '@/components/VoiceInput';
+import { Wordmark } from '@/components/Wordmark';
 import { fill, type Dictionary, type Locale } from '@/lib/i18n';
 import { normalizeSession } from '@/lib/session';
 import type {
@@ -133,12 +134,8 @@ export function DefenseRoom({ initial, dict, locale }: Props) {
     <div className="app-shell">
       <header className="flex h-14 items-center justify-between border-b border-[color:var(--color-line)] bg-[color:var(--color-surface)] px-5">
         <div className="flex items-center gap-3">
-          <Link
-            href="/"
-            className="flex items-center gap-2 text-[color:var(--color-primary-700)]"
-          >
-            <Icon name="shield" size={20} />
-            <span className="text-body-sm font-medium">{dict.app.name}</span>
+          <Link href="/" className="flex items-center">
+            <Wordmark height={22} />
           </Link>
           <span className="text-caption text-[color:var(--color-ink-400)]">/</span>
           <span className="text-body-sm text-[color:var(--color-ink-600)]">
