@@ -120,6 +120,17 @@ export function DefenseRoom({ initial, dict, locale }: Props) {
         body: JSON.stringify({ answer: text }),
       });
       const data = await response.json();
+
+      // 409 means this turn lost a race with another one and was not recorded.
+      // The message says so; what it cannot do by itself is stop the room
+      // showing a session that has since moved on, so the state is reloaded
+      // before the error is raised.
+      if (response.status === 409) {
+        const current = await auth.authedFetch(`/api/sessions/${session.session_id}`);
+        if (current.ok) setSession(normalizeSession((await current.json()) as SessionState));
+        throw new Error(data.error ?? dict.room.answerFailed);
+      }
+
       if (!response.ok) throw new Error(data.error ?? dict.room.answerFailed);
 
       const turn = data as SessionTurnResult;

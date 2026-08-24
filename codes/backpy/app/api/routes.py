@@ -32,7 +32,11 @@ from app.models.session import (
 from app.models.weakness_map import AnalysisResult
 from app.orchestrator.orchestrator import Orchestrator
 from app.speech.voice import SpeechError, speak_text, transcribe_answer
-from app.storage.session_store import FirestoreSessionStore, SessionNotFoundError
+from app.storage.session_store import (
+    FirestoreSessionStore,
+    SessionConflictError,
+    SessionNotFoundError,
+)
 
 router = APIRouter()
 
@@ -48,6 +52,16 @@ def _translated_errors() -> Iterator[None]:
         yield
     except SessionNotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except SessionConflictError as exc:
+        # 409, not 500. Nothing broke: this turn simply lost a race with
+        # another one, and the caller can recover by reloading the session.
+        raise HTTPException(
+            status_code=409,
+            detail=(
+                "This session moved on while your answer was being judged, so it "
+                "was not recorded. Reload the session and send it again."
+            ),
+        ) from exc
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except RuntimeError as exc:

@@ -22,13 +22,28 @@ from app.models.session import SessionDigest, SessionState
 class SessionStore(Protocol):
     def load(self, session_id: str) -> SessionState: ...
 
-    def save(self, state: SessionState) -> None: ...
+    def save(self, state: SessionState) -> None:
+        """Write the session back, refusing a write onto a newer revision."""
+        ...
 
     def list_for_user(self, user_id: str, limit: int = 50) -> list[SessionDigest]: ...
 
 
 class SessionNotFoundError(LookupError):
     """Raised when a session id does not exist."""
+
+
+class SessionConflictError(RuntimeError):
+    """Raised when a session changed underneath the caller.
+
+    A defense turn reads the whole session, spends half a minute in the model,
+    and writes it back. Two turns starting together therefore both read the same
+    state and both write it, and the later write erases the earlier one: two
+    model calls paid for, two answers apparently accepted, one silently gone.
+
+    Refusing the second write is the only honest outcome. The student is told
+    their answer was not recorded rather than believing it was.
+    """
 
 
 # How many of a student's documents are read before the newest are picked out.
@@ -70,6 +85,13 @@ class InMemorySessionStore:
         return state.model_copy(deep=True)
 
     def save(self, state: SessionState) -> None:
+        stored = self._sessions.get(state.session_id)
+        if stored is not None and stored.revision != state.revision:
+            raise SessionConflictError(
+                f"Session {state.session_id!r} changed while this turn was being judged."
+            )
+
+        state.revision += 1
         state.updated_at = datetime.now(UTC)
         self._sessions[state.session_id] = state.model_copy(deep=True)
 
@@ -99,9 +121,44 @@ class FirestoreSessionStore:
         return SessionState.model_validate(document.to_dict())
 
     def save(self, state: SessionState) -> None:
+        """Write the session, in a transaction that checks nobody else has.
+
+        The revision is read and compared inside the transaction rather than
+        before it, because a check that happens before the write is a check that
+        can be overtaken by the write it was meant to guard against.
+
+        The payload is built once, outside, so that a transaction Firestore
+        retries under contention cannot bump the revision twice.
+        """
+        from google.cloud import firestore
+
+        client = self.client
+        reference = client.collection(COLLECTION_VIVA_SESSIONS).document(state.session_id)
+
+        expected = state.revision
+        state.revision = expected + 1
         state.updated_at = datetime.now(UTC)
         payload = state.model_dump(mode="json")
-        self.client.collection(COLLECTION_VIVA_SESSIONS).document(state.session_id).set(payload)
+
+        @firestore.transactional
+        def write(transaction: Any) -> None:
+            snapshot = reference.get(transaction=transaction)
+            if snapshot.exists:
+                stored = int((snapshot.to_dict() or {}).get("revision", 0))
+                if stored != expected:
+                    raise SessionConflictError(
+                        f"Session {state.session_id!r} changed while this turn "
+                        "was being judged."
+                    )
+            transaction.set(reference, payload)
+
+        try:
+            write(client.transaction())
+        except SessionConflictError:
+            # Leave the caller's object exactly as it was, so a retry compares
+            # against the revision it actually holds.
+            state.revision = expected
+            raise
 
     def list_for_user(self, user_id: str, limit: int = 50) -> list[SessionDigest]:
         """A student's own sessions, newest first.

@@ -191,6 +191,15 @@ class SessionState(BaseModel):
     session_id: str
     user_id: str = ""
     draft_id: str = ""
+    revision: int = Field(
+        default=0,
+        description=(
+            "Bumped by every write, and checked against storage before one. Two "
+            "answers judged at the same time used to overwrite each other in "
+            "silence: both cost a model call, both appeared to succeed, and only "
+            "one survived. The second now fails loudly instead."
+        ),
+    )
     status: SessionStatus = SessionStatus.IN_PROGRESS
     language: str = "id"
     opening_remark: str = ""

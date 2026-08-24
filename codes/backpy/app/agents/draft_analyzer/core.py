@@ -30,6 +30,18 @@ from app.models.weakness_map import (
 )
 
 MIN_DRAFT_CHARS = 200
+
+# Roughly a hundred and thirty pages of dense text, which is more than any
+# thesis chapter set a student would submit for one examination, and far below
+# what the model's context window would technically accept.
+#
+# The limit is not about the window. Text of this size makes one analysis cost
+# minutes and a great deal of money, and the sitting it produces is worse rather
+# than better: an examination drawn from an entire thesis at once spreads itself
+# thin. There was no upper bound at all before this, so a pasted 2 MB document
+# was accepted, charged for, and then timed out somewhere the student could not
+# see.
+MAX_DRAFT_CHARS = 400_000
 MAX_FINDINGS = 12
 
 _SEVERITY_ORDER = {Severity.HIGH: 0, Severity.MEDIUM: 1, Severity.LOW: 2}
@@ -182,6 +194,14 @@ def analyze_draft(draft_text: str, runner: ModelRunner | None = None) -> Analysi
     if not draft_text or len(draft_text.strip()) < MIN_DRAFT_CHARS:
         raise ValueError(
             f"Draft text is too short to analyze (minimum {MIN_DRAFT_CHARS} characters)."
+        )
+
+    if len(draft_text) > MAX_DRAFT_CHARS:
+        raise ValueError(
+            f"This draft is {len(draft_text):,} characters, and the limit is "
+            f"{MAX_DRAFT_CHARS:,}. Submit the chapters you want examined, usually "
+            "the introduction, methodology, and findings. A whole thesis at once "
+            "produces a thinner examination, not a deeper one."
         )
 
     model_name = ""

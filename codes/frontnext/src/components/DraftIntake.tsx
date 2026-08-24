@@ -16,6 +16,16 @@ import type { SessionDigest, SessionHistory, StartSessionResponse } from '@/lib/
 
 const MIN_DRAFT_CHARS = 200;
 
+/**
+ * The same two limits the API enforces, checked here as well.
+ *
+ * Not a substitute for the server's check, which is the one that matters, but
+ * the difference between being told immediately and being told after uploading
+ * ten megabytes and waiting for a round trip.
+ */
+const MAX_DRAFT_CHARS = 400_000;
+const MAX_FILE_MB = 10;
+
 /** How long each preparation stage tends to take before the next begins. */
 const STAGE_INTERVAL_MS = 12_000;
 
@@ -87,13 +97,25 @@ export function DraftIntake({ dict, locale, embedded = false }: Props) {
 
   const length = draft.trim().length;
   const tooShort = length > 0 && length < MIN_DRAFT_CHARS;
+  const tooLong = length > MAX_DRAFT_CHARS;
   // Sign-in gates starting a defense, not reading the page. Someone who has
   // landed here should be able to see what the product is before deciding
   // whether to hand it their manuscript.
   const needsSignIn = auth.enabled && auth.ready && !auth.user;
-  const canStart = length >= MIN_DRAFT_CHARS && !busy && !needsSignIn;
+  const canStart = length >= MIN_DRAFT_CHARS && !tooLong && !busy && !needsSignIn;
 
   async function upload(file: File) {
+    const megabytes = file.size / (1024 * 1024);
+    if (megabytes > MAX_FILE_MB) {
+      setError(
+        fill(dict.limits.fileTooLarge, {
+          size: megabytes.toFixed(1),
+          max: MAX_FILE_MB,
+        }),
+      );
+      return;
+    }
+
     setReading(true);
     setError('');
     setSource(null);
@@ -354,6 +376,15 @@ export function DraftIntake({ dict, locale, embedded = false }: Props) {
               <span className="text-[color:var(--color-warning)]">
                 {' · '}
                 {fill(dict.intake.tooShort, { min: MIN_DRAFT_CHARS })}
+              </span>
+            ) : null}
+            {tooLong ? (
+              <span className="text-[color:var(--color-danger)]">
+                {' · '}
+                {fill(dict.limits.tooLong, {
+                  count: length.toLocaleString(locale),
+                  max: MAX_DRAFT_CHARS.toLocaleString(locale),
+                })}
               </span>
             ) : null}
           </p>
