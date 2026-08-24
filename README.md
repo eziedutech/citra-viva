@@ -92,11 +92,9 @@ Compliance with the three the rules require: Gemini 3.5 or newer, at least one G
 | **Firebase Authentication** | The sign-in provider and web app were created and configured as part of building | Verifies every ID token and decides who may open a session |
 | **Cloud Trace** | Used to verify the reasoning chain, by reading a real trace back out rather than assuming the export worked | One span per agent call, nested under the request |
 
-Even the parts that feel local were not. The development scripts reach the model through Google Cloud credentials obtained with `gcloud`, so when those credentials expired mid-project, everything stopped until they were renewed.
+**Naming.** Gemini Enterprise Agent Platform, formerly Vertex AI. The SDK identifiers still spell it `vertexai` and `aiplatform`, and are reproduced as typed.
 
-> **On the name.** Vertex AI became the Gemini Enterprise Agent Platform in April 2026, and this repository uses the current name throughout. The technical identifiers did not follow it, and they are reproduced here exactly as they are actually typed: the environment variable is `GOOGLE_GENAI_USE_VERTEXAI`, the SDK parameter is `vertexai=True`, the API to enable is `aiplatform.googleapis.com`, and the ADK package is `google-cloud-aiplatform`. None of those is a typo or a leftover. Renaming them in the documentation would produce commands that do not run.
-
-**Why two frameworks rather than one.** ADK is where the agents are declared, because `disallow_transfer_to_parent` and `disallow_transfer_to_peers` are what make the isolation between them a framework guarantee rather than a promise in a prompt. The GenAI SDK is the serving path, which keeps the request path free of the ADK dependency tree and the container image small. Both are named frameworks in the rules, and the split is a deliberate engineering decision rather than an omission.
+**ADK and the GenAI SDK.** ADK declares the agents and enforces their isolation. The GenAI SDK serves the requests.
 
 ### Testing instructions for judges
 
