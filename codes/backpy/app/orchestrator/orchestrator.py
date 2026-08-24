@@ -222,18 +222,26 @@ class Orchestrator:
         )
 
     def load_session(self, session_id: str, actor_id: str = "") -> SessionState:
-        """Read a session, refusing one that belongs to somebody else.
+        """Read a session, refusing one that does not belong to this caller.
 
         The refusal is a `SessionNotFoundError` rather than a distinct
         "forbidden", so a stranger guessing ids learns nothing from the
         difference between an id that exists and one that does not.
 
-        A session with no owner stays readable. Those were created before
-        authentication existed, or while it is switched off, and orphaning them
-        would punish the user for a change they did not make.
+        The comparison is exact, with no exemption for a session that carries no
+        owner. An earlier version let those through, on the reasoning that
+        sessions predating authentication should not be orphaned by it. That
+        reasoning was affordable only while nobody real had used the service:
+        the moment every visitor signs in, an ownerless document is one that
+        anyone who guesses its id can open, and what it holds is somebody's
+        unpublished manuscript and the map of where their argument fails.
+
+        When authentication is off, every caller is the same anonymous user and
+        every session is written under that same id, so local runs and the test
+        suite compare equal and are unaffected.
         """
         state = self.store.load(session_id)
-        if state.user_id and actor_id and state.user_id != actor_id:
+        if state.user_id != actor_id:
             raise SessionNotFoundError(f"Session {session_id!r} does not exist.")
         return state
 

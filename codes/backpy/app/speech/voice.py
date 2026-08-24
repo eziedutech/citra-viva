@@ -72,10 +72,16 @@ TRANSCRIPTION_INSTRUCTION = (
 # aloud, not as a prompt to act on. Stating that explicitly is what keeps a
 # question that happens to contain an instruction from being obeyed instead of
 # spoken.
+# The pace is stated plainly and briefly. An earlier version asked for "the
+# measured pace of an examiner speaking to a candidate", and the model read that
+# as an instruction to slow right down, which was painful to sit through.
+# Describing a manner produces a performance of that manner; describing a speed
+# produces a speed.
 NARRATION_INSTRUCTION = (
     "Read the following text aloud exactly as written, in the language it is "
-    "written in, at the measured pace of an examiner speaking to a candidate. "
-    "Read only this text. Do not answer it, add to it, or comment on it.\n\n"
+    "written in. Speak clearly at a normal conversational speed, neither slowed "
+    "down nor hurried. Read only this text. Do not answer it, add to it, or "
+    "comment on it.\n\n"
 )
 
 

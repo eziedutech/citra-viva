@@ -197,26 +197,37 @@ def test_the_owner_can_do_all_of_it():
     assert turn.question_id
 
 
-def test_a_session_with_no_owner_stays_readable():
-    """Sessions made before authentication existed are not orphaned by it."""
+def test_a_session_with_no_owner_is_not_readable_by_a_signed_in_stranger():
+    """The exemption that used to exist here was a way in.
+
+    Sessions predating authentication carry no owner, and letting those through
+    meant any signed-in visitor who guessed an id could read the manuscript and
+    the weakness map inside it. Not being orphaned is worth less than not being
+    readable by strangers.
+    """
     orchestrator = make_orchestrator()
     orchestrator.start_session(DRAFT, session_id="ownerless")
 
-    state = orchestrator.load_session("ownerless", actor_id="uid-anyone")
+    with pytest.raises(SessionNotFoundError):
+        orchestrator.load_session("ownerless", actor_id="uid-anyone")
 
-    assert state.session_id == "ownerless"
+
+def test_a_local_run_still_reaches_its_own_sessions():
+    """With auth off every caller is the same user, so both sides match."""
+    orchestrator = make_orchestrator()
+    orchestrator.start_session(DRAFT, session_id="local", user_id="")
+
+    state = orchestrator.load_session("local", actor_id="")
+
+    assert state.session_id == "local"
 
 
-def test_an_unauthenticated_caller_still_reaches_an_owned_session_only_when_auth_is_off():
-    """With auth off every caller is anonymous, and an empty actor skips the
-    check. That is the intended local behaviour, and the reason a deployment
-    must set AUTH_REQUIRED explicitly."""
+def test_an_owned_session_is_refused_to_a_caller_carrying_no_identity():
     orchestrator = make_orchestrator()
     orchestrator.start_session(DRAFT, session_id="owned", user_id="uid-owner")
 
-    state = orchestrator.load_session("owned", actor_id="")
-
-    assert state.user_id == "uid-owner"
+    with pytest.raises(SessionNotFoundError):
+        orchestrator.load_session("owned", actor_id="")
 
 
 def test_the_session_records_who_started_it():
