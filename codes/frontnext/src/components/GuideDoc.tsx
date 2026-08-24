@@ -6,9 +6,8 @@ import { Icon } from '@/components/Icon';
 import type { Dictionary } from '@/lib/i18n';
 
 const CITRA_URL = 'https://citra.eziedutech.dev';
-
-/** The section that carries the link out to the parent product. */
-const FAMILY_SECTION = 'what';
+const REPO_URL = 'https://github.com/eziedutech/citra-viva';
+const TERMS_URL = 'https://cloud.google.com/terms/';
 
 interface Props {
   dict: Dictionary;
@@ -65,6 +64,17 @@ export function GuideDoc({ dict }: Props) {
 
   const current = sections.find((section) => section.id === active) ?? sections[0];
   if (!current) return null;
+
+  // Three sections end in somewhere else, and the destination is the point of
+  // the section rather than a decoration on it: the parent product, the terms
+  // that actually govern what happens to a manuscript, and the source. Kept as
+  // a lookup so a section carrying no link renders nothing extra.
+  const outbound: Record<string, { href: string; label: string }> = {
+    what: { href: CITRA_URL, label: dict.landing.familyLink },
+    privacy: { href: TERMS_URL, label: dict.guide.termsLink },
+    tech: { href: REPO_URL, label: dict.guide.repoLink },
+  };
+  const link = outbound[current.id];
 
   return (
     <div className="mx-auto w-full max-w-[1120px] px-6 py-10">
@@ -145,14 +155,14 @@ export function GuideDoc({ dict }: Props) {
             ))}
           </dl>
 
-          {current.id === FAMILY_SECTION ? (
+          {link ? (
             <a
-              href={CITRA_URL}
+              href={link.href}
               target="_blank"
               rel="noreferrer"
               className="text-body-sm mt-8 inline-flex items-center gap-[6px] text-[color:var(--color-primary-700)] underline underline-offset-2"
             >
-              {dict.landing.familyLink}
+              {link.label}
               <Icon name="external" size={15} />
             </a>
           ) : null}

@@ -282,6 +282,8 @@ const en = {
     heading: 'How CITRA Viva works',
     lede: 'What the agent does with your manuscript, what it refuses to do, and how to get a useful session out of it. Nothing here needs an account.',
     contents: 'Contents',
+    repoLink: 'Read the source on GitHub',
+    termsLink: 'Google Cloud terms',
     sections: [
       {
         id: 'what',
@@ -299,6 +301,37 @@ const en = {
           {
             title: 'A companion to CITRA',
             body: 'CITRA is the research writing workspace where an argument gets built and every claim stays traceable to its source. Viva does the opposite job on the same manuscript: it looks for where that argument gives way, then presses there until the point holds or breaks.',
+          },
+        ],
+      },
+      {
+        id: 'start',
+        title: 'Your first session',
+        lead: 'What actually happens, in order. It is free to use, and the only things you need are a Google account and the draft you are going to defend.',
+        points: [
+          {
+            title: 'Sign in with Google',
+            body: 'A session holds your unpublished manuscript and a map of where your argument gives way. Signing in is what keeps that yours: a session can only ever be opened by the account that created it. Nothing is charged, and nothing else is asked of you.',
+          },
+          {
+            title: 'Give it your draft',
+            body: 'Paste the text, or upload a PDF or DOCX. If you would rather see how a session runs before handing over your own writing, there is a sample manuscript behind a button, already carrying the kinds of weakness a committee looks for.',
+          },
+          {
+            title: 'Wait about half a minute',
+            body: 'Two agents run before the first question arrives: one reads the manuscript in full and maps its weak points, the other turns that map into an ordered examination. You can see which stage is running while you wait.',
+          },
+          {
+            title: 'Answer five to eight questions',
+            body: 'A question can take more than one turn, because a strong answer earns a harder follow-up and a weak one earns a chance to clarify. Type or speak, whichever you would rather practise.',
+          },
+          {
+            title: 'Read the report, and keep it',
+            body: 'At the end you get what held, what is still open, and the habits behind the gaps. It downloads as a file, so it survives the browser it was made in.',
+          },
+          {
+            title: 'It follows the language of your draft',
+            body: 'A manuscript in Indonesian is analysed and examined in Indonesian. The interface language is a separate choice, so you can sit a defense conducted entirely in Indonesian with the buttons in English, or the other way round.',
           },
         ],
       },
@@ -358,6 +391,14 @@ const en = {
             body: 'You can see which question is being examined and which are done. What is still ahead stays shut, because a defense you can read in advance is not a defense.',
           },
           {
+            title: 'Every question shows where it came from',
+            body: 'Each one carries the sentence of your manuscript that produced it, quoted and checked back against your text. You can always see why you are being asked something.',
+          },
+          {
+            title: 'Your manuscript is one click away',
+            body: 'The draft you submitted can be opened beside the examination, so a question about a passage does not send you hunting through another window for it.',
+          },
+          {
             title: 'Answer in your own words',
             body: 'Short and precise beats long. The examiner is judging whether you can defend the point, not whether you can restate the chapter.',
           },
@@ -374,19 +415,50 @@ const en = {
       {
         id: 'voice',
         title: 'Speaking and listening',
-        lead: 'You can answer out loud, and the examiner can read its questions to you. A real viva is spoken, and practising it silently trains the wrong thing.',
+        lead: 'You can answer out loud, and the examiner speaks its questions to you. A real viva is spoken, and practising it silently trains the wrong thing.',
         points: [
           {
-            title: 'Speaking an answer',
-            body: 'The microphone records, and the transcript is placed in the answer box for you to read. It is not sent until you send it, because a defense transcript is a permanent record and a misheard word has to be correctable before it becomes part of one.',
+            title: 'The examiner speaks as the question appears',
+            body: 'The audio is made while the question is being decided rather than afterwards, so there is nothing to press and nothing extra to wait for. The switch in the header turns it off if you would rather read.',
           },
           {
-            title: 'Hearing the examiner',
-            body: 'Any examiner turn can be read aloud, and the switch in the header reads each new question as it arrives. The voice reads the text already in the transcript, never a second generation of it.',
+            title: 'Speaking an answer',
+            body: 'Press the microphone and talk. The audio is sent as you speak, so the transcript is ready under a second after you stop rather than several seconds later.',
+          },
+          {
+            title: 'You decide when you have finished',
+            body: 'The recording ends when you stop it, never when the system decides you have paused for long enough. Someone thinking in the middle of an answer has not finished, and only you know the difference.',
+          },
+          {
+            title: 'Watch the level meter',
+            body: 'Bars move beside the timer while you speak. If they stay still, no audio is reaching the page, which is almost always the wrong microphone being selected somewhere. A recording that arrives silent is refused rather than sent.',
+          },
+          {
+            title: 'The transcript is yours to correct first',
+            body: 'Speech lands in the answer box, not in the session. Read it, fix anything misheard, then send it. A defense transcript is a permanent record, and a word the recognition got wrong has to be correctable before it becomes part of one.',
           },
           {
             title: 'Voice changes nothing underneath',
             body: 'A spoken answer travels the same path as a typed one and meets exactly the same rules. Speech is a way in and a way out, not a separate mode with its own behaviour.',
+          },
+        ],
+      },
+      {
+        id: 'rubric',
+        title: 'Asking for the marking scheme',
+        lead: 'There is help available during a question, and it is deliberately the kind of help that cannot answer for you.',
+        points: [
+          {
+            title: 'What it gives you',
+            body: 'The marking scheme for the question in front of you: what a good answer would need to contain. Not the answer, not a sentence you could repeat back, and not an example you could adapt.',
+          },
+          {
+            title: 'Why there are no suggested answers',
+            body: 'That feature was considered and refused. Someone who reads a suggested answer before replying is no longer defending anything, and the entire value of this tool is that the answer has to come from you.',
+          },
+          {
+            title: 'Asking is recorded',
+            body: 'Every reveal is written into the transcript and appears in the closing report. Help that hides itself from the record is not help: it is a way to arrive at a real defense believing you were readier than you were.',
           },
         ],
       },
@@ -406,6 +478,29 @@ const en = {
           {
             title: 'Patterns for next time',
             body: 'The habits behind the individual gaps. Paste them into the unresolved weaknesses field when you start your next session and they will be tested first.',
+          },
+          {
+            title: 'Take it with you',
+            body: 'The report downloads as a plain Markdown file that opens in any editor. Nothing about reading it later depends on this service still being here.',
+          },
+        ],
+      },
+      {
+        id: 'memory',
+        title: 'What carries into the next session',
+        lead: 'The second defense is not the first one repeated. A weakness you already failed to fix once is the most valuable thing to test again.',
+        points: [
+          {
+            title: 'Patterns, not transcripts',
+            body: 'What carries forward is the habit behind the gaps, written so that it is still recognisable in a different manuscript months later. Something like treating a correlation as a cause when writing conclusions, rather than question three was weak.',
+          },
+          {
+            title: 'How to use it',
+            body: 'Copy the patterns out of your report and into the unresolved weaknesses field when you start the next session. Questions attacking them are then asked first, even when other findings look more severe.',
+          },
+          {
+            title: 'Nothing is remembered about you personally',
+            body: 'There is no free-form memory of who you are or how you did. What is kept is a structured list of weaknesses, each one traceable to a specific finding in a specific manuscript, so you can read it, check it, and disagree with it.',
           },
         ],
       },
@@ -429,6 +524,33 @@ const en = {
         ],
       },
       {
+        id: 'privacy',
+        title: 'Your manuscript, and who can see it',
+        lead: 'You are being asked to hand an unpublished thesis to a service you did not write. That deserves a straight answer rather than a policy page.',
+        points: [
+          {
+            title: 'Only your account can open your sessions',
+            body: 'Ownership is checked on the record itself rather than guessed from the address. A session belonging to somebody else is reported as not existing at all, because telling a stranger that a session exists but is not theirs already tells them something worth knowing.',
+          },
+          {
+            title: 'The file you upload is never stored',
+            body: 'A PDF or DOCX is read into memory, turned into text, and discarded. What is kept is the text you reviewed and chose to submit, so that you can open your manuscript beside the questions during the defense and so that every quote can be checked against exactly what you sent.',
+          },
+          {
+            title: 'Nothing leaves Google Cloud',
+            body: 'Your draft is sent to Google’s Gemini models to be analysed, and nowhere else. There is no third party in this system: no analytics service reading your text, no other vendor, nothing sold to anyone. What Google itself does with data sent to its enterprise AI platform is governed by Google’s own terms, linked below rather than paraphrased here.',
+          },
+          {
+            title: 'Your work is never shown to another user',
+            body: 'No session, finding, question, or report is visible to anyone else, and none of it is published anywhere.',
+          },
+          {
+            title: 'The sign-in gives us almost nothing',
+            body: 'Sessions are keyed to the account identifier Google returns, not to your email address, because an email can change hands and an identifier cannot. There is no password here to lose, because there is no password here at all.',
+          },
+        ],
+      },
+      {
         id: 'integrity',
         title: 'What it will not do',
         lead: 'These are enforced in code rather than requested in a prompt, which means the model cannot decide otherwise on a bad day.',
@@ -448,6 +570,60 @@ const en = {
           {
             title: 'It will not override the model quietly',
             body: 'Where a session rule replaces the model’s decision, the substitution is shown to you in the transcript rather than applied out of sight.',
+          },
+        ],
+      },
+      {
+        id: 'trouble',
+        title: 'When something goes wrong',
+        lead: 'The failures people actually hit, and what each one means.',
+        points: [
+          {
+            title: 'Your spoken answer came back empty',
+            body: 'Almost always the wrong microphone is selected, in the browser or in the operating system. The level meter is the test: if it does not move while you are speaking, no audio is reaching the page. Silence is refused rather than sent, because a model given silence answers anyway and hands you words you never said.',
+          },
+          {
+            title: 'Your PDF was refused',
+            body: 'A scanned document is a picture of text and has no text to extract. Export a text PDF from the software you wrote in, or paste the text directly.',
+          },
+          {
+            title: 'The extracted text looks wrong',
+            body: 'Fix it in the box before starting. Two column layouts, running headers, and unusual characters all survive extraction imperfectly, and every quote the examiner uses is checked against exactly what you submit.',
+          },
+          {
+            title: 'You closed the tab in the middle',
+            body: 'Nothing is lost. Every turn is written to storage as it is judged, so the session resumes at the question it stopped on, from any machine you sign in on.',
+          },
+          {
+            title: 'The examiner seems to be taking a long time',
+            body: 'Judging an answer is a real piece of reasoning and takes as long as it takes. A busy model is retried automatically. If a turn fails outright, your place is not lost: the session is still at that question and you can answer it again.',
+          },
+        ],
+      },
+      {
+        id: 'tech',
+        title: 'What it is built on',
+        lead: 'The whole thing is open source, so none of this has to be taken on trust.',
+        points: [
+          {
+            title: 'Five agents, none of which can call another',
+            body: 'One maps the weaknesses, one plans the examination, one judges each answer and decides what to say next, one writes the report, and one checks citations beside them. Every exchange goes through a single orchestrator. The isolation is enforced by the framework rather than requested in a prompt, so an agent could not hand work to another even if it tried.',
+          },
+          {
+            title: 'The models',
+            body: 'Gemini 3.5 Flash does the reasoning. Two further Gemini models handle voice: one speaks the examiner’s questions, one transcribes your answer while you are still speaking.',
+          },
+          {
+            title: 'Where it runs',
+            body: 'Google Cloud, entirely. Cloud Run serves the application, Firestore holds every piece of state, Firebase Authentication decides who may open it, and Cloud Trace records one span per agent call, so the chain of decisions behind a single turn can be read afterwards.',
+          },
+          {
+            title: 'Nothing is kept inside the model',
+            body: 'A session lives in the database, not in an agent’s memory. That is why closing the tab costs nothing, and why two answers sent at the same moment cannot overwrite each other.',
+          },
+          {
+            title: 'Read it yourself',
+            body: 'The repository carries the architecture, the prompts, the rules enforced in code, and the instructions for running your own copy. It is MIT licensed.',
           },
         ],
       },
@@ -911,174 +1087,350 @@ const id: Dictionary = {
   guide: {
     nav: 'Panduan',
     heading: 'Cara kerja CITRA Viva',
-    lede: 'Apa yang dilakukan agent terhadap naskah Anda, apa yang ditolaknya, dan bagaimana mendapatkan sesi yang benar-benar berguna. Tidak ada bagian di sini yang memerlukan akun.',
+    lede: 'Apa yang dilakukan agen terhadap naskah Anda, apa yang ditolaknya, dan bagaimana mendapatkan sesi yang berguna. Tidak ada yang di halaman ini butuh akun.',
     contents: 'Daftar isi',
+    repoLink: 'Baca kodenya di GitHub',
+    termsLink: 'Ketentuan Google Cloud',
     sections: [
       {
         id: 'what',
-        title: 'Apa ini',
-        lead: 'Sidang latihan berbasis agent. Anda menyerahkan draf yang akan Anda pertahankan, empat agent membagi pekerjaan mengujinya, lalu Anda ditanyai pada bagian yang akan dikejar penguji sungguhan.',
+        title: 'Ini apa',
+        lead: 'Sidang latihan yang dijalankan agen. Anda serahkan draf yang akan Anda pertahankan, empat agen membagi pekerjaan mengujinya, dan Anda ditanyai pada bagian yang akan dikejar penguji sungguhan.',
         points: [
           {
-            title: 'Menekan, dan itu memang disengaja',
-            body: 'Kebanyakan alat menulis dibangun untuk menyetujui Anda. Yang ini dibangun untuk menemukan kalimat yang tidak sanggup didukung argumen Anda, lalu terus menanyakannya. Itu tidak nyaman, dan justru itu maksudnya: ketidaknyamanan di sini jauh lebih murah daripada di ruang sidang.',
+            title: 'Memang dibuat untuk melawan Anda',
+            body: 'Kebanyakan alat tulis dibuat untuk menyetujui Anda. Yang ini dibuat untuk menemukan kalimat yang tidak sanggup ditopang argumen Anda, lalu terus menanyakannya. Itu tidak nyaman, dan memang itu maksudnya: ketidaknyamanan di sini jauh lebih murah daripada di ruang sidang.',
           },
           {
             title: 'Ia menguji, bukan menuliskan',
-            body: 'Ia tidak akan menyusun jawaban untuk Anda, dan tidak akan menawarkan kalimat yang tinggal Anda ulang. Yang dihasilkannya adalah pertanyaan, penilaian, dan catatan. Mempertahankannya tetap tugas Anda.',
+            body: 'Ia tidak akan menyusun jawaban untuk Anda, dan tidak akan menyodorkan kalimat yang bisa Anda ulangi. Yang dihasilkannya adalah pertanyaan, penilaian, dan catatan. Mempertahankannya tetap tugas Anda.',
           },
           {
             title: 'Pendamping CITRA',
-            body: 'CITRA adalah ruang kerja penulisan riset, tempat argumen dibangun dan setiap klaim tetap dapat ditelusuri ke sumbernya. Viva melakukan pekerjaan sebaliknya pada naskah yang sama: mencari tempat argumen itu melemah, lalu menekannya sampai poin itu bertahan atau patah.',
+            body: 'CITRA adalah ruang kerja menulis riset tempat argumen dibangun dan setiap klaim tetap bisa dilacak ke sumbernya. Viva mengerjakan kebalikannya pada naskah yang sama: mencari di mana argumen itu jebol, lalu menekan di situ sampai poinnya bertahan atau patah.',
+          },
+        ],
+      },
+      {
+        id: 'start',
+        title: 'Sesi pertama Anda',
+        lead: 'Apa yang sebenarnya terjadi, berurutan. Gratis, dan yang Anda perlukan hanya akun Google dan draf yang akan Anda pertahankan.',
+        points: [
+          {
+            title: 'Masuk dengan Google',
+            body: 'Satu sesi memuat naskah Anda yang belum terbit dan peta di mana argumen Anda jebol. Masuk itulah yang membuat semua itu tetap milik Anda: sebuah sesi hanya bisa dibuka oleh akun yang membuatnya. Tidak ada biaya, dan tidak ada data lain yang diminta.',
+          },
+          {
+            title: 'Berikan draf Anda',
+            body: 'Tempel teksnya, atau unggah PDF atau DOCX. Kalau Anda ingin melihat dulu bagaimana sesi berjalan sebelum menyerahkan tulisan sendiri, ada naskah contoh di balik satu tombol, yang sudah membawa jenis kelemahan yang dicari penguji.',
+          },
+          {
+            title: 'Tunggu sekitar setengah menit',
+            body: 'Dua agen berjalan sebelum pertanyaan pertama muncul: satu membaca naskah selengkapnya dan memetakan titik lemahnya, satu lagi mengubah peta itu menjadi ujian yang terurut. Anda bisa melihat tahap mana yang sedang berjalan.',
+          },
+          {
+            title: 'Jawab lima sampai delapan pertanyaan',
+            body: 'Satu pertanyaan bisa memakan lebih dari satu giliran, karena jawaban yang kuat justru mendapat pendalaman yang lebih sulit dan jawaban yang lemah mendapat kesempatan memperjelas. Ketik atau bicara, mana yang lebih ingin Anda latih.',
+          },
+          {
+            title: 'Baca laporannya, lalu simpan',
+            body: 'Di akhir Anda mendapat apa yang bertahan, apa yang masih terbuka, dan kebiasaan di balik celahnya. Laporannya bisa diunduh sebagai berkas, jadi ia tetap ada setelah peramban ini ditutup.',
+          },
+          {
+            title: 'Ia mengikuti bahasa draf Anda',
+            body: 'Naskah berbahasa Indonesia dianalisis dan diuji dalam bahasa Indonesia. Bahasa antarmuka adalah pilihan terpisah, jadi Anda bisa menjalani sidang berbahasa Indonesia dengan tombol berbahasa Inggris, atau sebaliknya.',
           },
         ],
       },
       {
         id: 'how',
         title: 'Bagaimana satu sesi berjalan',
-        lead: 'Empat agent menjalankan sidang, berurutan, masing-masing menyerahkan sesuatu yang lebih sempit daripada yang diterimanya. Yang kelima, pemeriksa sitasi, berjalan di sampingnya, bukan di dalamnya.',
+        lead: 'Empat agen menjalankan sidang, berurutan, masing-masing menyerahkan ke agen berikutnya sesuatu yang lebih sempit daripada yang ia terima. Yang kelima, pemeriksa sitasi, berjalan di sampingnya, bukan di dalamnya.',
         points: [
           {
             title: '1. Draf dibaca dan dipetakan',
-            body: 'Naskah dibaca sekali, utuh, dan kalimat yang akan membuat penguji berhenti ditandai di tempatnya. Tiap kalimat menjadi satu temuan: kutipannya, alasan lemahnya, dan seberapa keras penguji biasanya menekannya.',
+            body: 'Naskah dibaca sekali, selengkapnya, dan kalimat yang akan membuat penguji berhenti ditandai di tempatnya. Masing-masing menjadi satu temuan: kutipannya, alasan kelemahannya, dan seberapa keras penguji kemungkinan akan menekan.',
           },
           {
-            title: '2. Pengujian disusun',
-            body: 'Temuan menjadi pertanyaan, diurutkan menurut tekanan, bukan menurut letaknya di naskah. Kelemahan yang Anda bawa dari sesi sebelumnya ditanyakan lebih dulu, berapa pun bobotnya.',
+            title: '2. Ujian disusun',
+            body: 'Temuan menjadi pertanyaan, diurutkan menurut tekanan, bukan menurut letaknya di teks Anda. Kelemahan yang Anda bawa dari sesi sebelumnya ditanyakan lebih dulu, berapa pun tingkat keparahannya.',
           },
           {
-            title: '3. Tiap jawaban dinilai',
-            body: 'Jawaban Anda ditimbang terhadap apa yang sebenarnya diminta pertanyaan, lalu penguji memutuskan langkah berikutnya: menekan lebih dalam, memberi kesempatan menjelaskan, berpindah topik, atau mencatat poin itu sebagai belum terjawab.',
+            title: '3. Setiap jawaban dinilai',
+            body: 'Jawaban Anda ditimbang terhadap apa yang sebenarnya diminta pertanyaan itu, lalu penguji memutuskan langkah berikutnya: menekan lebih dalam, memberi kesempatan memperjelas, berpindah, atau mencatat poin itu sebagai tidak terpertahankan.',
           },
           {
             title: '4. Sesi dilaporkan',
-            body: 'Di akhir, apa yang berhasil Anda pertahankan dan apa yang masih terbuka sama-sama diambil dari transkrip dengan kata-kata penguji sendiri, sehingga laporannya tidak mungkin bertentangan dengan sesi yang dilaporkannya.',
+            body: 'Di akhir, apa yang Anda pertahankan dan apa yang masih terbuka sama-sama diambil dari transkrip, dengan kata-kata penguji sendiri, sehingga laporannya tidak mungkin bertentangan dengan sesi yang dilaporkannya.',
           },
         ],
       },
       {
         id: 'draft',
-        title: 'Menyiapkan draf',
-        lead: 'Kualitas pengujian mengikuti kualitas bahan yang diberikan. Beberapa menit di sini mengubah seluruh sesi.',
+        title: 'Menyiapkan draf Anda',
+        lead: 'Ujian hanya sebaik bahan yang diberikan kepadanya. Beberapa menit di tahap ini mengubah keseluruhan sesi.',
         points: [
           {
             title: 'Tempel atau unggah',
-            body: 'PDF, DOCX, TXT, dan Markdown dapat dibaca, maksimal 10 MB. Dokumen hasil pindai tidak punya teks yang dapat dipilih dan tidak bisa dipakai: ekspor ulang sebagai PDF teks. Berkasnya sendiri tidak pernah disimpan.',
+            body: 'PDF, DOCX, TXT, dan Markdown terbaca, sampai 10 MB. Dokumen hasil pindaian tidak punya teks yang bisa diseleksi dan tidak bisa dipakai: ekspor PDF teks sebagai gantinya. Berkasnya sendiri tidak pernah disimpan.',
           },
           {
-            title: 'Periksa hasil ekstraksi sebelum memulai',
-            body: 'Teks hasil ekstraksi masuk ke kotak yang dapat disunting, bukan langsung ke sesi. Setiap kutipan yang dipakai penguji dicocokkan ke persis apa yang Anda kirim di sini, jadi kesalahan ekstraksi sebaiknya diperbaiki sekarang.',
+            title: 'Periksa teks hasil ekstraksi sebelum mulai',
+            body: 'Teks hasil ekstraksi mendarat di kotak yang bisa disunting, bukan langsung masuk sesi. Setiap kutipan yang dipakai penguji diperiksa terhadap persis apa yang Anda kirim di sini, jadi apa pun yang rusak saat ekstraksi layak diperbaiki sekarang.',
           },
           {
             title: 'Berikan argumennya, bukan halaman depannya',
-            body: 'Pendahuluan, metodologi, dan hasil memberi penguji bahan paling banyak. Abstrak saja nyaris tidak memberi apa pun untuk ditekan.',
+            body: 'Pendahuluan, metodologi, dan temuan memberi penguji bahan paling banyak. Abstrak saja hampir tidak memberinya apa pun untuk ditekan.',
           },
           {
             title: 'Bawa kelemahan yang belum selesai',
-            body: 'Kolom opsional menerima satu kelemahan per baris, biasanya disalin dari laporan sesi sebelumnya. Pertanyaan yang menyasarnya diajukan lebih dulu. Kelemahan yang sekali gagal Anda perbaiki adalah hal paling berharga untuk diuji ulang.',
+            body: 'Kolom opsional itu menerima satu kelemahan per baris, biasanya ditempel dari laporan sesi sebelumnya. Pertanyaan yang menyerangnya ditanyakan lebih dulu. Kelemahan yang sudah sekali gagal Anda perbaiki adalah hal paling berharga untuk diuji lagi.',
           },
         ],
       },
       {
         id: 'defense',
         title: 'Di ruang sidang',
-        lead: 'Tiga panel, masing-masing bergulir sendiri: rencana di kiri, percakapan di tengah, bukti di kanan.',
+        lead: 'Tiga panel, masing-masing menggulir sendiri: rencana di kiri, percakapan di tengah, bukti di kanan.',
         points: [
           {
             title: 'Rencana di depan Anda tetap tertutup',
-            body: 'Anda dapat melihat pertanyaan mana yang sedang diuji dan mana yang selesai. Yang masih di depan tetap tertutup, karena sidang yang dapat dibaca lebih dulu bukan sidang.',
+            body: 'Anda bisa melihat pertanyaan mana yang sedang diuji dan mana yang sudah selesai. Yang masih di depan tetap tertutup, karena sidang yang bisa dibaca lebih dulu bukan sidang.',
+          },
+          {
+            title: 'Setiap pertanyaan menunjukkan asalnya',
+            body: 'Masing-masing membawa kalimat naskah Anda yang melahirkannya, dikutip dan dicocokkan kembali ke teks Anda. Anda selalu bisa melihat mengapa Anda ditanyai sesuatu.',
+          },
+          {
+            title: 'Naskah Anda satu klik saja',
+            body: 'Draf yang Anda kirim bisa dibuka di samping ujian, sehingga pertanyaan tentang satu bagian tidak membuat Anda mencarinya di jendela lain.',
           },
           {
             title: 'Jawab dengan kata-kata Anda sendiri',
-            body: 'Pendek dan tepat lebih baik daripada panjang. Penguji menilai apakah Anda dapat mempertahankan poinnya, bukan apakah Anda hafal isi bab.',
+            body: 'Pendek dan tepat mengalahkan panjang. Penguji menilai apakah Anda sanggup mempertahankan poinnya, bukan apakah Anda hafal isi bab.',
           },
           {
-            title: 'Pertanyaan berakhir, bukan berputar',
-            body: 'Satu pertanyaan memberi paling banyak dua pendalaman dan satu kesempatan klarifikasi. Batas itu ditegakkan di kode, bukan diminta pada model, sehingga pengujian tidak bisa mengitari satu poin sampai Anda menyerah.',
+            title: 'Satu pertanyaan berakhir, tidak berputar',
+            body: 'Satu pertanyaan mengizinkan paling banyak dua pendalaman dan satu klarifikasi. Batas itu ditegakkan di kode, bukan diminta kepada model, sehingga ujian tidak mungkin mengitari satu poin sampai Anda menyerah.',
           },
           {
             title: 'Tidak ada yang bergantung pada tab ini',
-            body: 'Setiap giliran ditulis ke penyimpanan begitu dinilai. Tutup tab di tengah sidang, kembali besok dari perangkat lain, dan sesinya dilanjutkan dari pertanyaan tempatnya berhenti.',
+            body: 'Setiap giliran ditulis ke penyimpanan begitu dinilai. Tutup tab di tengah sidang, kembali besok di mesin lain, dan ia melanjutkan dari pertanyaan tempat ia berhenti.',
           },
         ],
       },
       {
         id: 'voice',
-        title: 'Berbicara dan mendengarkan',
-        lead: 'Anda dapat menjawab dengan suara, dan penguji dapat membacakan pertanyaannya. Sidang sungguhan itu lisan, dan berlatih dalam diam melatih hal yang salah.',
+        title: 'Bicara dan mendengar',
+        lead: 'Anda bisa menjawab dengan suara, dan penguji membacakan pertanyaannya. Sidang sungguhan itu lisan, dan melatihnya dalam diam melatih hal yang salah.',
         points: [
           {
-            title: 'Menjawab dengan suara',
-            body: 'Mikrofon merekam, lalu transkripnya ditaruh di kotak jawaban untuk Anda baca. Ia tidak terkirim sampai Anda mengirimnya, karena transkrip sidang adalah catatan permanen dan kata yang salah dengar harus dapat diperbaiki sebelum menjadi bagian darinya.',
+            title: 'Penguji bicara begitu pertanyaannya muncul',
+            body: 'Audionya dibuat sementara pertanyaannya sedang diputuskan, bukan sesudahnya, jadi tidak ada yang perlu ditekan dan tidak ada tambahan waktu tunggu. Sakelar di header mematikannya kalau Anda lebih suka membaca.',
           },
           {
-            title: 'Mendengarkan penguji',
-            body: 'Setiap giliran penguji dapat dibacakan, dan sakelar di bilah atas membacakan tiap pertanyaan baru begitu muncul. Suaranya membacakan teks yang sudah ada di transkrip, bukan generasi kedua darinya.',
+            title: 'Menjawab dengan suara',
+            body: 'Tekan mikrofon lalu bicara. Audionya dikirim sambil Anda bicara, sehingga transkripnya siap kurang dari satu detik setelah Anda berhenti, bukan beberapa detik kemudian.',
+          },
+          {
+            title: 'Anda yang memutuskan kapan selesai',
+            body: 'Rekaman berhenti ketika Anda menghentikannya, tidak pernah ketika sistem menganggap jeda Anda sudah cukup lama. Orang yang sedang berpikir di tengah jawaban belum selesai, dan hanya Anda yang tahu bedanya.',
+          },
+          {
+            title: 'Perhatikan meter tingkat suara',
+            body: 'Batang di samping penghitung waktu bergerak saat Anda bicara. Kalau diam saja, tidak ada audio yang sampai ke halaman, dan itu hampir selalu berarti mikrofon yang salah sedang terpilih di suatu tempat. Rekaman yang sampai dalam keadaan senyap ditolak, bukan dikirim.',
+          },
+          {
+            title: 'Transkripnya Anda koreksi dulu',
+            body: 'Hasil suara mendarat di kotak jawaban, bukan langsung ke sesi. Baca, perbaiki yang salah dengar, baru kirim. Transkrip sidang adalah catatan permanen, dan kata yang salah dikenali harus bisa dikoreksi sebelum menjadi bagian darinya.',
           },
           {
             title: 'Suara tidak mengubah apa pun di bawahnya',
-            body: 'Jawaban lisan menempuh jalur yang sama dengan jawaban tertulis dan tunduk pada aturan yang persis sama. Suara adalah jalan masuk dan jalan keluar, bukan mode terpisah dengan perilakunya sendiri.',
+            body: 'Jawaban lisan menempuh jalur yang sama dengan jawaban ketik dan menemui aturan yang persis sama. Suara adalah jalan masuk dan jalan keluar, bukan mode terpisah dengan perilakunya sendiri.',
+          },
+        ],
+      },
+      {
+        id: 'rubric',
+        title: 'Meminta skema penilaian',
+        lead: 'Ada bantuan yang tersedia di tengah pertanyaan, dan bantuan itu sengaja dibuat tidak bisa menjawab untuk Anda.',
+        points: [
+          {
+            title: 'Apa yang Anda dapat',
+            body: 'Skema penilaian untuk pertanyaan yang sedang di depan Anda: apa yang harus dimuat sebuah jawaban yang baik. Bukan jawabannya, bukan kalimat yang bisa Anda ulangi, dan bukan contoh yang bisa Anda sesuaikan.',
+          },
+          {
+            title: 'Kenapa tidak ada rekomendasi jawaban',
+            body: 'Fitur itu sudah dipertimbangkan dan ditolak. Orang yang membaca saran jawaban sebelum menjawab tidak lagi sedang mempertahankan apa pun, dan seluruh nilai alat ini terletak pada kenyataan bahwa jawabannya harus datang dari Anda.',
+          },
+          {
+            title: 'Meminta bantuan itu tercatat',
+            body: 'Setiap pembukaan skema ditulis ke transkrip dan muncul di laporan akhir. Bantuan yang menyembunyikan diri dari catatan bukan bantuan: itu cara tiba di sidang sungguhan sambil mengira diri lebih siap daripada kenyataannya.',
           },
         ],
       },
       {
         id: 'report',
         title: 'Laporan sesi',
-        lead: 'Disusun dari transkrip, bukan dari kesan baru atasnya.',
+        lead: 'Ditulis dari transkrip, bukan dari kesan yang baru dibentuk terhadapnya.',
         points: [
           {
-            title: 'Yang bertahan',
-            body: 'Poin yang dicatat penguji sebagai berhasil dipertahankan selama sesi, dan dikembalikan ke laporan jika ringkasannya mencoba menghilangkannya. Laporan yang mengatakan tidak ada satu pun yang bertahan adalah laporan yang juga tidak akan Anda percaya soal kelemahan Anda.',
+            title: 'Apa yang bertahan',
+            body: 'Poin yang dicatat penguji sebagai terpertahankan selama sesi, dikembalikan ke laporan kalau ringkasannya mencoba menghilangkannya. Laporan yang bilang tidak ada satu pun yang bertahan adalah laporan yang juga tidak akan Anda percaya soal kelemahan Anda.',
           },
           {
-            title: 'Yang masih terbuka',
-            body: 'Setiap poin yang tercatat sebagai celah, digambarkan sebagai celah dan tidak pernah sebagai solusinya. Diberi tahu apa yang harus dikatakan akan menggugurkan seluruh latihannya.',
+            title: 'Apa yang masih terbuka',
+            body: 'Setiap poin yang tercatat sebagai celah, digambarkan sebagai celah dan tidak pernah sebagai perbaikan. Diberi tahu apa yang harus dikatakan justru menggagalkan latihannya.',
           },
           {
-            title: 'Pola untuk sesi berikutnya',
-            body: 'Kebiasaan di balik celah-celah itu. Tempelkan ke kolom kelemahan yang belum selesai saat memulai sesi berikutnya, dan poin itu akan diuji lebih dulu.',
+            title: 'Pola untuk lain kali',
+            body: 'Kebiasaan di balik celah-celah itu. Tempelkan ke kolom kelemahan yang belum selesai saat Anda memulai sesi berikutnya, dan itulah yang akan diuji lebih dulu.',
+          },
+          {
+            title: 'Bawa pulang',
+            body: 'Laporannya diunduh sebagai berkas Markdown biasa yang terbuka di editor mana pun. Kemampuan Anda membacanya nanti tidak bergantung pada layanan ini masih ada atau tidak.',
+          },
+        ],
+      },
+      {
+        id: 'memory',
+        title: 'Apa yang terbawa ke sesi berikutnya',
+        lead: 'Sidang kedua bukan pengulangan yang pertama. Kelemahan yang sudah sekali gagal Anda perbaiki adalah hal paling berharga untuk diuji lagi.',
+        points: [
+          {
+            title: 'Pola, bukan transkrip',
+            body: 'Yang terbawa adalah kebiasaan di balik celahnya, ditulis supaya masih bisa dikenali di naskah lain berbulan-bulan kemudian. Sesuatu seperti memperlakukan korelasi sebagai sebab ketika menulis kesimpulan, bukan pertanyaan tiga lemah.',
+          },
+          {
+            title: 'Cara memakainya',
+            body: 'Salin pola itu dari laporan Anda ke kolom kelemahan yang belum selesai saat memulai sesi berikutnya. Pertanyaan yang menyerangnya kemudian ditanyakan lebih dulu, bahkan ketika temuan lain terlihat lebih parah.',
+          },
+          {
+            title: 'Tidak ada yang diingat tentang diri Anda',
+            body: 'Tidak ada ingatan bebas tentang siapa Anda atau bagaimana penampilan Anda. Yang disimpan adalah daftar kelemahan yang terstruktur, masing-masing bisa dilacak ke temuan tertentu di naskah tertentu, sehingga Anda bisa membacanya, memeriksanya, dan tidak menyetujuinya.',
           },
         ],
       },
       {
         id: 'citation',
         title: 'Memeriksa sitasi',
-        lead: 'Alat terpisah, untuk pertanyaan yang berbeda: apakah sumber ini benar-benar memuat kalimat yang Anda sitasikan padanya?',
+        lead: 'Alat terpisah, untuk pertanyaan yang berbeda: apakah sumber ini benar-benar memuat kalimat yang Anda sitasikan kepadanya?',
         points: [
           {
-            title: 'Mengapa DOI yang resolve tidak cukup',
-            body: 'DOI membuktikan makalahnya ada. Itu tidak membuktikan makalahnya mengatakan apa yang Anda atributkan padanya, dan kemiripan topik lolos dari semua pemeriksaan mekanis yang pernah ditulis.',
+            title: 'Kenapa DOI yang resolve saja tidak cukup',
+            body: 'DOI membuktikan makalahnya ada. Ia tidak membuktikan makalah itu mengatakan apa yang Anda atributkan kepadanya, dan kemiripan topik lolos dari setiap pemeriksaan mekanis yang pernah ditulis orang.',
           },
           {
             title: 'Apa yang dibutuhkannya',
-            body: 'Klaim persis seperti tertulis di naskah Anda, dan teks sumbernya, biasanya abstrak atau bagian yang Anda sitasikan. Penilaiannya tidak boleh bersandar pada apa pun selain itu, dan itulah yang membuatnya dapat diperiksa.',
+            body: 'Klaim persis seperti yang tertulis di naskah Anda, dan teks sumbernya, biasanya abstrak atau bagian yang Anda sitasi. Penilaiannya tidak boleh bersandar pada apa pun selain itu, dan justru itulah yang membuatnya bisa diperiksa.',
           },
           {
             title: 'Ia bertanya, bukan menuduh',
-            body: 'Vonis negatif wajib disertai pertanyaan untuk Anda, atau vonisnya turun menjadi tidak dapat dipastikan. Menandai sitasi seseorang salah tanpa jalan untuk menjawab adalah tuduhan, bukan telaah.',
+            body: 'Putusan negatif harus disertai pertanyaan untuk Anda, atau ia diturunkan menjadi tidak dapat dipastikan. Menyatakan sitasi seseorang salah tanpa memberi jalan untuk menjawab itu tuduhan, bukan telaah.',
+          },
+        ],
+      },
+      {
+        id: 'privacy',
+        title: 'Naskah Anda, dan siapa yang bisa melihatnya',
+        lead: 'Anda sedang diminta menyerahkan tesis yang belum terbit kepada layanan yang bukan Anda tulis. Itu pantas dijawab lugas, bukan dengan halaman kebijakan.',
+        points: [
+          {
+            title: 'Hanya akun Anda yang bisa membuka sesi Anda',
+            body: 'Kepemilikan diperiksa pada catatannya sendiri, bukan ditebak dari alamatnya. Sesi milik orang lain dilaporkan sebagai tidak ada sama sekali, karena memberi tahu orang asing bahwa sebuah sesi ada tetapi bukan miliknya sudah memberitahukan sesuatu yang berharga.',
+          },
+          {
+            title: 'Berkas yang Anda unggah tidak pernah disimpan',
+            body: 'PDF atau DOCX dibaca ke memori, diubah menjadi teks, lalu dibuang. Yang disimpan adalah teks yang Anda periksa dan Anda pilih untuk dikirim, supaya Anda bisa membuka naskah di samping pertanyaan selama sidang dan supaya setiap kutipan bisa dicocokkan dengan persis apa yang Anda kirim.',
+          },
+          {
+            title: 'Tidak ada yang keluar dari Google Cloud',
+            body: 'Draf Anda dikirim ke model Gemini milik Google untuk dianalisis, dan tidak ke mana pun lagi. Tidak ada pihak ketiga dalam sistem ini: tidak ada layanan analitik yang membaca teks Anda, tidak ada vendor lain, tidak ada yang dijual kepada siapa pun. Apa yang Google sendiri lakukan terhadap data yang dikirim ke platform AI perusahaannya diatur oleh ketentuan Google, yang ditautkan di bawah alih-alih diparafrasekan di sini.',
+          },
+          {
+            title: 'Pekerjaan Anda tidak pernah ditunjukkan ke pengguna lain',
+            body: 'Tidak ada sesi, temuan, pertanyaan, atau laporan yang terlihat oleh orang lain, dan tidak ada satu pun yang diterbitkan di mana pun.',
+          },
+          {
+            title: 'Proses masuk memberi kami hampir tidak ada apa-apa',
+            body: 'Sesi dikaitkan ke pengenal akun yang dikembalikan Google, bukan ke alamat surel Anda, karena surel bisa berpindah tangan dan pengenal tidak. Tidak ada kata sandi yang bisa hilang di sini, karena memang tidak ada kata sandi sama sekali.',
           },
         ],
       },
       {
         id: 'integrity',
-        title: 'Yang tidak akan dilakukannya',
-        lead: 'Semuanya ditegakkan di kode, bukan diminta lewat prompt, sehingga model tidak bisa memutuskan sebaliknya di hari yang buruk.',
+        title: 'Apa yang tidak akan dilakukannya',
+        lead: 'Semua ini ditegakkan di kode, bukan diminta lewat prompt, yang berarti model tidak bisa memutuskan sebaliknya di hari yang buruk.',
         points: [
           {
-            title: 'Tidak akan mengutip kalimat yang tidak Anda tulis',
-            body: 'Setiap temuan wajib mengutip naskah Anda kata demi kata, dan setiap kutipan dicocokkan kembali ke teks Anda. Temuan yang kutipannya tidak ditemukan di sana dibuang, bukan ditampilkan, karena temuan atas kalimat yang tidak pernah Anda tulis adalah tuduhan.',
+            title: 'Ia tidak akan mengutip kalimat yang tidak Anda tulis',
+            body: 'Setiap temuan wajib mengutip naskah Anda kata demi kata, dan setiap kutipan dicocokkan kembali ke teks Anda. Temuan yang kutipannya tidak ditemukan di sana dibuang, bukan ditampilkan, karena temuan tentang kalimat yang tidak pernah Anda tulis adalah tuduhan.',
           },
           {
-            title: 'Tidak akan mencatat celah tanpa memberi peringatan lebih dulu',
-            body: 'Sebuah poin tidak dapat dicatat sebagai belum terjawab sebelum Anda diberi setidaknya satu kesempatan untuk menjelaskannya.',
+            title: 'Ia tidak akan mencatat celah tanpa memperingatkan lebih dulu',
+            body: 'Satu poin tidak bisa ditulis sebagai tidak terpertahankan sebelum Anda diberi setidaknya satu kesempatan memperjelasnya.',
           },
           {
-            title: 'Tidak akan menilai mutu riset Anda',
-            body: 'Tidak ada skor dan tidak ada batas lulus. Severity menggambarkan seberapa keras penguji biasanya menekan, dan itu pernyataan tentang penguji, bukan tentang mutu pekerjaan Anda.',
+            title: 'Ia tidak akan menilai mutu riset Anda',
+            body: 'Tidak ada skor dan tidak ada batas lulus. Tingkat keparahan menggambarkan seberapa keras penguji kemungkinan akan menekan, dan itu pernyataan tentang penguji, bukan tentang mutu pekerjaan Anda.',
           },
           {
-            title: 'Tidak akan menimpa model diam-diam',
-            body: 'Ketika aturan sesi menggantikan keputusan model, penggantian itu ditampilkan kepada Anda di transkrip, bukan dijalankan di luar penglihatan.',
+            title: 'Ia tidak akan menimpa model diam-diam',
+            body: 'Ketika aturan sesi menggantikan keputusan model, penggantian itu ditunjukkan kepada Anda di transkrip, bukan diterapkan di luar pandangan.',
+          },
+        ],
+      },
+      {
+        id: 'trouble',
+        title: 'Ketika ada yang tidak beres',
+        lead: 'Kegagalan yang benar-benar ditemui orang, dan arti masing-masing.',
+        points: [
+          {
+            title: 'Jawaban lisan Anda kembali kosong',
+            body: 'Hampir selalu mikrofon yang salah sedang terpilih, di peramban atau di sistem operasi. Meter tingkat suara adalah alat ujinya: kalau ia tidak bergerak saat Anda bicara, tidak ada audio yang sampai ke halaman. Kesenyapan ditolak, bukan dikirim, karena model yang diberi kesenyapan tetap akan menjawab dan menyerahkan kata-kata yang tidak pernah Anda ucapkan.',
+          },
+          {
+            title: 'PDF Anda ditolak',
+            body: 'Dokumen hasil pindaian adalah gambar dari teks dan tidak punya teks untuk diambil. Ekspor PDF teks dari perangkat lunak tempat Anda menulis, atau tempel teksnya langsung.',
+          },
+          {
+            title: 'Teks hasil ekstraksi terlihat kacau',
+            body: 'Perbaiki di kotaknya sebelum memulai. Tata letak dua kolom, header berulang, dan karakter tidak lazim semuanya tidak selamat sempurna dari ekstraksi, dan setiap kutipan yang dipakai penguji diperiksa terhadap persis apa yang Anda kirim.',
+          },
+          {
+            title: 'Anda menutup tab di tengah jalan',
+            body: 'Tidak ada yang hilang. Setiap giliran ditulis ke penyimpanan begitu dinilai, jadi sesinya melanjutkan dari pertanyaan tempat ia berhenti, dari mesin mana pun tempat Anda masuk.',
+          },
+          {
+            title: 'Penguji terasa lama sekali',
+            body: 'Menilai satu jawaban adalah pekerjaan penalaran sungguhan dan memakan waktu selama yang diperlukan. Model yang sedang sibuk dicoba ulang otomatis. Kalau satu giliran benar-benar gagal, tempat Anda tidak hilang: sesinya masih di pertanyaan itu dan bisa Anda jawab lagi.',
+          },
+        ],
+      },
+      {
+        id: 'tech',
+        title: 'Dibangun di atas apa',
+        lead: 'Seluruhnya sumber terbuka, jadi tidak ada satu pun dari ini yang harus Anda percaya begitu saja.',
+        points: [
+          {
+            title: 'Lima agen, dan tidak ada yang bisa memanggil yang lain',
+            body: 'Satu memetakan kelemahan, satu menyusun ujian, satu menilai setiap jawaban sekaligus memutuskan apa yang dikatakan berikutnya, satu menulis laporan, dan satu memeriksa sitasi di sampingnya. Setiap pertukaran melewati satu orkestrator. Isolasinya ditegakkan oleh kerangka kerjanya, bukan diminta lewat prompt, jadi sebuah agen tidak akan bisa menyerahkan pekerjaan ke agen lain sekalipun ia mencoba.',
+          },
+          {
+            title: 'Modelnya',
+            body: 'Gemini 3.5 Flash yang melakukan penalaran. Dua model Gemini lain menangani suara: satu membacakan pertanyaan penguji, satu mentranskrip jawaban Anda sementara Anda masih bicara.',
+          },
+          {
+            title: 'Berjalan di mana',
+            body: 'Sepenuhnya di Google Cloud. Cloud Run melayani aplikasinya, Firestore memegang seluruh state, Firebase Authentication memutuskan siapa yang boleh membukanya, dan Cloud Trace mencatat satu span per pemanggilan agen, sehingga rantai keputusan di balik satu giliran bisa dibaca setelahnya.',
+          },
+          {
+            title: 'Tidak ada yang disimpan di dalam model',
+            body: 'Satu sesi hidup di basis data, bukan di ingatan agen. Itulah sebabnya menutup tab tidak merugikan apa pun, dan sebabnya dua jawaban yang dikirim pada saat yang sama tidak bisa saling menimpa.',
+          },
+          {
+            title: 'Baca sendiri',
+            body: 'Repositorinya memuat arsitekturnya, prompt-nya, aturan yang ditegakkan di kode, dan petunjuk menjalankan salinan Anda sendiri. Lisensinya MIT.',
           },
         ],
       },
