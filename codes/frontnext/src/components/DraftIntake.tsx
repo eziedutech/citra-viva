@@ -12,7 +12,7 @@ import { Hint } from '@/components/Hint';
 import { Icon } from '@/components/Icon';
 import { fill, type Dictionary, type Locale } from '@/lib/i18n';
 import { SAMPLE_DRAFT_EN, SAMPLE_DRAFT_ID } from '@/lib/sample-draft';
-import type { StartSessionResponse } from '@/lib/types';
+import type { SessionDigest, SessionHistory, StartSessionResponse } from '@/lib/types';
 
 const MIN_DRAFT_CHARS = 200;
 
@@ -42,6 +42,8 @@ export function DraftIntake({ dict, locale, embedded = false }: Props) {
   const [source, setSource] = useState<{ name: string; pages: number; notes: string[] } | null>(
     null,
   );
+  const [carry, setCarry] = useState<SessionDigest | null>(null);
+  const [carried, setCarried] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -50,6 +52,38 @@ export function DraftIntake({ dict, locale, embedded = false }: Props) {
       if (timer.current) clearInterval(timer.current);
     };
   }, []);
+
+  /**
+   * What the last finished session concluded should be tested first.
+   *
+   * This is the memory that makes the thing a partner rather than a tool. It
+   * was produced at the end of every session and accepted at the start of the
+   * next one, and between the two sat a copy and paste that nobody performs, so
+   * the best feature in the product almost never ran. Offered rather than
+   * filled in silently: a student may want a clean examination, and quietly
+   * changing what gets tested is not a decision to make for them.
+   */
+  useEffect(() => {
+    if (auth.enabled && (!auth.ready || !auth.user || !auth.sessionReady)) return;
+
+    let cancelled = false;
+    void (async () => {
+      try {
+        const response = await auth.authedFetch('/api/sessions/history');
+        if (!response.ok) return;
+        const rows = ((await response.json()) as SessionHistory).sessions ?? [];
+        const latest = rows.find((row) => (row.recurring_gap_patterns ?? []).length > 0);
+        if (!cancelled && latest) setCarry(latest);
+      } catch {
+        // A missing carry-forward costs the student one paste. It is not worth
+        // an error message on a page they came here to type into.
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [auth]);
 
   const length = draft.trim().length;
   const tooShort = length > 0 && length < MIN_DRAFT_CHARS;
@@ -236,6 +270,49 @@ export function DraftIntake({ dict, locale, embedded = false }: Props) {
               <p className="text-caption mb-2 max-w-[64ch] text-[color:var(--color-ink-600)]">
                 {dict.intake.gapsHelp}
               </p>
+
+              {carry ? (
+                <section className="mb-3 border-l-2 border-[color:var(--color-ai)] bg-[color:var(--color-tint-ai)] px-4 py-3">
+                  <h3 className="text-caption mb-1 flex items-center gap-[6px] font-medium text-[color:var(--color-ai)]">
+                    <Icon name="history" size={15} />
+                    {dict.carry.title}
+                  </h3>
+                  <p className="text-caption mb-2 max-w-[64ch] text-[color:var(--color-ink-600)]">
+                    {dict.carry.lede}
+                  </p>
+                  <ul className="text-caption mb-3 space-y-1">
+                    {carry.recurring_gap_patterns.map((pattern) => (
+                      <li key={pattern} className="border-l-2 border-[color:var(--color-line)] pl-3">
+                        {pattern}
+                      </li>
+                    ))}
+                  </ul>
+                  <span className="flex flex-wrap items-center gap-3">
+                    <button
+                      type="button"
+                      disabled={busy || carried}
+                      onClick={() => {
+                        setGaps((current) =>
+                          [current.trim(), carry.recurring_gap_patterns.join('\n')]
+                            .filter(Boolean)
+                            .join('\n'),
+                        );
+                        setCarried(true);
+                      }}
+                      className="text-caption h-8 rounded-[var(--radius-action)] bg-[color:var(--color-primary-700)] px-3 font-medium text-white transition-colors duration-150 hover:bg-[color:var(--color-primary-900)] disabled:bg-[color:var(--color-ink-400)]"
+                    >
+                      {carried ? dict.carry.added : dict.carry.action}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setCarry(null)}
+                      className="text-caption text-[color:var(--color-ink-600)] underline underline-offset-2"
+                    >
+                      {dict.carry.dismiss}
+                    </button>
+                  </span>
+                </section>
+              ) : null}
               <textarea
                 id="gaps"
                 value={gaps}

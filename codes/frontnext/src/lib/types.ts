@@ -154,6 +154,7 @@ export interface SessionDigest {
   answered_count: number;
   gap_count: number;
   has_summary: boolean;
+  recurring_gap_patterns: string[];
   created_at: string | null;
   updated_at: string | null;
 }

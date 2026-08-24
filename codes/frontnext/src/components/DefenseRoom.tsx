@@ -452,6 +452,7 @@ export function DefenseRoom({ initial, dict, locale }: Props) {
         </main>
 
         <Slideover
+          session={session}
           findings={session.findings}
           activeFindingId={activeFinding}
           focusFindingId={focusFinding}
@@ -463,6 +464,7 @@ export function DefenseRoom({ initial, dict, locale }: Props) {
           activeTab={tab}
           onTabChange={setTab}
           dict={dict}
+          locale={locale}
         />
       </div>
     </div>

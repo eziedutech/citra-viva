@@ -4,9 +4,11 @@ import { useEffect, useRef, useState } from 'react';
 
 import { Hint } from '@/components/Hint';
 import { Icon } from '@/components/Icon';
-import type { Dictionary } from '@/lib/i18n';
+import type { Dictionary, Locale } from '@/lib/i18n';
+import { buildReportMarkdown, downloadReport } from '@/lib/report';
 import type {
   AnswerEvaluation,
+  SessionState,
   SessionSummary,
   WeaknessFinding,
 } from '@/lib/types';
@@ -177,16 +179,20 @@ function EvaluationPanel({
 
 function ReportPanel({
   summary,
+  session,
   onClose,
   closing,
   canClose,
   dict,
+  locale,
 }: {
   summary: SessionSummary | null;
+  session: SessionState;
   onClose: () => void;
   closing: boolean;
   canClose: boolean;
   dict: Dictionary;
+  locale: Locale;
 }) {
   if (!summary) {
     return (
@@ -284,6 +290,19 @@ function ReportPanel({
         </section>
       ) : null}
 
+      <section className="border-t border-[color:var(--color-line)] pt-4">
+        <button
+          type="button"
+          onClick={() =>
+            downloadReport(session, buildReportMarkdown(session, summary, dict, locale))
+          }
+          className="text-body-sm flex h-10 w-full items-center justify-center gap-2 rounded-[var(--radius-action)] border border-[color:var(--color-line)] px-4 transition-colors duration-150 hover:bg-[color:var(--color-hover)]"
+        >
+          <Icon name="file" size={16} />
+          {dict.report.download}
+        </button>
+      </section>
+
       {summary.closing_remark ? (
         <section>
           <h4 className="text-caption mb-2 font-medium text-[color:var(--color-ink-600)]">
@@ -301,6 +320,7 @@ function ReportPanel({
 type Tab = 'weakness' | 'evaluation' | 'report';
 
 interface Props {
+  session: SessionState;
   findings: WeaknessFinding[];
   /** The finding behind the question currently open. */
   activeFindingId?: string;
@@ -314,9 +334,11 @@ interface Props {
   activeTab: Tab;
   onTabChange: (tab: Tab) => void;
   dict: Dictionary;
+  locale: Locale;
 }
 
 export function Slideover({
+  session,
   findings,
   activeFindingId = '',
   focusFindingId = '',
@@ -328,6 +350,7 @@ export function Slideover({
   activeTab,
   onTabChange,
   dict,
+  locale,
 }: Props) {
   const tabs: Array<{ id: Tab; label: string }> = [
     { id: 'weakness', label: dict.slideover.tabs.weakness },
@@ -385,10 +408,12 @@ export function Slideover({
         {activeTab === 'report' ? (
           <ReportPanel
             summary={summary}
+            session={session}
             onClose={onClose}
             closing={closing}
             canClose={finished}
             dict={dict}
+            locale={locale}
           />
         ) : null}
       </div>

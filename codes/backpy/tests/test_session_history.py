@@ -133,3 +133,35 @@ def test_a_digest_carries_no_manuscript_text():
     assert "transcript" not in fields
     assert "findings" not in fields
     assert "questions" not in fields
+
+
+def test_a_finished_session_carries_its_patterns_onto_its_row():
+    """The reason this field is on the digest at all.
+
+    The patterns were already produced at the end of every session and already
+    accepted at the start of the next one, and in between sat a copy and paste
+    that nobody performs. Putting them on the row is what closes that loop.
+    """
+    from app.models.session import SessionSummary
+
+    store = InMemorySessionStore()
+    finished = session("done", "student-a")
+    finished.status = SessionStatus.COMPLETED
+    finished.summary = SessionSummary(
+        strong_points=["Named the sampling limit."],
+        remaining_gaps=["Causal language survives in the abstract."],
+        recurring_gap_patterns=["States causation from a cross-sectional design."],
+    )
+    seed(store, finished)
+
+    row = store.list_for_user("student-a")[0]
+
+    assert row.has_summary is True
+    assert row.recurring_gap_patterns == ["States causation from a cross-sectional design."]
+
+
+def test_an_unfinished_session_carries_no_patterns():
+    store = InMemorySessionStore()
+    seed(store, session("open", "student-a"))
+
+    assert store.list_for_user("student-a")[0].recurring_gap_patterns == []

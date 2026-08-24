@@ -172,6 +172,15 @@ class SessionDigest(BaseModel):
     answered_count: int = 0
     gap_count: int = 0
     has_summary: bool = False
+    recurring_gap_patterns: list[str] = Field(
+        default_factory=list,
+        description=(
+            "What this session concluded should be tested first next time. "
+            "Carried on the row itself so the next session can offer it without "
+            "the student copying it across by hand, which is the reason the "
+            "field existed for months and was almost never used."
+        ),
+    )
     created_at: datetime | None = None
     updated_at: datetime | None = None
 
@@ -232,6 +241,9 @@ class SessionState(BaseModel):
             answered_count=sum(1 for turn in self.transcript if turn.role == "student"),
             gap_count=sum(1 for item in self.progress if item.gap_recorded),
             has_summary=self.summary is not None,
+            recurring_gap_patterns=(
+                list(self.summary.recurring_gap_patterns) if self.summary else []
+            ),
             created_at=self.created_at,
             updated_at=self.updated_at,
         )
