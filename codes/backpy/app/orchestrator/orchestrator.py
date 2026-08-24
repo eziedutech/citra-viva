@@ -30,6 +30,7 @@ from app.models.session import (
     AnswerStrength,
     ExaminerDecision,
     QuestionProgress,
+    QuestionRubric,
     SessionState,
     SessionStatus,
     SessionSummary,
@@ -314,10 +315,49 @@ class Orchestrator:
             adjustments=adjustments,
         )
 
+    def reveal_rubric(self, session_id: str, actor_id: str = "") -> QuestionRubric:
+        """Show what the question now on the table is testing.
+
+        Two limits, both deliberate.
+
+        Only the current question. Revealing the criteria for a question still
+        ahead would let a student prepare for an examination they are not
+        supposed to be able to read in advance, which is the rule the whole
+        sidebar is built around.
+
+        And the request is written into the session before the answer comes
+        back. The help is allowed; hiding that it was taken is not, because the
+        closing report claims to describe what happened.
+        """
+        state = self.load_session(session_id, actor_id)
+
+        question = state.current_question()
+        if question is None:
+            raise ValueError("This session has no question open.")
+
+        progress = state.current_progress()
+        if progress is not None and not progress.rubric_revealed:
+            progress.rubric_revealed = True
+            self.store.save(state)
+
+        return QuestionRubric(
+            question_id=question.id,
+            question=question.question,
+            intent=question.intent,
+            evaluation_criteria=question.evaluation_criteria,
+        )
+
     def close_session(self, session_id: str, actor_id: str = "") -> SessionClosing:
         """Reflect on a finished session and store the summary."""
         state = self.load_session(session_id, actor_id)
         summary, adjustments = reflect_on_session(state, runner=self.runner)
+
+        # Taken from the record rather than asked of the model, in the same
+        # way defended points and gaps are. A summary that could quietly omit
+        # the help a student took would not be a summary of this session.
+        summary.rubric_revealed_for = [
+            item.question_id for item in state.progress if item.rubric_revealed
+        ]
 
         state.summary = summary
         state.status = SessionStatus.COMPLETED

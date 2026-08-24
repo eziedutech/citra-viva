@@ -1,6 +1,8 @@
 # CITRA Viva
 
-**An adversarial AI thesis defense simulator.** A module of C.I.T.R.A (Core Integrity & Trustworthy Research Assistant).
+**An agentic adversarial thesis defense simulator.** Four AI agents read your research draft, plan an examination from its weakest points, question you on them, and report what held.
+
+A companion to C.I.T.R.A (Core Integrity & Trustworthy Research Assistant).
 
 Built for the **All Things Agentic Hackathon** (Google / Devpost), category *Collaborative Partner*.
 

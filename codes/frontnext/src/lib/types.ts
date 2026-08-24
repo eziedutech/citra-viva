@@ -103,6 +103,7 @@ export interface QuestionProgress {
   question_id: string;
   follow_ups_asked: number;
   clarifications_offered: number;
+  rubric_revealed: boolean;
   final_strength: string;
   gap_recorded: string;
   defended_points: string[];
@@ -114,6 +115,7 @@ export interface SessionSummary {
   remaining_gaps: string[];
   recurring_gap_patterns: string[];
   closing_remark: string;
+  rubric_revealed_for: string[];
 }
 
 export interface SessionState {
@@ -131,6 +133,14 @@ export interface SessionState {
   summary: SessionSummary | null;
   created_at: string | null;
   updated_at: string | null;
+}
+
+/** What one question is testing. The marking scheme, never an answer. */
+export interface QuestionRubric {
+  question_id: string;
+  question: string;
+  intent: string;
+  evaluation_criteria: string;
 }
 
 export type SessionStatus = 'in_progress' | 'completed';

@@ -233,6 +233,25 @@ function ReportPanel({
         </p>
       </section>
 
+      {summary.rubric_revealed_for.length > 0 ? (
+        <section>
+          <h4 className="text-caption mb-2 flex items-center gap-[6px] font-medium text-[color:var(--color-ink-600)]">
+            {dict.rubric.reportTitle}
+            <Hint text={dict.rubric.reportHelp} align="end" />
+          </h4>
+          <p className="text-body-sm flex flex-wrap gap-2">
+            {summary.rubric_revealed_for.map((id) => (
+              <span
+                key={id}
+                className="text-micro rounded-[var(--radius-chip)] bg-[color:var(--color-tint-ai)] px-2 py-[2px] font-medium text-[color:var(--color-ai)]"
+              >
+                {id}
+              </span>
+            ))}
+          </p>
+        </section>
+      ) : null}
+
       {summary.closing_remark ? (
         <section>
           <h4 className="text-caption mb-2 font-medium text-[color:var(--color-ink-600)]">

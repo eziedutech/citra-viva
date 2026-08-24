@@ -24,7 +24,7 @@ const en = {
   app: {
     name: 'CITRA Viva',
     tagline:
-      'A thesis defense simulator that reads your research draft and tests the weakest points of your argument.',
+      'An agentic thesis defense simulator. Four AI agents read your research draft, plan an examination from its weakest points, question you on them, and report what held.',
   },
 
   nav: {
@@ -34,7 +34,7 @@ const en = {
   },
 
   landing: {
-    eyebrow: 'Adversarial practice, before the committee does it for real',
+    eyebrow: 'Agentic adversarial practice, before the committee does it for real',
     steps: [
       {
         title: 'It reads the whole draft',
@@ -60,6 +60,9 @@ const en = {
       'Your draft is read to plan the examination and is not shown to anyone else. Nothing leaves Google Cloud.',
     signInUnavailable: 'Sign-in is not configured on this deployment.',
     footer: 'An adversarial practice viva. It questions your argument. It does not write it.',
+    agentsTitle: 'Four agents, one examination',
+    agents:
+      'Draft Analyzer maps where the argument gives way. Question Strategy turns that map into an examination ordered by pressure. Examiner judges each answer and decides whether to press, allow a clarification, or move on. Session Reflection writes the report from the transcript. Each agent hands the next something narrower than it received, and none of them can reach past its own job.',
     promiseTitle: 'What it will not do',
     promise:
       'It will not write your answers, and it will not record a weakness as unanswered before giving you a chance to clarify. Where a session rule overrides the model, the override is shown to you rather than applied quietly.',
@@ -261,7 +264,7 @@ const en = {
       {
         id: 'what',
         title: 'What this is',
-        lead: 'A practice viva. You give it the draft you are going to defend, and it examines you on the parts a committee would go after.',
+        lead: 'An agentic practice viva. You give it the draft you are going to defend, four agents divide the work of examining it between them, and you are questioned on the parts a committee would go after.',
         points: [
           {
             title: 'It is adversarial on purpose',
@@ -448,6 +451,24 @@ const en = {
     signedInAs: 'Signed in',
   },
 
+
+  rubric: {
+    open: 'What is being tested?',
+    opened: 'Criteria opened',
+    opening: 'Opening the criteria',
+    title: 'What this question is testing',
+    close: 'Close',
+    intent: 'What the examiner is probing',
+    criteria: 'What a sufficient answer has to cover',
+    recorded:
+      'This is the marking scheme, not an answer. Opening it is recorded against this question and appears in your session report, because a report that hid the help you took would not be a report of this session.',
+    failed: 'The criteria could not be opened.',
+    revealed: 'Criteria opened',
+    reportTitle: 'Questions where you opened the criteria',
+    reportHelp:
+      'Shown so the record is complete. Asking what a question is testing is a legitimate way to learn; it is only worth recording so the rest of the report can be trusted.',
+  },
+
   voice: {
     speak: 'Speak your answer',
     stop: 'Stop and transcribe',
@@ -562,7 +583,7 @@ const id: Dictionary = {
   app: {
     name: 'CITRA Viva',
     tagline:
-      'Simulator sidang skripsi yang membaca draf riset Anda dan menguji titik terlemah argumennya.',
+      'Simulator sidang skripsi berbasis agent. Empat agent AI membaca draf riset Anda, menyusun pengujian dari titik terlemahnya, menanyakannya kepada Anda, lalu melaporkan apa yang bertahan.',
   },
 
   nav: {
@@ -572,7 +593,7 @@ const id: Dictionary = {
   },
 
   landing: {
-    eyebrow: 'Latihan yang menekan, sebelum penguji sungguhan melakukannya',
+    eyebrow: 'Latihan menekan berbasis agent, sebelum penguji sungguhan melakukannya',
     steps: [
       {
         title: 'Membaca draf secara utuh',
@@ -598,6 +619,9 @@ const id: Dictionary = {
       'Draf Anda dibaca untuk menyusun rencana pengujian dan tidak diperlihatkan kepada siapa pun. Tidak ada yang keluar dari Google Cloud.',
     signInUnavailable: 'Fitur masuk belum dikonfigurasi pada deployment ini.',
     footer: 'Sidang latihan yang menekan. Ia menguji argumen Anda, bukan menuliskannya.',
+    agentsTitle: 'Empat agent, satu pengujian',
+    agents:
+      'Draft Analyzer memetakan tempat argumen melemah. Question Strategy mengubah peta itu menjadi pengujian yang diurutkan menurut tekanan. Examiner menilai tiap jawaban dan memutuskan apakah menekan, memberi kesempatan klarifikasi, atau berpindah. Session Reflection menyusun laporan dari transkrip. Tiap agent menyerahkan kepada agent berikutnya sesuatu yang lebih sempit daripada yang diterimanya, dan tidak satu pun dapat menjangkau di luar tugasnya sendiri.',
     promiseTitle: 'Yang tidak akan dilakukannya',
     promise:
       'Ia tidak akan menuliskan jawaban Anda, dan tidak akan mencatat sebuah kelemahan sebagai tak terjawab sebelum Anda diberi kesempatan menjelaskan. Ketika aturan sesi menimpa keputusan model, penimpaan itu ditampilkan, bukan dijalankan diam-diam.',
@@ -799,7 +823,7 @@ const id: Dictionary = {
       {
         id: 'what',
         title: 'Apa ini',
-        lead: 'Sidang latihan. Anda menyerahkan draf yang akan Anda pertahankan, lalu ia menguji Anda pada bagian yang akan dikejar penguji sungguhan.',
+        lead: 'Sidang latihan berbasis agent. Anda menyerahkan draf yang akan Anda pertahankan, empat agent membagi pekerjaan mengujinya, lalu Anda ditanyai pada bagian yang akan dikejar penguji sungguhan.',
         points: [
           {
             title: 'Menekan, dan itu memang disengaja',
@@ -984,6 +1008,24 @@ const id: Dictionary = {
     today: 'Hari ini',
     yesterday: 'Kemarin',
     signedInAs: 'Masuk sebagai',
+  },
+
+
+  rubric: {
+    open: 'Apa yang sedang diuji?',
+    opened: 'Kriteria dibuka',
+    opening: 'Membuka kriteria',
+    title: 'Apa yang diuji pertanyaan ini',
+    close: 'Tutup',
+    intent: 'Yang sedang ditelusuri penguji',
+    criteria: 'Yang harus dipenuhi sebuah jawaban',
+    recorded:
+      'Ini skema penilaian, bukan jawaban. Membukanya dicatat pada pertanyaan ini dan muncul di laporan sesi Anda, karena laporan yang menyembunyikan bantuan yang Anda ambil bukanlah laporan sesi ini.',
+    failed: 'Kriteria gagal dibuka.',
+    revealed: 'Kriteria dibuka',
+    reportTitle: 'Pertanyaan tempat Anda membuka kriteria',
+    reportHelp:
+      'Ditampilkan agar catatannya utuh. Menanyakan apa yang sedang diuji adalah cara belajar yang sah; ia dicatat semata agar sisa laporan ini dapat dipercaya.',
   },
 
   voice: {

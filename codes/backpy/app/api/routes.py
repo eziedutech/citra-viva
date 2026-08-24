@@ -23,6 +23,7 @@ from app.ingest.extract import ExtractionError, extract_draft
 from app.models.claim_support import CitedSource, ClaimSupportResult
 from app.models.question_strategy import StrategyResult
 from app.models.session import (
+    QuestionRubric,
     SessionDigest,
     SessionState,
     SessionSummary,
@@ -299,6 +300,21 @@ def answer_endpoint(
     """Submit one answer and receive what the examiner says next."""
     with _translated_errors():
         return _orchestrator().submit_answer(session_id, request.answer, actor_id=user.uid)
+
+
+@router.post("/api/sessions/{session_id}/rubric", response_model=QuestionRubric)
+def reveal_rubric_endpoint(session_id: str, user: CurrentUser) -> QuestionRubric:
+    """What the open question is testing, and what a sufficient answer must do.
+
+    It returns the marking scheme, never a model answer. The distinction is the
+    product: telling a student what would count as a good answer teaches them,
+    and telling them the answer replaces them. An answer read once cannot be
+    unread, and every judgment after it would be measuring paraphrase.
+
+    Asking is recorded against the question and appears in the closing report.
+    """
+    with _translated_errors():
+        return _orchestrator().reveal_rubric(session_id, actor_id=user.uid)
 
 
 @router.post("/api/sessions/{session_id}/close", response_model=CloseSessionResponse)

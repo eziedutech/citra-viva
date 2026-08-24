@@ -200,6 +200,16 @@ export function PublicLanding({ dict, locale }: Props) {
               ))}
             </ol>
 
+            <section className="mt-8 max-w-[72ch] border border-[color:var(--color-line)] bg-[color:var(--color-surface)] p-5">
+              <h2 className="text-body-sm mb-2 flex items-center gap-[6px] font-medium text-[color:var(--color-ai)]">
+                <Icon name="cpu" size={16} />
+                {dict.landing.agentsTitle}
+              </h2>
+              <p className="text-caption text-[color:var(--color-ink-600)]">
+                {dict.landing.agents}
+              </p>
+            </section>
+
             <p className="text-caption mt-6 max-w-[72ch] border-l-2 border-[color:var(--color-ai)] bg-[color:var(--color-tint-ai)] px-4 py-3 text-[color:var(--color-ink-600)]">
               <span className="font-medium text-[color:var(--color-ai)]">
                 {dict.landing.promiseTitle}.{' '}

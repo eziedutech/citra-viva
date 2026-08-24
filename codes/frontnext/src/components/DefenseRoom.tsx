@@ -12,6 +12,7 @@ import { Hint } from '@/components/Hint';
 import { Icon } from '@/components/Icon';
 import { LocaleSwitch } from '@/components/LocaleSwitch';
 import { QuestionSidebar } from '@/components/QuestionSidebar';
+import { RubricButton } from '@/components/RubricButton';
 import { SignedOutNotice } from '@/components/SignedOutNotice';
 import { Slideover, type Tab } from '@/components/Slideover';
 import { SpeakButton } from '@/components/SpeakButton';
@@ -327,6 +328,25 @@ export function DefenseRoom({ initial, dict, locale }: Props) {
                       <Hint text={dict.room.hints.answer} side="top" />
                     </span>
 
+                    <span className="flex flex-wrap items-center gap-2">
+                      <RubricButton
+                        sessionId={session.session_id}
+                        dict={dict}
+                        disabled={thinking}
+                        alreadyOpened={Boolean(
+                          session.progress[session.current_index]?.rubric_revealed,
+                        )}
+                        onOpened={() =>
+                          setSession((current) => ({
+                            ...current,
+                            progress: current.progress.map((item, index) =>
+                              index === current.current_index
+                                ? { ...item, rubric_revealed: true }
+                                : item,
+                            ),
+                          }))
+                        }
+                      />
                     <VoiceInput
                       dict={dict}
                       disabled={thinking}
@@ -339,6 +359,7 @@ export function DefenseRoom({ initial, dict, locale }: Props) {
                         answerBox.current?.focus();
                       }}
                     />
+                    </span>
                   </div>
 
                   {voiceNote ? (

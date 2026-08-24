@@ -83,6 +83,12 @@ export function QuestionSidebar({ questions, progress, currentIndex, dict }: Pro
                       </span>
                     </span>
 
+                    {state?.rubric_revealed ? (
+                      <span className="text-micro mt-1 mr-1 inline-block rounded-[var(--radius-chip)] bg-[color:var(--color-tint-ai)] px-2 py-[2px] font-medium text-[color:var(--color-ai)]">
+                        {dict.rubric.revealed}
+                      </span>
+                    ) : null}
+
                     {question.targets_recurring_gap ? (
                       <span className="text-micro mt-1 inline-block rounded-[var(--radius-chip)] bg-[color:var(--color-tint-warn)] px-2 py-[2px] font-medium text-[color:var(--color-warning)]">
                         {dict.sidebar.recurringGap}

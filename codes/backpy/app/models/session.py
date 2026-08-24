@@ -102,6 +102,14 @@ class QuestionProgress(BaseModel):
     question_id: str
     follow_ups_asked: int = 0
     clarifications_offered: int = 0
+    rubric_revealed: bool = Field(
+        default=False,
+        description=(
+            "Whether the student asked to see what this question was testing. "
+            "Recorded rather than hidden: the help is allowed, and pretending "
+            "it was not taken is what would make the session report a lie."
+        ),
+    )
     final_strength: str = ""
     gap_recorded: str = ""
     defended_points: list[str] = Field(
@@ -120,6 +128,29 @@ class SessionSummary(BaseModel):
     remaining_gaps: list[str] = Field(default_factory=list)
     recurring_gap_patterns: list[str] = Field(default_factory=list)
     closing_remark: str = ""
+    rubric_revealed_for: list[str] = Field(
+        default_factory=list,
+        description=(
+            "Questions where the student opened the marking criteria before "
+            "answering. Filled from the session record by code, never by the "
+            "model, so it cannot be flattered away."
+        ),
+    )
+
+
+class QuestionRubric(BaseModel):
+    """What one question is testing, in the examiner's own planning words.
+
+    This is the marking scheme, not an answer. A supervisor telling a student
+    what a good answer would have to establish is teaching them; a supervisor
+    telling them what to say is doing it for them, and this model deliberately
+    carries only the first.
+    """
+
+    question_id: str
+    question: str
+    intent: str = ""
+    evaluation_criteria: str = ""
 
 
 class SessionDigest(BaseModel):

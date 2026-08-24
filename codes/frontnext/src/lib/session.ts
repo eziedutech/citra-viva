@@ -20,7 +20,18 @@ export function normalizeSession(raw: SessionState): SessionState {
     findings: raw.findings ?? [],
     progress: raw.progress ?? [],
     transcript: raw.transcript ?? [],
-    summary: raw.summary ?? null,
+    // A summary written before a field existed comes back without it, and a
+    // report panel reading `.length` on `undefined` takes the whole room down.
+    summary: raw.summary
+      ? {
+          ...raw.summary,
+          strong_points: raw.summary.strong_points ?? [],
+          remaining_gaps: raw.summary.remaining_gaps ?? [],
+          recurring_gap_patterns: raw.summary.recurring_gap_patterns ?? [],
+          rubric_revealed_for: raw.summary.rubric_revealed_for ?? [],
+          closing_remark: raw.summary.closing_remark ?? '',
+        }
+      : null,
     current_index: raw.current_index ?? 0,
     opening_remark: raw.opening_remark ?? '',
     language: raw.language ?? 'id',
