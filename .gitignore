@@ -15,6 +15,7 @@ service-account*.json
 /agents/
 /resources/
 /kickoff-prompt.md
+/bug-report-*.md
 /CITRA-Viva-Product-Technical-Doc.md
 /read_folder.md
 /docs/status-dan-rencana.md

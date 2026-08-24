@@ -56,7 +56,6 @@ Built for the **All Things Agentic Hackathon** (Google and Devpost), category *C
 - [State, concurrency, and failure tolerance](#state-concurrency-and-failure-tolerance)
 - [Observability](#observability)
 - [Repository layout](#repository-layout)
-- [Findings and learnings](#findings-and-learnings)
 - [Disclosure](#disclosure)
 - [License](#license)
 
@@ -734,20 +733,6 @@ scripts/                          tooling outside the application
 ```
 
 ---
-
-## Findings and learnings
-
-**The most expensive bug had no error message.** A student spoke a long answer and the transcript came back as the words "yes and no". Not truncated, not garbled: a short plausible sentence with nothing to do with what they said. `MediaRecorder` in Chrome produces a WebM container, and Gemini reads WAV, MP3, AIFF, AAC, OGG, and FLAC. Given bytes it cannot decode, the model does not refuse. It answers anyway, from nothing.
-
-**The first fix made it worse.** It recorded WebM and converted afterwards, falling back to the original when conversion failed, which meant a failed conversion looked exactly like a successful one. The real fix removed the container entirely and wrote raw samples from the microphone straight into a WAV. The lesson generalised into a rule the rest of the system now follows: *a fallback that hides the failure it is falling back from is worse than no fallback.*
-
-**Silence is a failure mode, and it needs an instrument.** After that came a transcript of the single word "Null", which is the model reporting it heard nothing. Two causes: asking for a specific channel count made some devices return a track that was live and silent, and a gain of exactly zero let the audio graph conclude the branch could not be heard and stop pulling it. Both are fixed, and a level meter now runs while recording, because a meter that does not move while somebody is speaking says more in two seconds than any error message can afterwards.
-
-**An instruction about pace was read as an instruction about speed.** The examiner's voice was unusably slow, and the cause was a phrase in our own prompt asking it to read "at the measured pace of an examiner". Replacing it with a plain request for normal conversational speed took the same sentence from 13.7 seconds to 8.1.
-
-**Some configuration is worth not setting.** `ActivityHandling` and `TurnCoverage` on the Live session were tried and changed nothing measurable, so they are absent. Configuration that has not been shown to matter is a future reader's false lead.
-
-**A feature worth refusing is a design decision.** Answer recommendations were considered and rejected, and the marking scheme shipped instead. Both of those are described above, under [the constraint that shapes everything](#the-constraint-that-shapes-everything).
 
 ---
 

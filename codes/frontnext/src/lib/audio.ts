@@ -7,8 +7,8 @@
  * plausible sentence with nothing to do with what they said, and no error
  * anywhere.
  *
- * `MediaRecorder` in Chrome and Firefox produces a WebM container, because
- * that is what it offers. Gemini reads WAV, MP3, AIFF, AAC, OGG, and FLAC.
+ * `MediaRecorder` in Chrome and Firefox produces a WebM container, because that
+ * is what it offers. Gemini reads WAV, MP3, AIFF, AAC, OGG, and FLAC.
  * WebM is on neither list, and given bytes it cannot decode the model does not
  * refuse: it answers anyway, from nothing. The student's own words are replaced
  * by an invention in the field they are about to submit as their defense.
