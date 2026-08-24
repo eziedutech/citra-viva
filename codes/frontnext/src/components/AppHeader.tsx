@@ -1,39 +1,42 @@
-"use client";
+'use client';
 
-import Link from "next/link";
+import Link from 'next/link';
 
-import { AccountButton } from "@/components/AccountButton";
-import { Icon } from "@/components/Icon";
-import { LocaleSwitch } from "@/components/LocaleSwitch";
-import type { Dictionary, Locale } from "@/lib/i18n";
+import { AccountButton } from '@/components/AccountButton';
+import { Icon } from '@/components/Icon';
+import { LocaleSwitch } from '@/components/LocaleSwitch';
+import type { Dictionary, Locale } from '@/lib/i18n';
 
 interface Props {
   dict: Dictionary;
   locale: Locale;
   /** Which page is showing, so its own link is marked rather than offered. */
-  current: "defense" | "claims";
+  current: 'defense' | 'claims' | 'guide';
 }
 
 /**
- * The one bar across the top of every page.
+ * The one bar across the top of the pages that stand on their own.
  *
  * It was previously assembled inside each page's own column, which put the
  * brand at a different horizontal position on every route and left the account
  * control floating in the middle of the reading measure. A full width bar fixes
- * both, and pinning it means a student two thousand words into a manuscript can
- * still see whose account the draft is going into.
+ * both, and pinning it means a person deep into a long page can still see whose
+ * account they are in.
+ *
+ * The signed-in workspace does not use this. It has a sidebar carrying the same
+ * things, and two navigations for one screen is one too many.
  */
 export function AppHeader({ dict, locale, current }: Props) {
   const tab = (href: string, label: string, active: boolean) => (
     <Link
       href={href}
-      aria-current={active ? "page" : undefined}
+      aria-current={active ? 'page' : undefined}
       className={[
-        "text-caption flex h-14 items-center border-b-2 px-1 transition-colors duration-150",
+        'text-caption flex h-14 items-center border-b-2 px-1 transition-colors duration-150',
         active
-          ? "border-[color:var(--color-primary-500)] text-[color:var(--color-ink-900)]"
-          : "border-transparent text-[color:var(--color-ink-600)] hover:text-[color:var(--color-ink-900)]",
-      ].join(" ")}
+          ? 'border-[color:var(--color-primary-500)] text-[color:var(--color-ink-900)]'
+          : 'border-transparent text-[color:var(--color-ink-600)] hover:text-[color:var(--color-ink-900)]',
+      ].join(' ')}
     >
       {label}
     </Link>
@@ -47,14 +50,13 @@ export function AppHeader({ dict, locale, current }: Props) {
           className="flex shrink-0 items-center gap-2 text-[color:var(--color-primary-700)]"
         >
           <Icon name="shield" size={20} />
-          <span className="text-body-sm font-medium tracking-[-0.01em]">
-            {dict.app.name}
-          </span>
+          <span className="text-body-sm font-medium tracking-[-0.01em]">{dict.app.name}</span>
         </Link>
 
         <nav aria-label={dict.nav.label} className="flex items-center gap-6">
-          {tab("/", dict.nav.defense, current === "defense")}
-          {tab("/klaim", dict.nav.claims, current === "claims")}
+          {tab('/', dict.nav.defense, current === 'defense')}
+          {tab('/klaim', dict.nav.claims, current === 'claims')}
+          {tab('/panduan', dict.guide.nav, current === 'guide')}
         </nav>
 
         <span className="ml-auto flex items-center gap-3">

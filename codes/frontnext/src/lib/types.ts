@@ -133,6 +133,25 @@ export interface SessionState {
   updated_at: string | null;
 }
 
+export type SessionStatus = 'in_progress' | 'completed';
+
+/** One row of a student's own history. Deliberately without manuscript text. */
+export interface SessionDigest {
+  session_id: string;
+  status: SessionStatus;
+  headline: string;
+  question_count: number;
+  answered_count: number;
+  gap_count: number;
+  has_summary: boolean;
+  created_at: string | null;
+  updated_at: string | null;
+}
+
+export interface SessionHistory {
+  sessions: SessionDigest[];
+}
+
 export interface SessionTurnResult {
   session_id: string;
   examiner_says: string;

@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 
@@ -21,9 +22,15 @@ const STAGE_INTERVAL_MS = 12_000;
 interface Props {
   dict: Dictionary;
   locale: Locale;
+  /**
+   * Inside the signed-in workspace, where the surrounding shell already carries
+   * the brand, the account, and the navigation. The pitch goes with them: a
+   * person who has signed in has already been persuaded.
+   */
+  embedded?: boolean;
 }
 
-export function DraftIntake({ dict, locale }: Props) {
+export function DraftIntake({ dict, locale, embedded = false }: Props) {
   const router = useRouter();
   const auth = useAuth();
   const [draft, setDraft] = useState('');
@@ -110,8 +117,8 @@ export function DraftIntake({ dict, locale }: Props) {
   }
 
   return (
-    <div className="flex min-h-dvh flex-col">
-      <AppHeader dict={dict} locale={locale} current="defense" />
+    <div className={embedded ? 'flex min-h-full flex-col' : 'flex min-h-dvh flex-col'}>
+      {embedded ? null : <AppHeader dict={dict} locale={locale} current="defense" />}
       <AiWorking
         active={busy || reading}
         label={reading ? dict.intake.uploading : dict.intake.stages[stage]}
@@ -126,49 +133,20 @@ export function DraftIntake({ dict, locale }: Props) {
       />
 
       <div className="flex-1">
-        {/* The opening sits on white against the canvas below it, so the page
-            has a top rather than beginning mid-thought at a form field. */}
-        <section className="border-b border-[color:var(--color-line)] bg-[color:var(--color-surface)]">
-          <div className="mx-auto w-full max-w-[1120px] px-6 pt-12 pb-10">
-            <p className="text-micro mb-4 flex items-center gap-[6px] tracking-[0.06em] text-[color:var(--color-ai)] uppercase">
-              <Icon name="cpu" size={14} />
-              {dict.landing.eyebrow}
-            </p>
+        <div className="mx-auto w-full max-w-[1120px] px-6 pt-8">
+          <h1 className="text-h1 mb-1 flex items-start gap-2">
+            <span>{dict.intake.heading}</span>
+            <Hint text={dict.intake.hints.heading} className="mt-[6px]" />
+          </h1>
+          <Link
+            href="/panduan"
+            className="text-caption text-[color:var(--color-primary-700)] underline underline-offset-2"
+          >
+            {dict.guide.heading}
+          </Link>
+        </div>
 
-            <h1 className="text-display mb-4 flex max-w-[24ch] items-start gap-2">
-              <span>{dict.intake.heading}</span>
-              <Hint text={dict.intake.hints.heading} className="mt-[10px]" />
-            </h1>
-
-            <p className="text-body-lg max-w-[64ch] text-[color:var(--color-ink-600)]">
-              {dict.intake.lede}
-            </p>
-
-            <ol className="mt-10 grid gap-px border border-[color:var(--color-line)] bg-[color:var(--color-line)] md:grid-cols-3">
-              {dict.landing.steps.map((step, index) => (
-                <li key={step.title} className="bg-[color:var(--color-surface)] p-5">
-                  <p className="text-micro mb-2 flex items-center gap-2 text-[color:var(--color-ink-400)]">
-                    <span className="flex h-5 w-5 items-center justify-center border border-[color:var(--color-line)] tabular-nums">
-                      {index + 1}
-                    </span>
-                    <span className="h-px flex-1 bg-[color:var(--color-line)]" />
-                  </p>
-                  <h2 className="text-h3 mb-2">{step.title}</h2>
-                  <p className="text-caption text-[color:var(--color-ink-600)]">{step.body}</p>
-                </li>
-              ))}
-            </ol>
-
-            <p className="text-caption mt-6 max-w-[80ch] border-l-2 border-[color:var(--color-ai)] bg-[color:var(--color-tint-ai)] px-4 py-3 text-[color:var(--color-ink-600)]">
-              <span className="font-medium text-[color:var(--color-ai)]">
-                {dict.landing.promiseTitle}.{' '}
-              </span>
-              {dict.landing.promise}
-            </p>
-          </div>
-        </section>
-
-        <div className="mx-auto w-full max-w-[1120px] px-6 py-10">
+        <div className="mx-auto w-full max-w-[1120px] px-6 py-8">
           <section className="border border-[color:var(--color-line)] bg-[color:var(--color-surface)] p-5">
             <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
               <span className="inline-flex items-center gap-[6px]">
@@ -277,19 +255,9 @@ export function DraftIntake({ dict, locale }: Props) {
           ) : null}
 
           {needsSignIn ? (
-            <section className="mt-6 border border-[color:var(--color-line)] bg-[color:var(--color-surface)] p-5">
-              <h2 className="text-h3 mb-2">{dict.auth.required}</h2>
-              <p className="text-body-sm mb-4 max-w-[64ch] text-[color:var(--color-ink-600)]">
-                {dict.auth.requiredHelp}
-              </p>
-              <button
-                type="button"
-                onClick={() => void auth.signIn()}
-                className="text-body-sm h-10 rounded-[var(--radius-action)] bg-[color:var(--color-primary-700)] px-5 font-medium text-white transition-colors duration-150 hover:bg-[color:var(--color-primary-900)]"
-              >
-                {dict.auth.signIn}
-              </button>
-            </section>
+            <p className="text-body-sm mt-6 border border-[color:var(--color-line)] bg-[color:var(--color-surface)] p-4 text-[color:var(--color-ink-600)]">
+              {dict.auth.requiredHelp}
+            </p>
           ) : null}
         </div>
       </div>

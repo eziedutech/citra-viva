@@ -16,7 +16,7 @@ from datetime import UTC, datetime
 from typing import Any, Protocol
 
 from app.models.firestore_schemas import COLLECTION_VIVA_SESSIONS
-from app.models.session import SessionState
+from app.models.session import SessionDigest, SessionState
 
 
 class SessionStore(Protocol):
@@ -24,9 +24,34 @@ class SessionStore(Protocol):
 
     def save(self, state: SessionState) -> None: ...
 
+    def list_for_user(self, user_id: str, limit: int = 50) -> list[SessionDigest]: ...
+
 
 class SessionNotFoundError(LookupError):
     """Raised when a session id does not exist."""
+
+
+# How many of a student's documents are read before the newest are picked out.
+# A person practising for one defense does not accumulate hundreds of sessions,
+# and a cap keeps one unusual account from turning a sidebar into a large read.
+MAX_HISTORY_SCAN = 200
+
+
+def _newest_first(sessions: list[SessionState], limit: int) -> list[SessionDigest]:
+    """Order by when a session was last touched, with undated ones last.
+
+    Sessions written before `created_at` was recorded have no date at all, and
+    sorting `None` against a datetime raises. They sort to the bottom rather
+    than taking the whole history down with them."""
+    ordered = sorted(
+        sessions,
+        key=lambda state: (
+            state.updated_at is not None,
+            state.updated_at or state.created_at or datetime.min.replace(tzinfo=UTC),
+        ),
+        reverse=True,
+    )
+    return [state.digest() for state in ordered[:limit]]
 
 
 class InMemorySessionStore:
@@ -47,6 +72,10 @@ class InMemorySessionStore:
     def save(self, state: SessionState) -> None:
         state.updated_at = datetime.now(UTC)
         self._sessions[state.session_id] = state.model_copy(deep=True)
+
+    def list_for_user(self, user_id: str, limit: int = 50) -> list[SessionDigest]:
+        owned = [state for state in self._sessions.values() if state.user_id == user_id]
+        return _newest_first(owned, limit)
 
 
 class FirestoreSessionStore:
@@ -73,3 +102,27 @@ class FirestoreSessionStore:
         state.updated_at = datetime.now(UTC)
         payload = state.model_dump(mode="json")
         self.client.collection(COLLECTION_VIVA_SESSIONS).document(state.session_id).set(payload)
+
+    def list_for_user(self, user_id: str, limit: int = 50) -> list[SessionDigest]:
+        """A student's own sessions, newest first.
+
+        Filtered on owner alone, then ordered in Python. Adding `order_by` to an
+        equality filter makes Firestore demand a composite index, and a query
+        that works locally and fails in production the first time a real user
+        opens their history is not a trade worth making for a list this small.
+        """
+        from google.cloud.firestore_v1.base_query import FieldFilter
+
+        if not user_id:
+            return []
+
+        documents = (
+            self.client.collection(COLLECTION_VIVA_SESSIONS)
+            .where(filter=FieldFilter("user_id", "==", user_id))
+            .limit(MAX_HISTORY_SCAN)
+            .stream()
+        )
+        return _newest_first(
+            [SessionState.model_validate(document.to_dict()) for document in documents],
+            limit,
+        )

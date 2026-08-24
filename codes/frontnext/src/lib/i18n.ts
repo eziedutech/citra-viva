@@ -49,6 +49,17 @@ const en = {
         body: 'Each answer is weighed against what the question was asking for. The report separates what you held from what is still open, in the examiner’s own words.',
       },
     ],
+    familyTitle: 'A companion to CITRA',
+    family:
+      'CITRA is the research writing workspace where an argument gets built and every claim stays traceable to the source it came from. Viva does the opposite job on the same manuscript: it hunts for the place that argument gives way, then presses there until the point either holds or breaks. The same discipline, turned against you on purpose, so that the first person to find the weak spot is you rather than your committee.',
+    familyLink: 'Open CITRA',
+    signInTitle: 'Sign in to begin',
+    signInBody:
+      'Your manuscript and your sessions are yours. Signing in is what keeps them apart from everyone else’s, and it is what lets a defense you had to leave halfway be picked up later, from any machine.',
+    signInPrivacy:
+      'Your draft is read to plan the examination and is not shown to anyone else. Nothing leaves Google Cloud.',
+    signInUnavailable: 'Sign-in is not configured on this deployment.',
+    footer: 'An adversarial practice viva. It questions your argument. It does not write it.',
     promiseTitle: 'What it will not do',
     promise:
       'It will not write your answers, and it will not record a weakness as unanswered before giving you a chance to clarify. Where a session rule overrides the model, the override is shown to you rather than applied quietly.',
@@ -239,6 +250,204 @@ const en = {
 
 
 
+
+
+  guide: {
+    nav: 'Guide',
+    heading: 'How CITRA Viva works',
+    lede: 'What the agent does with your manuscript, what it refuses to do, and how to get a useful session out of it. Nothing here needs an account.',
+    contents: 'Contents',
+    sections: [
+      {
+        id: 'what',
+        title: 'What this is',
+        lead: 'A practice viva. You give it the draft you are going to defend, and it examines you on the parts a committee would go after.',
+        points: [
+          {
+            title: 'It is adversarial on purpose',
+            body: 'Most writing tools are built to agree with you. This one is built to find the sentence your argument cannot support and to keep asking about it. That is uncomfortable, and it is the point: the discomfort is cheaper here than in the room.',
+          },
+          {
+            title: 'It examines, it does not ghostwrite',
+            body: 'It will not compose an answer for you, and it will not suggest wording you could repeat back. What it produces is questions, judgments, and a record. The defending is yours.',
+          },
+          {
+            title: 'A companion to CITRA',
+            body: 'CITRA is the research writing workspace where an argument gets built and every claim stays traceable to its source. Viva does the opposite job on the same manuscript: it looks for where that argument gives way, then presses there until the point holds or breaks.',
+          },
+        ],
+      },
+      {
+        id: 'how',
+        title: 'How a session runs',
+        lead: 'Four agents, in order. Each one hands the next something narrower than what it received.',
+        points: [
+          {
+            title: '1. The draft is read and mapped',
+            body: 'The manuscript is read once, in full, and the sentences an examiner would stop at are marked where they stand. Each becomes a finding: the quote, why it is weak, and how hard a committee is likely to press.',
+          },
+          {
+            title: '2. The examination is planned',
+            body: 'Findings become questions, ordered by pressure rather than by where they appear in your text. A weakness you carried in from an earlier session is asked about first, whatever its severity.',
+          },
+          {
+            title: '3. Each answer is judged',
+            body: 'Your answer is weighed against what the question was asking for, and the examiner decides what happens next: press harder, offer you a chance to clarify, move on, or record the point as undefended.',
+          },
+          {
+            title: '4. The session is reported',
+            body: 'At the end, what you defended and what is still open are both taken from the transcript, in the examiner’s own words, so the report cannot contradict the session it describes.',
+          },
+        ],
+      },
+      {
+        id: 'draft',
+        title: 'Preparing your draft',
+        lead: 'The examination is only as good as what it is given. A few minutes here changes the whole session.',
+        points: [
+          {
+            title: 'Paste or upload',
+            body: 'PDF, DOCX, TXT, and Markdown are read, up to 10 MB. A scanned document has no selectable text and cannot be used: export a text PDF instead. The file itself is never stored.',
+          },
+          {
+            title: 'Check the extracted text before you start',
+            body: 'Extracted text lands in the editable box rather than going straight into a session. Every quote the examiner uses is checked against exactly what you submit here, so anything extraction mangled is worth fixing now.',
+          },
+          {
+            title: 'Give it the argument, not the front matter',
+            body: 'Introduction, methodology, and findings give an examiner the most to work with. An abstract alone gives it almost nothing to press on.',
+          },
+          {
+            title: 'Carry your unresolved weaknesses forward',
+            body: 'The optional field takes one weakness per line, usually pasted from a previous session report. Questions attacking those are asked first. A weakness you already failed to fix once is the most valuable thing to test again.',
+          },
+        ],
+      },
+      {
+        id: 'defense',
+        title: 'In the defense room',
+        lead: 'Three panels, each scrolling on its own: the plan on the left, the exchange in the middle, the evidence on the right.',
+        points: [
+          {
+            title: 'The plan stays closed ahead of you',
+            body: 'You can see which question is being examined and which are done. What is still ahead stays shut, because a defense you can read in advance is not a defense.',
+          },
+          {
+            title: 'Answer in your own words',
+            body: 'Short and precise beats long. The examiner is judging whether you can defend the point, not whether you can restate the chapter.',
+          },
+          {
+            title: 'A question ends, it does not loop',
+            body: 'One question allows at most two follow-ups and one clarification. That limit is enforced in code, not asked of the model, so an examination cannot circle a single point until you give up.',
+          },
+          {
+            title: 'Nothing depends on this tab',
+            body: 'Every turn is written to storage as it is judged. Close the tab mid-defense, come back tomorrow on another machine, and it resumes at the question it stopped on.',
+          },
+        ],
+      },
+      {
+        id: 'voice',
+        title: 'Speaking and listening',
+        lead: 'You can answer out loud, and the examiner can read its questions to you. A real viva is spoken, and practising it silently trains the wrong thing.',
+        points: [
+          {
+            title: 'Speaking an answer',
+            body: 'The microphone records, and the transcript is placed in the answer box for you to read. It is not sent until you send it, because a defense transcript is a permanent record and a misheard word has to be correctable before it becomes part of one.',
+          },
+          {
+            title: 'Hearing the examiner',
+            body: 'Any examiner turn can be read aloud, and the switch in the header reads each new question as it arrives. The voice reads the text already in the transcript, never a second generation of it.',
+          },
+          {
+            title: 'Voice changes nothing underneath',
+            body: 'A spoken answer travels the same path as a typed one and meets exactly the same rules. Speech is a way in and a way out, not a separate mode with its own behaviour.',
+          },
+        ],
+      },
+      {
+        id: 'report',
+        title: 'The session report',
+        lead: 'Written from the transcript rather than from a fresh impression of it.',
+        points: [
+          {
+            title: 'What held',
+            body: 'Points the examiner recorded as defended during the session, restored into the report if the summary tries to leave them out. A report that tells you nothing survived is a report you will not believe about your weaknesses either.',
+          },
+          {
+            title: 'What is still open',
+            body: 'Every point recorded as a gap, described as a gap and never as a fix. Being told what to say would defeat the exercise.',
+          },
+          {
+            title: 'Patterns for next time',
+            body: 'The habits behind the individual gaps. Paste them into the unresolved weaknesses field when you start your next session and they will be tested first.',
+          },
+        ],
+      },
+      {
+        id: 'citation',
+        title: 'Checking a citation',
+        lead: 'A separate tool, for a different question: does this source actually carry the sentence you cited it for?',
+        points: [
+          {
+            title: 'Why a resolving DOI is not enough',
+            body: 'A DOI proves the paper exists. It does not prove the paper says what you attributed to it, and topical similarity passes every mechanical check ever written.',
+          },
+          {
+            title: 'What it needs',
+            body: 'The claim exactly as it stands in your manuscript, and the source text, usually the abstract or the passage you cited. The judgment may rest on nothing else, which is what keeps it checkable.',
+          },
+          {
+            title: 'It asks rather than accuses',
+            body: 'A negative verdict has to come with a question for you, or it is downgraded to undecided. Marking someone’s citation wrong with no way to answer is an accusation, not a review.',
+          },
+        ],
+      },
+      {
+        id: 'integrity',
+        title: 'What it will not do',
+        lead: 'These are enforced in code rather than requested in a prompt, which means the model cannot decide otherwise on a bad day.',
+        points: [
+          {
+            title: 'It will not quote a sentence you did not write',
+            body: 'Every finding must quote your manuscript word for word, and every quote is matched back against your text. A finding whose quote cannot be found there is discarded rather than shown, because a finding about a sentence you never wrote is an accusation.',
+          },
+          {
+            title: 'It will not record a gap without warning you first',
+            body: 'A point cannot be written down as undefended until you have been offered at least one chance to clarify it.',
+          },
+          {
+            title: 'It will not grade your research',
+            body: 'There is no score and no pass mark. Severity describes how hard an examiner is likely to press, which is a claim about examiners, not about the quality of your work.',
+          },
+          {
+            title: 'It will not override the model quietly',
+            body: 'Where a session rule replaces the model’s decision, the substitution is shown to you in the transcript rather than applied out of sight.',
+          },
+        ],
+      },
+    ],
+  },
+
+  workspace: {
+    newSession: 'New defense',
+    history: 'Your sessions',
+    historyHint:
+      'Every defense you have started, newest first. An unfinished one resumes exactly where it stopped, including from a different machine, because nothing about a session lives in this tab.',
+    empty: 'Sessions you start appear here.',
+    loading: 'Loading your sessions',
+    failed: 'Your sessions could not be loaded.',
+    retry: 'Try again',
+    inProgress: 'In progress',
+    completed: 'Completed',
+    answeredOf: '{answered} of {total} answered',
+    openGaps: '{count} recorded as gaps',
+    untitled: 'Untitled session',
+    today: 'Today',
+    yesterday: 'Yesterday',
+    signedInAs: 'Signed in',
+  },
+
   voice: {
     speak: 'Speak your answer',
     stop: 'Stop and transcribe',
@@ -371,6 +580,17 @@ const id: Dictionary = {
         body: 'Tiap jawaban ditimbang terhadap apa yang sebenarnya diminta pertanyaan. Laporan memisahkan yang berhasil Anda pertahankan dari yang masih terbuka, dengan kata-kata penguji sendiri.',
       },
     ],
+    familyTitle: 'Pendamping CITRA',
+    family:
+      'CITRA adalah ruang kerja penulisan riset, tempat argumen dibangun dan setiap klaim tetap dapat ditelusuri ke sumber asalnya. Viva melakukan pekerjaan sebaliknya pada naskah yang sama: mencari tempat argumen itu melemah, lalu menekannya sampai poin itu bertahan atau patah. Disiplin yang sama, sengaja diarahkan kepada Anda, supaya orang pertama yang menemukan titik lemahnya adalah Anda, bukan penguji Anda.',
+    familyLink: 'Buka CITRA',
+    signInTitle: 'Masuk untuk memulai',
+    signInBody:
+      'Naskah dan sesi Anda adalah milik Anda. Masuk adalah yang menjaganya terpisah dari milik orang lain, dan yang membuat sidang yang terpaksa Anda tinggalkan di tengah dapat dilanjutkan nanti, dari perangkat mana pun.',
+    signInPrivacy:
+      'Draf Anda dibaca untuk menyusun rencana pengujian dan tidak diperlihatkan kepada siapa pun. Tidak ada yang keluar dari Google Cloud.',
+    signInUnavailable: 'Fitur masuk belum dikonfigurasi pada deployment ini.',
+    footer: 'Sidang latihan yang menekan. Ia menguji argumen Anda, bukan menuliskannya.',
     promiseTitle: 'Yang tidak akan dilakukannya',
     promise:
       'Ia tidak akan menuliskan jawaban Anda, dan tidak akan mencatat sebuah kelemahan sebagai tak terjawab sebelum Anda diberi kesempatan menjelaskan. Ketika aturan sesi menimpa keputusan model, penimpaan itu ditampilkan, bukan dijalankan diam-diam.',
@@ -560,6 +780,204 @@ const id: Dictionary = {
   },
 
 
+
+
+
+  guide: {
+    nav: 'Panduan',
+    heading: 'Cara kerja CITRA Viva',
+    lede: 'Apa yang dilakukan agent terhadap naskah Anda, apa yang ditolaknya, dan bagaimana mendapatkan sesi yang benar-benar berguna. Tidak ada bagian di sini yang memerlukan akun.',
+    contents: 'Daftar isi',
+    sections: [
+      {
+        id: 'what',
+        title: 'Apa ini',
+        lead: 'Sidang latihan. Anda menyerahkan draf yang akan Anda pertahankan, lalu ia menguji Anda pada bagian yang akan dikejar penguji sungguhan.',
+        points: [
+          {
+            title: 'Menekan, dan itu memang disengaja',
+            body: 'Kebanyakan alat menulis dibangun untuk menyetujui Anda. Yang ini dibangun untuk menemukan kalimat yang tidak sanggup didukung argumen Anda, lalu terus menanyakannya. Itu tidak nyaman, dan justru itu maksudnya: ketidaknyamanan di sini jauh lebih murah daripada di ruang sidang.',
+          },
+          {
+            title: 'Ia menguji, bukan menuliskan',
+            body: 'Ia tidak akan menyusun jawaban untuk Anda, dan tidak akan menawarkan kalimat yang tinggal Anda ulang. Yang dihasilkannya adalah pertanyaan, penilaian, dan catatan. Mempertahankannya tetap tugas Anda.',
+          },
+          {
+            title: 'Pendamping CITRA',
+            body: 'CITRA adalah ruang kerja penulisan riset, tempat argumen dibangun dan setiap klaim tetap dapat ditelusuri ke sumbernya. Viva melakukan pekerjaan sebaliknya pada naskah yang sama: mencari tempat argumen itu melemah, lalu menekannya sampai poin itu bertahan atau patah.',
+          },
+        ],
+      },
+      {
+        id: 'how',
+        title: 'Bagaimana satu sesi berjalan',
+        lead: 'Empat agent, berurutan. Masing-masing menyerahkan sesuatu yang lebih sempit daripada yang diterimanya.',
+        points: [
+          {
+            title: '1. Draf dibaca dan dipetakan',
+            body: 'Naskah dibaca sekali, utuh, dan kalimat yang akan membuat penguji berhenti ditandai di tempatnya. Tiap kalimat menjadi satu temuan: kutipannya, alasan lemahnya, dan seberapa keras penguji biasanya menekannya.',
+          },
+          {
+            title: '2. Pengujian disusun',
+            body: 'Temuan menjadi pertanyaan, diurutkan menurut tekanan, bukan menurut letaknya di naskah. Kelemahan yang Anda bawa dari sesi sebelumnya ditanyakan lebih dulu, berapa pun bobotnya.',
+          },
+          {
+            title: '3. Tiap jawaban dinilai',
+            body: 'Jawaban Anda ditimbang terhadap apa yang sebenarnya diminta pertanyaan, lalu penguji memutuskan langkah berikutnya: menekan lebih dalam, memberi kesempatan menjelaskan, berpindah topik, atau mencatat poin itu sebagai belum terjawab.',
+          },
+          {
+            title: '4. Sesi dilaporkan',
+            body: 'Di akhir, apa yang berhasil Anda pertahankan dan apa yang masih terbuka sama-sama diambil dari transkrip dengan kata-kata penguji sendiri, sehingga laporannya tidak mungkin bertentangan dengan sesi yang dilaporkannya.',
+          },
+        ],
+      },
+      {
+        id: 'draft',
+        title: 'Menyiapkan draf',
+        lead: 'Kualitas pengujian mengikuti kualitas bahan yang diberikan. Beberapa menit di sini mengubah seluruh sesi.',
+        points: [
+          {
+            title: 'Tempel atau unggah',
+            body: 'PDF, DOCX, TXT, dan Markdown dapat dibaca, maksimal 10 MB. Dokumen hasil pindai tidak punya teks yang dapat dipilih dan tidak bisa dipakai: ekspor ulang sebagai PDF teks. Berkasnya sendiri tidak pernah disimpan.',
+          },
+          {
+            title: 'Periksa hasil ekstraksi sebelum memulai',
+            body: 'Teks hasil ekstraksi masuk ke kotak yang dapat disunting, bukan langsung ke sesi. Setiap kutipan yang dipakai penguji dicocokkan ke persis apa yang Anda kirim di sini, jadi kesalahan ekstraksi sebaiknya diperbaiki sekarang.',
+          },
+          {
+            title: 'Berikan argumennya, bukan halaman depannya',
+            body: 'Pendahuluan, metodologi, dan hasil memberi penguji bahan paling banyak. Abstrak saja nyaris tidak memberi apa pun untuk ditekan.',
+          },
+          {
+            title: 'Bawa kelemahan yang belum selesai',
+            body: 'Kolom opsional menerima satu kelemahan per baris, biasanya disalin dari laporan sesi sebelumnya. Pertanyaan yang menyasarnya diajukan lebih dulu. Kelemahan yang sekali gagal Anda perbaiki adalah hal paling berharga untuk diuji ulang.',
+          },
+        ],
+      },
+      {
+        id: 'defense',
+        title: 'Di ruang sidang',
+        lead: 'Tiga panel, masing-masing bergulir sendiri: rencana di kiri, percakapan di tengah, bukti di kanan.',
+        points: [
+          {
+            title: 'Rencana di depan Anda tetap tertutup',
+            body: 'Anda dapat melihat pertanyaan mana yang sedang diuji dan mana yang selesai. Yang masih di depan tetap tertutup, karena sidang yang dapat dibaca lebih dulu bukan sidang.',
+          },
+          {
+            title: 'Jawab dengan kata-kata Anda sendiri',
+            body: 'Pendek dan tepat lebih baik daripada panjang. Penguji menilai apakah Anda dapat mempertahankan poinnya, bukan apakah Anda hafal isi bab.',
+          },
+          {
+            title: 'Pertanyaan berakhir, bukan berputar',
+            body: 'Satu pertanyaan memberi paling banyak dua pendalaman dan satu kesempatan klarifikasi. Batas itu ditegakkan di kode, bukan diminta pada model, sehingga pengujian tidak bisa mengitari satu poin sampai Anda menyerah.',
+          },
+          {
+            title: 'Tidak ada yang bergantung pada tab ini',
+            body: 'Setiap giliran ditulis ke penyimpanan begitu dinilai. Tutup tab di tengah sidang, kembali besok dari perangkat lain, dan sesinya dilanjutkan dari pertanyaan tempatnya berhenti.',
+          },
+        ],
+      },
+      {
+        id: 'voice',
+        title: 'Berbicara dan mendengarkan',
+        lead: 'Anda dapat menjawab dengan suara, dan penguji dapat membacakan pertanyaannya. Sidang sungguhan itu lisan, dan berlatih dalam diam melatih hal yang salah.',
+        points: [
+          {
+            title: 'Menjawab dengan suara',
+            body: 'Mikrofon merekam, lalu transkripnya ditaruh di kotak jawaban untuk Anda baca. Ia tidak terkirim sampai Anda mengirimnya, karena transkrip sidang adalah catatan permanen dan kata yang salah dengar harus dapat diperbaiki sebelum menjadi bagian darinya.',
+          },
+          {
+            title: 'Mendengarkan penguji',
+            body: 'Setiap giliran penguji dapat dibacakan, dan sakelar di bilah atas membacakan tiap pertanyaan baru begitu muncul. Suaranya membacakan teks yang sudah ada di transkrip, bukan generasi kedua darinya.',
+          },
+          {
+            title: 'Suara tidak mengubah apa pun di bawahnya',
+            body: 'Jawaban lisan menempuh jalur yang sama dengan jawaban tertulis dan tunduk pada aturan yang persis sama. Suara adalah jalan masuk dan jalan keluar, bukan mode terpisah dengan perilakunya sendiri.',
+          },
+        ],
+      },
+      {
+        id: 'report',
+        title: 'Laporan sesi',
+        lead: 'Disusun dari transkrip, bukan dari kesan baru atasnya.',
+        points: [
+          {
+            title: 'Yang bertahan',
+            body: 'Poin yang dicatat penguji sebagai berhasil dipertahankan selama sesi, dan dikembalikan ke laporan jika ringkasannya mencoba menghilangkannya. Laporan yang mengatakan tidak ada satu pun yang bertahan adalah laporan yang juga tidak akan Anda percaya soal kelemahan Anda.',
+          },
+          {
+            title: 'Yang masih terbuka',
+            body: 'Setiap poin yang tercatat sebagai celah, digambarkan sebagai celah dan tidak pernah sebagai solusinya. Diberi tahu apa yang harus dikatakan akan menggugurkan seluruh latihannya.',
+          },
+          {
+            title: 'Pola untuk sesi berikutnya',
+            body: 'Kebiasaan di balik celah-celah itu. Tempelkan ke kolom kelemahan yang belum selesai saat memulai sesi berikutnya, dan poin itu akan diuji lebih dulu.',
+          },
+        ],
+      },
+      {
+        id: 'citation',
+        title: 'Memeriksa sitasi',
+        lead: 'Alat terpisah, untuk pertanyaan yang berbeda: apakah sumber ini benar-benar memuat kalimat yang Anda sitasikan padanya?',
+        points: [
+          {
+            title: 'Mengapa DOI yang resolve tidak cukup',
+            body: 'DOI membuktikan makalahnya ada. Itu tidak membuktikan makalahnya mengatakan apa yang Anda atributkan padanya, dan kemiripan topik lolos dari semua pemeriksaan mekanis yang pernah ditulis.',
+          },
+          {
+            title: 'Apa yang dibutuhkannya',
+            body: 'Klaim persis seperti tertulis di naskah Anda, dan teks sumbernya, biasanya abstrak atau bagian yang Anda sitasikan. Penilaiannya tidak boleh bersandar pada apa pun selain itu, dan itulah yang membuatnya dapat diperiksa.',
+          },
+          {
+            title: 'Ia bertanya, bukan menuduh',
+            body: 'Vonis negatif wajib disertai pertanyaan untuk Anda, atau vonisnya turun menjadi tidak dapat dipastikan. Menandai sitasi seseorang salah tanpa jalan untuk menjawab adalah tuduhan, bukan telaah.',
+          },
+        ],
+      },
+      {
+        id: 'integrity',
+        title: 'Yang tidak akan dilakukannya',
+        lead: 'Semuanya ditegakkan di kode, bukan diminta lewat prompt, sehingga model tidak bisa memutuskan sebaliknya di hari yang buruk.',
+        points: [
+          {
+            title: 'Tidak akan mengutip kalimat yang tidak Anda tulis',
+            body: 'Setiap temuan wajib mengutip naskah Anda kata demi kata, dan setiap kutipan dicocokkan kembali ke teks Anda. Temuan yang kutipannya tidak ditemukan di sana dibuang, bukan ditampilkan, karena temuan atas kalimat yang tidak pernah Anda tulis adalah tuduhan.',
+          },
+          {
+            title: 'Tidak akan mencatat celah tanpa memberi peringatan lebih dulu',
+            body: 'Sebuah poin tidak dapat dicatat sebagai belum terjawab sebelum Anda diberi setidaknya satu kesempatan untuk menjelaskannya.',
+          },
+          {
+            title: 'Tidak akan menilai mutu riset Anda',
+            body: 'Tidak ada skor dan tidak ada batas lulus. Severity menggambarkan seberapa keras penguji biasanya menekan, dan itu pernyataan tentang penguji, bukan tentang mutu pekerjaan Anda.',
+          },
+          {
+            title: 'Tidak akan menimpa model diam-diam',
+            body: 'Ketika aturan sesi menggantikan keputusan model, penggantian itu ditampilkan kepada Anda di transkrip, bukan dijalankan di luar penglihatan.',
+          },
+        ],
+      },
+    ],
+  },
+
+  workspace: {
+    newSession: 'Sidang baru',
+    history: 'Sesi Anda',
+    historyHint:
+      'Setiap sidang yang pernah Anda mulai, terbaru di atas. Yang belum selesai dilanjutkan persis dari tempatnya berhenti, termasuk dari perangkat berbeda, karena tidak ada bagian sesi yang hidup di tab ini.',
+    empty: 'Sesi yang Anda mulai akan muncul di sini.',
+    loading: 'Memuat sesi Anda',
+    failed: 'Sesi Anda gagal dimuat.',
+    retry: 'Coba lagi',
+    inProgress: 'Berlangsung',
+    completed: 'Selesai',
+    answeredOf: '{answered} dari {total} terjawab',
+    openGaps: '{count} tercatat sebagai celah',
+    untitled: 'Sesi tanpa judul',
+    today: 'Hari ini',
+    yesterday: 'Kemarin',
+    signedInAs: 'Masuk sebagai',
+  },
 
   voice: {
     speak: 'Jawab dengan suara',

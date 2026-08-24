@@ -26,7 +26,10 @@ export type IconName =
   | 'book'
   | 'mic'
   | 'square'
-  | 'speaker';
+  | 'speaker'
+  | 'plus'
+  | 'external'
+  | 'help';
 
 const PATHS: Record<IconName, React.ReactNode> = {
   check: <polyline points="20 6 9 17 4 12" />,
@@ -107,6 +110,21 @@ const PATHS: Record<IconName, React.ReactNode> = {
   // Stop, not pause. Both recording and playback here end rather than suspend,
   // and a pause glyph would promise a resume that does not exist.
   square: <rect x="6" y="6" width="12" height="12" rx="1" />,
+  plus: <path d="M12 5v14M5 12h14" />,
+  help: (
+    <>
+      <circle cx="12" cy="12" r="9.25" />
+      <path d="M9.4 9.4a2.7 2.7 0 0 1 5.2.9c0 1.8-2.6 2.7-2.6 2.7" />
+      <path d="M12 17h.01" />
+    </>
+  ),
+  external: (
+    <>
+      <path d="M15 3h6v6" />
+      <path d="M10 14 21 3" />
+      <path d="M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5" />
+    </>
+  ),
   speaker: (
     <>
       <path d="M11 4 6 9H3v6h3l5 5Z" />

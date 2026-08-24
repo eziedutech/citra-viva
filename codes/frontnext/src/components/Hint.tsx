@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from 'react';
 
-type Side = "top" | "bottom";
-type Align = "start" | "end";
+type Side = 'top' | 'bottom';
+type Align = 'start' | 'end';
 
 interface Props {
   /** One or two sentences. What this label means, or what to do with it. */
@@ -28,12 +28,7 @@ interface Props {
  * than a `title` attribute: `title` never appears on touch, cannot be styled,
  * and arrives too late to be read as part of the label.
  */
-export function Hint({
-  text,
-  side = "bottom",
-  align = "start",
-  className,
-}: Props) {
+export function Hint({ text, side = 'bottom', align = 'start', className }: Props) {
   const [open, setOpen] = useState(false);
   const wrap = useRef<HTMLSpanElement>(null);
 
@@ -46,24 +41,19 @@ export function Hint({
       if (!wrap.current?.contains(event.target as Node)) setOpen(false);
     }
     function onKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") setOpen(false);
+      if (event.key === 'Escape') setOpen(false);
     }
 
-    document.addEventListener("pointerdown", onPointerDown);
-    document.addEventListener("keydown", onKeyDown);
+    document.addEventListener('pointerdown', onPointerDown);
+    document.addEventListener('keydown', onKeyDown);
     return () => {
-      document.removeEventListener("pointerdown", onPointerDown);
-      document.removeEventListener("keydown", onKeyDown);
+      document.removeEventListener('pointerdown', onPointerDown);
+      document.removeEventListener('keydown', onKeyDown);
     };
   }, [open]);
 
   return (
-    <span
-      ref={wrap}
-      className={["relative inline-flex align-middle", className ?? ""].join(
-        " ",
-      )}
-    >
+    <span ref={wrap} className={['relative inline-flex align-middle', className ?? ''].join(' ')}>
       <button
         type="button"
         // The hint itself is the accessible name. A generic "more information"
@@ -101,46 +91,15 @@ export function Hint({
           role="tooltip"
           aria-hidden="true"
           className={[
-            "pointer-events-none absolute z-50 w-[264px] max-w-[70vw] border border-[color:var(--color-line)] bg-[color:var(--color-surface)] px-3 py-2 shadow-[0_6px_20px_rgba(31,39,51,0.14)]",
-            "text-caption leading-[1.5] font-normal text-[color:var(--color-ink-600)]",
-            side === "top" ? "bottom-full mb-2" : "top-full mt-2",
-            align === "end" ? "right-0" : "left-0",
-          ].join(" ")}
+            'pointer-events-none absolute z-50 w-[264px] max-w-[70vw] border border-[color:var(--color-line)] bg-[color:var(--color-surface)] px-3 py-2 shadow-[0_6px_20px_rgba(31,39,51,0.14)]',
+            'text-caption leading-[1.5] font-normal text-[color:var(--color-ink-600)]',
+            side === 'top' ? 'bottom-full mb-2' : 'top-full mt-2',
+            align === 'end' ? 'right-0' : 'left-0',
+          ].join(' ')}
         >
           {text}
         </span>
       ) : null}
-    </span>
-  );
-}
-
-/**
- * A label with its hint attached, for the common case.
- *
- * Keeping the pair in one component is what stops half the labels in the app
- * from quietly losing their (i) as the interface is edited.
- */
-export function Labeled({
-  children,
-  hint,
-  side,
-  align,
-  className,
-}: {
-  children: React.ReactNode;
-  hint: string;
-  side?: Side;
-  align?: Align;
-  className?: string;
-}) {
-  return (
-    <span
-      className={["inline-flex items-center gap-[6px]", className ?? ""].join(
-        " ",
-      )}
-    >
-      {children}
-      <Hint text={hint} side={side} align={align} />
     </span>
   );
 }

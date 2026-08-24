@@ -122,6 +122,29 @@ class SessionSummary(BaseModel):
     closing_remark: str = ""
 
 
+class SessionDigest(BaseModel):
+    """One line of a student's own history, and nothing more.
+
+    Deliberately not a `SessionState`. A history list of twenty defenses would
+    otherwise carry twenty manuscripts worth of findings and transcripts to the
+    browser to render twenty rows, and every one of those is text the student
+    did not ask to see again.
+    """
+
+    session_id: str
+    status: SessionStatus = SessionStatus.IN_PROGRESS
+    headline: str = Field(
+        default="",
+        description="The opening remark or first question, so a row is recognisable.",
+    )
+    question_count: int = 0
+    answered_count: int = 0
+    gap_count: int = 0
+    has_summary: bool = False
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
+
+
 class SessionState(BaseModel):
     """Everything needed to resume a session from cold storage."""
 
@@ -163,6 +186,24 @@ class SessionState(BaseModel):
         if 0 <= self.current_index < len(self.progress):
             return self.progress[self.current_index]
         return None
+
+    def digest(self) -> SessionDigest:
+        """Reduce a session to the row that represents it in a history list."""
+        headline = self.opening_remark.strip()
+        if not headline and self.questions:
+            headline = self.questions[0].question.strip()
+
+        return SessionDigest(
+            session_id=self.session_id,
+            status=self.status,
+            headline=headline,
+            question_count=len(self.questions),
+            answered_count=sum(1 for turn in self.transcript if turn.role == "student"),
+            gap_count=sum(1 for item in self.progress if item.gap_recorded),
+            has_summary=self.summary is not None,
+            created_at=self.created_at,
+            updated_at=self.updated_at,
+        )
 
     def is_finished(self) -> bool:
         return self.current_index >= len(self.questions)

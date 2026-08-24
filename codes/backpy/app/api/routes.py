@@ -22,7 +22,12 @@ from app.config import get_settings
 from app.ingest.extract import ExtractionError, extract_draft
 from app.models.claim_support import CitedSource, ClaimSupportResult
 from app.models.question_strategy import StrategyResult
-from app.models.session import SessionState, SessionSummary, SessionTurnResult
+from app.models.session import (
+    SessionDigest,
+    SessionState,
+    SessionSummary,
+    SessionTurnResult,
+)
 from app.models.weakness_map import AnalysisResult
 from app.orchestrator.orchestrator import Orchestrator
 from app.speech.voice import SpeechError, speak_text, transcribe_answer
@@ -131,6 +136,10 @@ class SpeakRequest(BaseModel):
 class SpeakResponse(BaseModel):
     audio_base64: str = Field(description="The spoken audio, base64 encoded.")
     mime_type: str = "audio/wav"
+
+
+class SessionHistoryResponse(BaseModel):
+    sessions: list[SessionDigest] = Field(default_factory=list)
 
 
 class CloseSessionResponse(BaseModel):
@@ -321,6 +330,20 @@ def check_claim_endpoint(request: CheckClaimRequest, user: CurrentUser) -> Claim
     """
     with _translated_errors():
         return check_claim_support(request.claim, request.source)
+
+
+@router.get("/api/sessions", response_model=SessionHistoryResponse)
+def list_sessions_endpoint(user: CurrentUser) -> SessionHistoryResponse:
+    """The caller's own sessions, newest first.
+
+    Ownership is the query rather than a check applied to the results, so there
+    is no path through this endpoint that reads another student's defense in
+    order to decide not to show it.
+    """
+    with _translated_errors():
+        return SessionHistoryResponse(
+            sessions=FirestoreSessionStore().list_for_user(user.uid)
+        )
 
 
 @router.get("/api/sessions/{session_id}", response_model=SessionState)
