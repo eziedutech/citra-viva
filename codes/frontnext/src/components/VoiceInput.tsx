@@ -5,7 +5,13 @@ import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '@/components/AuthProvider';
 import { Hint } from '@/components/Hint';
 import { Icon } from '@/components/Icon';
-import { canRecord, MIN_RECORDING_SECONDS, startRecording, type Recorder } from '@/lib/audio';
+import {
+  canRecord,
+  MIN_RECORDING_SECONDS,
+  SILENCE_PEAK,
+  startRecording,
+  type Recorder,
+} from '@/lib/audio';
 import { fill, type Dictionary } from '@/lib/i18n';
 import { transcribe } from '@/lib/speech';
 
@@ -37,6 +43,7 @@ export function VoiceInput({ dict, onTranscript, disabled = false }: Props) {
   const [error, setError] = useState('');
   const [supported, setSupported] = useState(true);
 
+  const [level, setLevel] = useState(0);
   const recorder = useRef<Recorder | null>(null);
 
   // Checked after mount, not during render: these APIs do not exist on the
@@ -75,12 +82,21 @@ export function VoiceInput({ dict, onTranscript, disabled = false }: Props) {
 
     setWorking(true);
     try {
-      const { wav, seconds: length } = await active.stop();
+      const { wav, seconds: length, peak } = await active.stop();
+      setLevel(0);
 
       // A recording this short is a click, not an answer. Sending it spends a
       // model call to be told there was no speech in it.
       if (length < MIN_RECORDING_SECONDS) {
         setError(dict.voice.empty);
+        return;
+      }
+
+      // The microphone was open and produced nothing. Named plainly, because
+      // the alternative is what happened before: the recording is sent, the
+      // model hears silence, and the student is handed a word it invented.
+      if (peak < SILENCE_PEAK) {
+        setError(dict.voice.silent);
         return;
       }
 
@@ -103,7 +119,7 @@ export function VoiceInput({ dict, onTranscript, disabled = false }: Props) {
   async function begin() {
     setError('');
     try {
-      recorder.current = await startRecording();
+      recorder.current = await startRecording(setLevel);
       setRecording(true);
     } catch {
       // Every failure here is the same thing from the student's side: no
@@ -142,6 +158,29 @@ export function VoiceInput({ dict, onTranscript, disabled = false }: Props) {
         <span className="text-micro flex items-center gap-2 text-[color:var(--color-danger)]">
           <span className="ai-pulse block h-[7px] w-[7px] rounded-[var(--radius-chip)] bg-[color:var(--color-danger)]" />
           <span className="tabular-nums">{fill(dict.ai.elapsed, { seconds })}</span>
+
+          {/* What the microphone is actually giving us, while it gives it.
+              A meter that never moves while somebody is speaking says more in
+              two seconds than any error message can afterwards, and this
+              feature has now failed twice in ways nothing on screen showed. */}
+          <span
+            aria-hidden="true"
+            className="flex h-3 items-end gap-[2px]"
+            title={dict.voice.level}
+          >
+            {[0.06, 0.14, 0.26, 0.42, 0.62].map((threshold) => (
+              <span
+                key={threshold}
+                className={[
+                  'block w-[3px] transition-[height,background-color] duration-100',
+                  level >= threshold
+                    ? 'bg-[color:var(--color-danger)]'
+                    : 'bg-[color:var(--color-line)]',
+                ].join(' ')}
+                style={{ height: `${4 + threshold * 12}px` }}
+              />
+            ))}
+          </span>
         </span>
       ) : null}
 

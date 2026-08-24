@@ -111,7 +111,19 @@ async function resample(samples: Float32Array, from: number): Promise<Float32Arr
 export interface Recording {
   wav: Blob;
   seconds: number;
+  /** Loudest sample captured, 0 to 1. Zero means the microphone gave nothing. */
+  peak: number;
 }
+
+/**
+ * Below this the microphone produced silence.
+ *
+ * Not a judgement about a quiet speaker: normal speech at a normal distance
+ * peaks far above this, and room noise alone clears it. A recording under it
+ * means no audio reached the page at all, which the browser reports as success
+ * and the model answers with nothing.
+ */
+export const SILENCE_PEAK = 0.005;
 
 export interface Recorder {
   /** Stop, release the microphone, and return the recording as WAV. */
@@ -126,38 +138,50 @@ export interface Recorder {
  * Throws if permission is refused, which is the caller's cue to say so. Nothing
  * here degrades quietly: a recorder that cannot record raises.
  */
-export async function startRecording(): Promise<Recorder> {
+export async function startRecording(onLevel?: (level: number) => void): Promise<Recorder> {
   const Context = audioContextClass();
   if (!Context) throw new Error('This browser cannot record audio.');
 
-  const stream = await navigator.mediaDevices.getUserMedia({
-    audio: {
-      channelCount: 1,
-      echoCancellation: true,
-      noiseSuppression: true,
-      autoGainControl: true,
-    },
-  });
+  // Plain `audio: true`. Asking for a specific channel count is where some
+  // devices hand back a track that is live but silent, and a silent track is
+  // the hardest failure to see: everything reports success and the model
+  // receives nothing.
+  const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
   const context = new Context();
   const source = context.createMediaStreamSource(stream);
   const processor = context.createScriptProcessor(BUFFER_SIZE, 1, 1);
 
-  // A processor node only runs while it is connected to the destination, and
-  // connecting the microphone to the speakers is feedback. A gain of zero is
-  // what keeps the graph alive without putting the student's voice into their
-  // own ears half a second late.
+  // A processor node only runs while its output is being pulled, and pulling it
+  // through the speakers is feedback: the student's own voice in their ears
+  // half a second late. So it goes through a gain that is inaudible but not
+  // zero. Exactly zero invites a graph to conclude the branch cannot be heard
+  // and stop pulling it, which stops the capture with nothing reported.
   const silence = context.createGain();
-  silence.gain.value = 0;
+  silence.gain.value = 0.0001;
 
   const chunks: Float32Array[] = [];
   let frames = 0;
+  let peak = 0;
+  let level = 0;
 
   processor.onaudioprocess = (event) => {
     const input = event.inputBuffer.getChannelData(0);
     // Copied, because the event's buffer is reused for the next block.
     chunks.push(new Float32Array(input));
     frames += input.length;
+
+    // The loudest sample seen, for two purposes: a meter the student can watch
+    // while speaking, and the check at the end that refuses to send silence.
+    let block = 0;
+    for (let index = 0; index < input.length; index += 1) {
+      const value = Math.abs(input[index]);
+      if (value > block) block = value;
+    }
+    if (block > peak) peak = block;
+    // Falls back gradually so the meter reads as a level rather than a flicker.
+    level = Math.max(block, level * 0.8);
+    onLevel?.(level);
   };
 
   source.connect(processor);
@@ -192,7 +216,7 @@ export async function startRecording(): Promise<Recorder> {
 
       const seconds = frames / sampleRate;
       const samples = await resample(merged, sampleRate);
-      return { wav: encodeWav(samples, TARGET_SAMPLE_RATE), seconds };
+      return { wav: encodeWav(samples, TARGET_SAMPLE_RATE), seconds, peak };
     },
     cancel: release,
   };

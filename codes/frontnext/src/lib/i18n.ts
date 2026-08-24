@@ -550,6 +550,9 @@ const en = {
       'The microphone was not available. Allow it for this site in your browser, or type your answer instead.',
     unsupported: 'This browser cannot record audio. Type your answer instead.',
     empty: 'Nothing was recorded. Check the microphone and try again.',
+    silent:
+      'The microphone was open but no sound reached the page. Check that the right input device is selected and that the browser is not muted, then record again.',
+    level: 'Input level',
     failed: 'The recording could not be transcribed.',
     playFailed: 'That could not be read aloud.',
     transcriptAdded:
@@ -1178,6 +1181,9 @@ const id: Dictionary = {
       'Mikrofon tidak tersedia. Izinkan untuk situs ini di peramban Anda, atau ketik jawaban Anda.',
     unsupported: 'Peramban ini tidak dapat merekam audio. Silakan ketik jawaban Anda.',
     empty: 'Tidak ada yang terekam. Periksa mikrofon lalu coba lagi.',
+    silent:
+      'Mikrofon terbuka tetapi tidak ada suara yang sampai ke halaman ini. Periksa perangkat masukan yang terpilih dan pastikan peramban tidak dibisukan, lalu rekam lagi.',
+    level: 'Tingkat masukan',
     failed: 'Rekaman gagal ditranskripkan.',
     playFailed: 'Bagian ini gagal dibacakan.',
     transcriptAdded:
