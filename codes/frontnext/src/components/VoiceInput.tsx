@@ -13,6 +13,7 @@ import {
   type Recorder,
 } from '@/lib/audio';
 import { fill, type Dictionary } from '@/lib/i18n';
+import { liveEndpoint, openLiveTranscription } from '@/lib/live';
 import { transcribe } from '@/lib/speech';
 
 /** A spoken answer is a turn in a defense. Past this it is a monologue. */
@@ -48,7 +49,8 @@ export function VoiceInput({
   onWorkingChange,
   disabled = false,
 }: Props) {
-  const { authedFetch } = useAuth();
+  const auth = useAuth();
+  const { authedFetch } = auth;
   const [recording, setRecording] = useState(false);
   const [working, setWorking] = useState(false);
   const [seconds, setSeconds] = useState(0);
@@ -58,6 +60,7 @@ export function VoiceInput({
   const [level, setLevel] = useState(0);
   const [elapsed, setElapsed] = useState(0);
   const recorder = useRef<Recorder | null>(null);
+  const live = useRef<Awaited<ReturnType<typeof openLiveTranscription>> | null>(null);
 
   // Checked after mount, not during render: these APIs do not exist on the
   // server, and microphone access needs a secure origin, which the rendering
@@ -84,6 +87,8 @@ export function VoiceInput({
     return () => {
       recorder.current?.cancel();
       recorder.current = null;
+      live.current?.abandon();
+      live.current = null;
     };
   }, []);
 
@@ -102,6 +107,8 @@ export function VoiceInput({
       // A recording this short is a click, not an answer. Sending it spends a
       // model call to be told there was no speech in it.
       if (length < MIN_RECORDING_SECONDS) {
+        live.current?.abandon();
+        live.current = null;
         setError(dict.voice.empty);
         return;
       }
@@ -110,8 +117,28 @@ export function VoiceInput({
       // the alternative is what happened before: the recording is sent, the
       // model hears silence, and the student is handed a word it invented.
       if (peak < SILENCE_PEAK) {
+        live.current?.abandon();
+        live.current = null;
         setError(dict.voice.silent);
         return;
+      }
+
+      // The streamed transcript when there is one, the whole recording when
+      // there is not. A socket that produced nothing is not an error worth
+      // showing: the fallback gives the same answer, a few seconds later.
+      const streamed = live.current;
+      live.current = null;
+
+      if (streamed) {
+        try {
+          const text = await streamed.finish();
+          if (text) {
+            onTranscript(text);
+            return;
+          }
+        } catch {
+          // Fall through and upload it instead.
+        }
       }
 
       onTranscript(await transcribe(wav, authedFetch));
@@ -145,10 +172,41 @@ export function VoiceInput({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [recording, seconds]);
 
+  /**
+   * Open the streaming socket, or decide to do without it.
+   *
+   * Never fatal. Every reason this can fail, from a refused credential to a
+   * network that will not carry a WebSocket, ends the same way: the recording
+   * is uploaded whole when the student stops, which is what happened before
+   * streaming existed and still works. Losing four seconds is a far better
+   * outcome than losing the answer.
+   */
+  async function openLive(): Promise<boolean> {
+    if (!auth.user) return false;
+    try {
+      const [url, token] = await Promise.all([
+        liveEndpoint(auth.authedFetch),
+        auth.user.getIdToken(),
+      ]);
+      live.current = await openLiveTranscription(url, token);
+      return true;
+    } catch {
+      live.current = null;
+      return false;
+    }
+  }
+
   async function begin() {
     setError('');
     try {
-      recorder.current = await startRecording(setLevel);
+      const streaming = await openLive();
+
+      recorder.current = await startRecording({
+        onLevel: setLevel,
+        // Sent as it is captured, so the transcript is ready almost as soon as
+        // the student stops rather than four seconds later.
+        onChunk: streaming ? (pcm) => live.current?.send(pcm) : undefined,
+      });
       setRecording(true);
     } catch {
       // Every failure here is the same thing from the student's side: no

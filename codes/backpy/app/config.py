@@ -35,6 +35,16 @@ class Settings(BaseSettings):
     gemini_voice_model: str = "gemini-2.5-flash-tts"
     gemini_voice_name: str = "Charon"
 
+    # Streaming transcription. The Live model is refused on the `global`
+    # endpoint and answers in us-central1, so it carries its own location
+    # rather than borrowing the one every other call uses.
+    gemini_live_model: str = "gemini-live-2.5-flash-native-audio"
+    gemini_live_location: str = "us-central1"
+
+    # Origins allowed to open the streaming socket. Comma separated, and empty
+    # by default so a local run stays closed until it says otherwise.
+    allowed_web_origins: str = ""
+
     # Firestore
     firestore_database: str = "(default)"
 

@@ -138,7 +138,19 @@ export interface Recorder {
  * Throws if permission is refused, which is the caller's cue to say so. Nothing
  * here degrades quietly: a recorder that cannot record raises.
  */
-export async function startRecording(onLevel?: (level: number) => void): Promise<Recorder> {
+export interface RecorderOptions {
+  /** Called with the meter level, 0 to 1, as audio arrives. */
+  onLevel?: (level: number) => void;
+  /**
+   * Called with each frame as 16-bit PCM, for streaming it while it is spoken.
+   * Only fires when the browser agreed to capture at the target rate, because
+   * resampling every frame separately would drift at the seams.
+   */
+  onChunk?: (pcm: ArrayBuffer) => void;
+}
+
+export async function startRecording(options: RecorderOptions = {}): Promise<Recorder> {
+  const { onLevel, onChunk } = options;
   const Context = audioContextClass();
   if (!Context) throw new Error('This browser cannot record audio.');
 
@@ -148,7 +160,16 @@ export async function startRecording(onLevel?: (level: number) => void): Promise
   // receives nothing.
   const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
-  const context = new Context();
+  // Asked to capture at the rate the transcriber wants. When the browser
+  // agrees there is no resampling at all, on the way out or per frame; when it
+  // refuses, the fallback below still resamples at the end.
+  let context: AudioContext;
+  try {
+    context = new Context({ sampleRate: TARGET_SAMPLE_RATE });
+  } catch {
+    context = new Context();
+  }
+
   const source = context.createMediaStreamSource(stream);
   const processor = context.createScriptProcessor(BUFFER_SIZE, 1, 1);
 
@@ -182,6 +203,15 @@ export async function startRecording(onLevel?: (level: number) => void): Promise
     // Falls back gradually so the meter reads as a level rather than a flicker.
     level = Math.max(block, level * 0.8);
     onLevel?.(level);
+
+    if (onChunk && context.sampleRate === TARGET_SAMPLE_RATE) {
+      const pcm = new Int16Array(input.length);
+      for (let index = 0; index < input.length; index += 1) {
+        const sample = Math.max(-1, Math.min(1, input[index]));
+        pcm[index] = sample < 0 ? sample * 0x8000 : sample * 0x7fff;
+      }
+      onChunk(pcm.buffer);
+    }
   };
 
   source.connect(processor);
