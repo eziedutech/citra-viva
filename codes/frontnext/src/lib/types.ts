@@ -177,6 +177,9 @@ export interface SessionTurnResult {
   question_id: string;
   next_question_id: string;
   finished: boolean;
+  /** The reply, already spoken, when the student has the voice switched on. */
+  audio_base64: string;
+  audio_mime: string;
   /** Decisions the backend overrode, and why. Shown, never hidden. */
   adjustments: string[];
 }
@@ -188,6 +191,8 @@ export interface StartSessionResponse {
   question_id: string;
   analysis: AnalysisResult;
   strategy: StrategyResult;
+  audio_base64?: string;
+  audio_mime?: string;
 }
 
 export interface CloseSessionResponse {

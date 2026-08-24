@@ -45,6 +45,21 @@ export async function transcribe(recording: Blob, send: Fetcher = fetch): Promis
  * pins its blob in memory for the life of the document, and a defense plays
  * many of these.
  */
+/**
+ * Wrap audio that arrived with a turn so it can be played.
+ *
+ * The caller owns the returned object URL and must revoke it: one of these
+ * pins its blob for the life of the document, and a defense produces many.
+ */
+export function audioUrlFrom(base64: string, mimeType: string): string {
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let index = 0; index < binary.length; index += 1) {
+    bytes[index] = binary.charCodeAt(index);
+  }
+  return URL.createObjectURL(new Blob([bytes], { type: mimeType || 'audio/wav' }));
+}
+
 export async function speak(text: string, send: Fetcher = fetch): Promise<string> {
   const response = await send('/api/speech/say', {
     method: 'POST',

@@ -5,12 +5,17 @@ import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '@/components/AuthProvider';
 import { Icon } from '@/components/Icon';
 import type { Dictionary } from '@/lib/i18n';
-import { speak } from '@/lib/speech';
+import { audioUrlFrom, speak } from '@/lib/speech';
 
 interface Props {
   /** Examiner text, exactly as it stands in the transcript. */
   text: string;
   dict: Dictionary;
+  /**
+   * Audio that arrived with the turn, base64. When it is here there is nothing
+   * to fetch and nothing to wait for: the voice starts as the words appear.
+   */
+  audio?: { base64: string; mime: string } | null;
   /** Speak as soon as this turn appears, for a student running hands free. */
   autoPlay?: boolean;
 }
@@ -24,20 +29,20 @@ interface Props {
  * a question they did not catch should not wait through a second round trip,
  * and should not pay for one either.
  */
-export function SpeakButton({ text, dict, autoPlay = false }: Props) {
+export function SpeakButton({ text, dict, audio = null, autoPlay = false }: Props) {
   const auth = useAuth();
   const { authedFetch } = auth;
   const [busy, setBusy] = useState(false);
   const [playing, setPlaying] = useState(false);
   const [error, setError] = useState('');
 
-  const audio = useRef<HTMLAudioElement | null>(null);
+  const player = useRef<HTMLAudioElement | null>(null);
   const url = useRef<string>('');
   const played = useRef(false);
 
   useEffect(() => {
     return () => {
-      audio.current?.pause();
+      player.current?.pause();
       // An object URL pins its blob for the life of the document, and a
       // defense plays many of these.
       if (url.current) URL.revokeObjectURL(url.current);
@@ -56,22 +61,26 @@ export function SpeakButton({ text, dict, autoPlay = false }: Props) {
   async function play(automatic = false) {
     setError('');
 
-    if (audio.current) {
-      void audio.current.play().catch(() => setPlaying(false));
+    if (player.current) {
+      void player.current.play().catch(() => setPlaying(false));
       setPlaying(true);
       return;
     }
 
     setBusy(true);
     try {
-      const source = await speak(text, authedFetch);
+      // Made during the wait the student already had, so there is no second
+      // one here. Fetching is the fallback for a turn that arrived without it.
+      const source = audio?.base64
+        ? audioUrlFrom(audio.base64, audio.mime)
+        : await speak(text, authedFetch);
       url.current = source;
 
       const element = new Audio(source);
       element.onended = () => setPlaying(false);
       element.onpause = () => setPlaying(false);
       element.onplay = () => setPlaying(true);
-      audio.current = element;
+      player.current = element;
 
       await element.play();
     } catch (caught) {
@@ -87,8 +96,8 @@ export function SpeakButton({ text, dict, autoPlay = false }: Props) {
   }
 
   function stop() {
-    audio.current?.pause();
-    if (audio.current) audio.current.currentTime = 0;
+    player.current?.pause();
+    if (player.current) player.current.currentTime = 0;
     setPlaying(false);
   }
 

@@ -20,6 +20,7 @@ import { SpeakButton } from '@/components/SpeakButton';
 import { VoiceInput } from '@/components/VoiceInput';
 import { Wordmark } from '@/components/Wordmark';
 import { fill, type Dictionary, type Locale } from '@/lib/i18n';
+import { takeOpeningAudio } from '@/lib/opening-audio';
 import { normalizeSession } from '@/lib/session';
 import type {
   AnswerEvaluation,
@@ -56,6 +57,14 @@ export function DefenseRoom({ initial, dict, locale }: Props) {
   const [readAloud, setReadAloud] = useState(true);
   const [focusFinding, setFocusFinding] = useState('');
   const [transcribing, setTranscribing] = useState(false);
+  // Only for the turn that just arrived. Older turns fetch their own audio if
+  // the student asks, and holding every turn's audio would keep a whole
+  // defense of speech in memory for the sake of a replay nobody asked for.
+  const [spokenTurn, setSpokenTurn] = useState<{
+    index: number;
+    base64: string;
+    mime: string;
+  } | null>(null);
   const [voiceNote, setVoiceNote] = useState(false);
   const transcriptEnd = useRef<HTMLDivElement>(null);
   const answerBox = useRef<HTMLTextAreaElement>(null);
@@ -99,6 +108,13 @@ export function DefenseRoom({ initial, dict, locale }: Props) {
     transcriptEnd.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
   }, [session.transcript.length, thinking]);
 
+  // The opening was spoken while the examination was being planned, and left
+  // for the room to collect on arrival.
+  useEffect(() => {
+    const held = takeOpeningAudio(initial.session_id);
+    if (held) setSpokenTurn({ index: 0, base64: held.base64, mime: held.mime });
+  }, [initial.session_id]);
+
   async function submit() {
     const text = answer.trim();
     if (!text || thinking) return;
@@ -125,7 +141,9 @@ export function DefenseRoom({ initial, dict, locale }: Props) {
       const response = await auth.authedFetch(`/api/sessions/${session.session_id}/answer`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ answer: text }),
+        // The voice is asked for only when it will be heard, so nobody pays
+        // for audio that plays to a switched-off speaker.
+        body: JSON.stringify({ answer: text, speak: readAloud }),
       });
       const data = await response.json();
 
@@ -149,7 +167,17 @@ export function DefenseRoom({ initial, dict, locale }: Props) {
       // The server is the source of truth for the transcript, so the optimistic
       // turn is replaced rather than appended to.
       const fresh = await auth.authedFetch(`/api/sessions/${session.session_id}`);
-      if (fresh.ok) setSession(normalizeSession((await fresh.json()) as SessionState));
+      if (fresh.ok) {
+        const next = normalizeSession((await fresh.json()) as SessionState);
+        setSession(next);
+        if (turn.audio_base64) {
+          setSpokenTurn({
+            index: next.transcript.length - 1,
+            base64: turn.audio_base64,
+            mime: turn.audio_mime,
+          });
+        }
+      }
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : dict.room.answerFailed);
       setSession((current) => ({
@@ -306,6 +334,11 @@ export function DefenseRoom({ initial, dict, locale }: Props) {
                         <SpeakButton
                           text={turn.text}
                           dict={dict}
+                          audio={
+                            spokenTurn && spokenTurn.index === index
+                              ? { base64: spokenTurn.base64, mime: spokenTurn.mime }
+                              : null
+                          }
                           autoPlay={readAloud && index === lastExaminerTurn}
                         />
                       </span>

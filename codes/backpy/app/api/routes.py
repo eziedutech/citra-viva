@@ -9,6 +9,7 @@ sessions, and a restart mid-defense costs nothing.
 from __future__ import annotations
 
 import base64
+import logging
 from collections.abc import Iterator
 from contextlib import contextmanager
 from typing import Annotated
@@ -39,6 +40,8 @@ from app.storage.session_store import (
     SessionConflictError,
     SessionNotFoundError,
 )
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -73,6 +76,32 @@ def _translated_errors() -> Iterator[None]:
 def _orchestrator() -> Orchestrator:
     """An Orchestrator backed by Firestore, built fresh for each request."""
     return Orchestrator(store=FirestoreSessionStore(), drafts=FirestoreDraftStore())
+
+
+def _spoken(text: str) -> SpokenTurn:
+    """Synthesise an examiner line, and never let that failure cost the turn.
+
+    The examination is already judged and paid for by the time this runs. A
+    voice that could not be made costs the student a convenience; raising here
+    would cost them the answer itself, so it is logged and stepped over and the
+    button to play it by hand is still there.
+    """
+    settings = get_settings()
+    voice = settings.gemini_voice_name
+
+    try:
+        cached = get_cached_speech(text, voice)
+        speech = cached or speak_text(text, voice=voice, synthesizer=_voice())
+        if cached is None:
+            cache_speech(text, voice, speech)
+    except Exception:  # noqa: BLE001 - a missing voice is not a failed turn
+        logger.warning("Could not synthesise an examiner line", exc_info=True)
+        return SpokenTurn()
+
+    return SpokenTurn(
+        audio_base64=base64.b64encode(speech.data).decode("ascii"),
+        audio_mime=speech.mime_type,
+    )
 
 
 def _transcriber():
@@ -114,6 +143,10 @@ class PrepareSessionResponse(BaseModel):
 
 class StartSessionRequest(PrepareSessionRequest):
     session_id: str = Field(default="", description="Optional. Generated when not supplied.")
+    speak: bool = Field(
+        default=False,
+        description="Synthesise the opening question and return it with the session.",
+    )
 
 
 class StartSessionResponse(BaseModel):
@@ -123,6 +156,8 @@ class StartSessionResponse(BaseModel):
     question_id: str
     analysis: AnalysisResult
     strategy: StrategyResult
+    audio_base64: str = ""
+    audio_mime: str = ""
 
 
 class ExtractDraftResponse(BaseModel):
@@ -137,6 +172,14 @@ class ExtractDraftResponse(BaseModel):
 
 class AnswerRequest(BaseModel):
     answer: str = Field(description="What the student said.")
+    speak: bool = Field(
+        default=False,
+        description=(
+            "Synthesise the examiner's reply and return it with the turn. Asked "
+            "for by the client only when the student has the voice switched on, "
+            "so nobody pays for audio nobody will hear."
+        ),
+    )
 
 
 class TranscribeResponse(BaseModel):
@@ -159,6 +202,19 @@ class SpeakRequest(BaseModel):
 class SpeakResponse(BaseModel):
     audio_base64: str = Field(description="The spoken audio, base64 encoded.")
     mime_type: str = "audio/wav"
+
+
+class SpokenTurn(BaseModel):
+    """An examiner turn with its audio already made.
+
+    The voice used to be fetched after the text arrived, which meant a student
+    read the question and then waited again to hear it. The synthesis now runs
+    inside the wait they are already having, so the words and the voice arrive
+    together and there is nothing to press.
+    """
+
+    audio_base64: str = ""
+    audio_mime: str = ""
 
 
 class SessionHistoryResponse(BaseModel):
@@ -316,6 +372,11 @@ def start_session_endpoint(request: StartSessionRequest, user: CurrentUser) -> S
             session_id=request.session_id,
             persist_draft=request.persist,
         )
+    opening = " ".join(
+        part for part in (start.opening_remark, start.first_question) if part
+    )
+    spoken = _spoken(opening) if request.speak and opening else SpokenTurn()
+
     return StartSessionResponse(
         session_id=start.session_id,
         opening_remark=start.opening_remark,
@@ -323,6 +384,8 @@ def start_session_endpoint(request: StartSessionRequest, user: CurrentUser) -> S
         question_id=start.question_id,
         analysis=start.preparation.analysis,
         strategy=start.preparation.strategy,
+        audio_base64=spoken.audio_base64,
+        audio_mime=spoken.audio_mime,
     )
 
 
@@ -330,9 +393,22 @@ def start_session_endpoint(request: StartSessionRequest, user: CurrentUser) -> S
 def answer_endpoint(
     session_id: str, request: AnswerRequest, user: CurrentUser
 ) -> SessionTurnResult:
-    """Submit one answer and receive what the examiner says next."""
+    """Submit one answer and receive what the examiner says next.
+
+    The voice is made here rather than fetched afterwards. A student waits half
+    a minute for the examiner to weigh their answer; making the audio inside
+    that wait costs a few seconds of a wait they are already having, and saves
+    them a second one after the words have already appeared.
+    """
     with _translated_errors():
-        return _orchestrator().submit_answer(session_id, request.answer, actor_id=user.uid)
+        turn = _orchestrator().submit_answer(session_id, request.answer, actor_id=user.uid)
+
+    if request.speak and turn.examiner_says:
+        spoken = _spoken(turn.examiner_says)
+        turn.audio_base64 = spoken.audio_base64
+        turn.audio_mime = spoken.audio_mime
+
+    return turn
 
 
 @router.get("/api/sessions/{session_id}/document", response_model=SessionDocumentResponse)

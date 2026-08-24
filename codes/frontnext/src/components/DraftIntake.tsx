@@ -11,6 +11,7 @@ import { useAuth } from '@/components/AuthProvider';
 import { Hint } from '@/components/Hint';
 import { Icon } from '@/components/Icon';
 import { fill, type Dictionary, type Locale } from '@/lib/i18n';
+import { holdOpeningAudio } from '@/lib/opening-audio';
 import { SAMPLE_DRAFT_EN, SAMPLE_DRAFT_ID } from '@/lib/sample-draft';
 import type { SessionDigest, SessionHistory, StartSessionResponse } from '@/lib/types';
 
@@ -155,6 +156,9 @@ export function DraftIntake({ dict, locale, embedded = false }: Props) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           draft_text: draft,
+          // The opening is spoken during the wait the student is already
+          // having, so the first question is heard the moment it is read.
+          speak: true,
           recurring_gaps: gaps
             .split('\n')
             .map((line) => line.trim())
@@ -165,6 +169,9 @@ export function DraftIntake({ dict, locale, embedded = false }: Props) {
       if (!response.ok) throw new Error(data.error ?? dict.intake.failed);
 
       const started = data as StartSessionResponse;
+      if (started.audio_base64) {
+        holdOpeningAudio(started.session_id, started.audio_base64, started.audio_mime ?? '');
+      }
       // The room reads the session from the API on load, so nothing needs to
       // survive the navigation. A refresh mid-defense loses nothing either.
       router.push(`/sesi/${started.session_id}`);

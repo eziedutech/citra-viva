@@ -281,6 +281,15 @@ class SessionTurnResult(BaseModel):
         default="", description="Empty when the examiner is still on the same question."
     )
     finished: bool = False
+    audio_base64: str = Field(
+        default="",
+        description=(
+            "The examiner's reply, spoken, when the student asked for a voice. "
+            "Carried with the turn rather than fetched after it, so the words "
+            "and the voice arrive together."
+        ),
+    )
+    audio_mime: str = ""
     adjustments: list[str] = Field(
         default_factory=list,
         description="Decisions our code overrode, and why. Part of the audit trail.",
