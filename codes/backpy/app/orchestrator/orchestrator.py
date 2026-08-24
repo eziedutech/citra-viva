@@ -38,6 +38,7 @@ from app.models.session import (
     TranscriptTurn,
 )
 from app.models.weakness_map import AnalysisResult
+from app.storage.draft_store import DraftStore, InMemoryDraftStore
 from app.storage.firestore import save_weakness_map
 from app.storage.session_store import (
     InMemorySessionStore,
@@ -88,6 +89,7 @@ class Orchestrator:
     runner: ModelRunner | None = None
     firestore_client: Any | None = None
     store: SessionStore = field(default_factory=InMemorySessionStore)
+    drafts: DraftStore = field(default_factory=InMemoryDraftStore)
 
     # ---------------------------------------------------------------- #
     # Preparation
@@ -214,6 +216,14 @@ class Orchestrator:
         )
         self.store.save(state)
 
+        try:
+            self.drafts.save(session_id, user_id, draft_text)
+        except Exception:  # noqa: BLE001 - a stored manuscript is a convenience
+            # The defense is prepared and paid for. Losing the copy the student
+            # can read costs them a reference; losing the session would cost
+            # them the examination, so this is logged and stepped over.
+            logger.warning("Could not keep the manuscript for session %s", session_id)
+
         return SessionStart(
             session_id=session_id,
             opening_remark=strategy.opening_remark,
@@ -329,6 +339,19 @@ class Orchestrator:
             finished=state.is_finished(),
             adjustments=adjustments,
         )
+
+    def load_document(self, session_id: str, actor_id: str = "") -> str:
+        """The manuscript this session was built from, for the student to read.
+
+        A real viva happens with the thesis on the table. Ownership is checked
+        against the manuscript's own record rather than the session's, so a
+        stored document can never be read through a session it does not belong
+        to.
+        """
+        # Reading the session first is what turns a guessed id into a 404 that
+        # says nothing, before the manuscript store is touched at all.
+        self.load_session(session_id, actor_id)
+        return self.drafts.load(session_id, actor_id)
 
     def reveal_rubric(self, session_id: str, actor_id: str = "") -> QuestionRubric:
         """Show what the question now on the table is testing.

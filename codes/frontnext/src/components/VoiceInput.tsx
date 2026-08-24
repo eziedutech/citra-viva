@@ -5,9 +5,9 @@ import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '@/components/AuthProvider';
 import { Hint } from '@/components/Hint';
 import { Icon } from '@/components/Icon';
-import { toWav } from '@/lib/audio';
-import { canRecord, pickRecordingType, transcribe } from '@/lib/speech';
+import { canRecord, MIN_RECORDING_SECONDS, startRecording, type Recorder } from '@/lib/audio';
 import { fill, type Dictionary } from '@/lib/i18n';
+import { transcribe } from '@/lib/speech';
 
 /** A spoken answer is a turn in a defense. Past this it is a monologue. */
 const MAX_RECORDING_SECONDS = 300;
@@ -37,8 +37,7 @@ export function VoiceInput({ dict, onTranscript, disabled = false }: Props) {
   const [error, setError] = useState('');
   const [supported, setSupported] = useState(true);
 
-  const recorder = useRef<MediaRecorder | null>(null);
-  const chunks = useRef<Blob[]>([]);
+  const recorder = useRef<Recorder | null>(null);
 
   // Checked after mount, not during render: these APIs do not exist on the
   // server, and microphone access needs a secure origin, which the rendering
@@ -59,86 +58,58 @@ export function VoiceInput({ dict, onTranscript, disabled = false }: Props) {
     return () => clearInterval(timer);
   }, [recording]);
 
-  // A recorder left running holds the microphone open, and the browser keeps
+  // A recorder left running holds the microphone open, and the browser goes on
   // showing the recording indicator for a page that is no longer on screen.
   useEffect(() => {
     return () => {
-      const active = recorder.current;
-      if (active && active.state !== 'inactive') active.stop();
-      active?.stream.getTracks().forEach((track) => track.stop());
+      recorder.current?.cancel();
+      recorder.current = null;
     };
   }, []);
 
+  async function finish() {
+    const active = recorder.current;
+    recorder.current = null;
+    setRecording(false);
+    if (!active) return;
+
+    setWorking(true);
+    try {
+      const { wav, seconds: length } = await active.stop();
+
+      // A recording this short is a click, not an answer. Sending it spends a
+      // model call to be told there was no speech in it.
+      if (length < MIN_RECORDING_SECONDS) {
+        setError(dict.voice.empty);
+        return;
+      }
+
+      onTranscript(await transcribe(wav, authedFetch));
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : dict.voice.failed);
+    } finally {
+      setWorking(false);
+    }
+  }
+
   useEffect(() => {
     if (!recording || seconds < MAX_RECORDING_SECONDS) return;
-    stop();
-    // The dependency list is deliberately narrow: this fires on the tick that
-    // crosses the limit, and stopping clears `recording` so it cannot repeat.
+    void finish();
+    // Fires on the tick that crosses the limit. Stopping clears `recording`,
+    // so it cannot repeat.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [recording, seconds]);
 
-  function release() {
-    recorder.current?.stream.getTracks().forEach((track) => track.stop());
-    recorder.current = null;
-  }
-
   async function begin() {
     setError('');
-    let stream: MediaStream;
     try {
-      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      recorder.current = await startRecording();
+      setRecording(true);
     } catch {
       // Every failure here is the same thing from the student's side: no
       // microphone is available to them. Naming the browser's permission
       // dialog is more use than reporting which exception was raised.
       setError(dict.voice.denied);
-      return;
-    }
-
-    const mimeType = pickRecordingType();
-    const active = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
-    chunks.current = [];
-
-    active.ondataavailable = (event) => {
-      if (event.data.size > 0) chunks.current.push(event.data);
-    };
-
-    active.onstop = () => {
-      const recorded = new Blob(chunks.current, { type: active.mimeType || 'audio/webm' });
-      chunks.current = [];
-      release();
-      void send(recorded);
-    };
-
-    recorder.current = active;
-    active.start();
-    setRecording(true);
-  }
-
-  function stop() {
-    const active = recorder.current;
-    if (active && active.state !== 'inactive') active.stop();
-    setRecording(false);
-  }
-
-  async function send(recorded: Blob) {
-    if (recorded.size === 0) {
-      setError(dict.voice.empty);
-      return;
-    }
-
-    setWorking(true);
-    try {
-      // Re-encoded before it is sent. What a browser records is WebM, which the
-      // model does not read, and given bytes it cannot decode it answers from
-      // nothing rather than refusing: a long spoken answer came back as the
-      // words "yes and no", with no error anywhere.
-      const text = await transcribe(await toWav(recorded), authedFetch);
-      onTranscript(text);
-    } catch (caught) {
-      setError(caught instanceof Error ? caught.message : dict.voice.failed);
-    } finally {
-      setWorking(false);
     }
   }
 
@@ -152,7 +123,7 @@ export function VoiceInput({ dict, onTranscript, disabled = false }: Props) {
     <span className="flex flex-wrap items-center gap-2">
       <button
         type="button"
-        onClick={() => (recording ? stop() : void begin())}
+        onClick={() => void (recording ? finish() : begin())}
         disabled={disabled || working}
         aria-pressed={recording}
         className={[

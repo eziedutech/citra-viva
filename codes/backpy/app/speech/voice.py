@@ -46,18 +46,29 @@ MAX_AUDIO_BYTES = 10 * 1024 * 1024
 # enough that a runaway string cannot turn into a minutes-long synthesis bill.
 MAX_SPEECH_CHARS = 2000
 
-# What a browser actually produces. Chrome and Edge record a WebM container,
-# Firefox records Ogg, Safari records MP4 with AAC. The list is what those
-# three send, plus WAV for anything uploaded by hand.
+# Exactly what the model reads, and nothing else.
+#
+# This list used to include WebM and MP4, on the reasoning that they are what a
+# browser records. That reasoning was backwards and it cost a real bug: given
+# audio in a container it cannot decode, the model does not refuse, it answers
+# anyway, and a student's spoken answer came back as an invented sentence with
+# no error anywhere. Accepting a format the model cannot read is accepting a
+# transcript that is quietly false.
+#
+# The browser now sends WAV, encoded from raw samples, so nothing is lost by
+# refusing the rest. Anything not on this list is turned away with a message
+# rather than passed on to be misread.
 SUPPORTED_AUDIO_TYPES = {
-    "audio/webm",
-    "audio/ogg",
     "audio/wav",
     "audio/x-wav",
-    "audio/mp4",
     "audio/mpeg",
+    "audio/mp3",
+    "audio/aiff",
+    "audio/x-aiff",
     "audio/aac",
+    "audio/ogg",
     "audio/flac",
+    "audio/x-flac",
 }
 
 TRANSCRIPTION_INSTRUCTION = (
@@ -161,7 +172,7 @@ def transcribe_answer(
     if normalised not in SUPPORTED_AUDIO_TYPES:
         raise SpeechError(
             f"Audio of type {normalised or 'unknown'} cannot be read. "
-            "Recording from the browser produces a supported format."
+            "Supported formats are WAV, MP3, AIFF, AAC, OGG, and FLAC."
         )
 
     text = _clean_transcript(

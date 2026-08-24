@@ -6,36 +6,6 @@
  * never leaves for anywhere except the service that transcribes it.
  */
 
-/**
- * What this browser can actually record.
- *
- * Chrome and Edge produce a WebM container, Firefox produces Ogg, and Safari
- * produces MP4 with AAC. Asking for a type the browser cannot encode does not
- * fail loudly: `MediaRecorder` quietly falls back to something else and the
- * media type on the blob then disagrees with what was requested, which is the
- * sort of mismatch that only shows up as a rejected upload.
- */
-const PREFERRED_TYPES = [
-  'audio/webm;codecs=opus',
-  'audio/webm',
-  'audio/ogg;codecs=opus',
-  'audio/ogg',
-  'audio/mp4',
-];
-
-export function pickRecordingType(): string | undefined {
-  if (typeof MediaRecorder === 'undefined') return undefined;
-  return PREFERRED_TYPES.find((type) => MediaRecorder.isTypeSupported(type));
-}
-
-export function canRecord(): boolean {
-  return (
-    typeof navigator !== 'undefined' &&
-    typeof navigator.mediaDevices?.getUserMedia === 'function' &&
-    typeof MediaRecorder !== 'undefined'
-  );
-}
-
 /** File extension matching a recording's media type, for the upload filename. */
 function extensionFor(mimeType: string): string {
   if (mimeType.includes('ogg')) return 'ogg';

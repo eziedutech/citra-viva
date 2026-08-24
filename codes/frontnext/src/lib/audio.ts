@@ -1,29 +1,36 @@
 /**
- * Turn a browser recording into audio the model can actually read.
+ * Recording a spoken answer as audio the model can actually read.
  *
- * This exists because of a bug with a very confusing symptom. A student spoke a
- * long answer and what appeared in the answer box was "yes and no". Not
- * truncated, not garbled: a short plausible sentence that had nothing to do with
- * what they said, and no error anywhere.
+ * This is deliberately not built on `MediaRecorder`, and the reason is a bug
+ * with a very confusing symptom. A student spoke a long answer and the box
+ * filled with the words "yes and no": not truncated, not garbled, a short
+ * plausible sentence with nothing to do with what they said, and no error
+ * anywhere.
  *
- * The cause is the container. Chrome and Firefox record a WebM container,
- * because that is what `MediaRecorder` supports, and WebM is not one of the
- * audio formats the model accepts. Given bytes it cannot decode, it does not
- * refuse; it answers anyway, from nothing.
+ * `MediaRecorder` in Chrome and Firefox produces a WebM container, because
+ * that is what it offers. Gemini reads WAV, MP3, AIFF, AAC, OGG, and FLAC.
+ * WebM is on neither list, and given bytes it cannot decode the model does not
+ * refuse: it answers anyway, from nothing. The student's own words are replaced
+ * by an invention in the field they are about to submit as their defense.
  *
- * So the recording is decoded in the browser and re-encoded as WAV, which is on
- * the supported list and which this project has verified end to end. Decoding
- * happens through the Web Audio API, which reads whatever the same browser just
- * recorded, so every browser can read its own output.
+ * The first attempt at a fix recorded WebM and converted it afterwards, and
+ * fell back to the original when conversion failed. That fallback is what kept
+ * the bug alive: a failed conversion looked exactly like a successful one.
  *
- * Sixteen kilohertz mono, because speech recognition gains nothing above it and
- * a defense answer can run for minutes: a stereo forty-eight kilohertz WAV of
- * three minutes is over thirty megabytes, and this is six times smaller with no
- * loss that matters.
+ * So there is no container to convert out of. Raw samples are taken from the
+ * microphone and written straight into a WAV, which is on the supported list
+ * and which this project has verified end to end. Nothing here can silently
+ * produce audio the model will misread.
+ *
+ * Sixteen kilohertz mono, matching what the model downsamples to anyway.
  */
 
 const TARGET_SAMPLE_RATE = 16_000;
 const BYTES_PER_SAMPLE = 2;
+const BUFFER_SIZE = 4096;
+
+/** Below this a recording is a click or a slip of the finger, not an answer. */
+export const MIN_RECORDING_SECONDS = 0.4;
 
 type AudioContextConstructor = typeof AudioContext;
 
@@ -36,9 +43,13 @@ function audioContextClass(): AudioContextConstructor | null {
   return scope.AudioContext ?? scope.webkitAudioContext ?? null;
 }
 
-/** Whether this browser can re-encode a recording before sending it. */
-export function canConvertAudio(): boolean {
-  return audioContextClass() !== null && typeof OfflineAudioContext !== 'undefined';
+export function canRecord(): boolean {
+  return (
+    typeof navigator !== 'undefined' &&
+    typeof navigator.mediaDevices?.getUserMedia === 'function' &&
+    audioContextClass() !== null &&
+    typeof OfflineAudioContext !== 'undefined'
+  );
 }
 
 function encodeWav(samples: Float32Array, sampleRate: number): Blob {
@@ -57,9 +68,9 @@ function encodeWav(samples: Float32Array, sampleRate: number): Blob {
   view.setUint32(4, 36 + dataBytes, true);
   writeText(8, 'WAVE');
   writeText(12, 'fmt ');
-  view.setUint32(16, 16, true); // PCM header length
+  view.setUint32(16, 16, true); // header length for PCM
   view.setUint16(20, 1, true); // PCM, uncompressed
-  view.setUint16(22, 1, true); // mono
+  view.setUint16(22, 1, true); // one channel
   view.setUint32(24, sampleRate, true);
   view.setUint32(28, sampleRate * BYTES_PER_SAMPLE, true); // bytes per second
   view.setUint16(32, BYTES_PER_SAMPLE, true); // bytes per frame
@@ -70,7 +81,7 @@ function encodeWav(samples: Float32Array, sampleRate: number): Blob {
   let offset = 44;
   for (let index = 0; index < samples.length; index += 1) {
     // Clamped before scaling. A sample outside the range wraps rather than
-    // clips once it becomes an integer, which is heard as a burst of noise.
+    // clips once it is an integer, and that is heard as a burst of noise.
     const sample = Math.max(-1, Math.min(1, samples[index]));
     view.setInt16(offset, sample < 0 ? sample * 0x8000 : sample * 0x7fff, true);
     offset += BYTES_PER_SAMPLE;
@@ -79,41 +90,110 @@ function encodeWav(samples: Float32Array, sampleRate: number): Blob {
   return new Blob([buffer], { type: 'audio/wav' });
 }
 
+/** Move samples to the rate we send at, using the browser's own resampler. */
+async function resample(samples: Float32Array, from: number): Promise<Float32Array> {
+  if (from === TARGET_SAMPLE_RATE) return samples;
+
+  const frames = Math.max(1, Math.round((samples.length / from) * TARGET_SAMPLE_RATE));
+  const offline = new OfflineAudioContext(1, frames, TARGET_SAMPLE_RATE);
+
+  const buffer = offline.createBuffer(1, samples.length, from);
+  buffer.copyToChannel(samples, 0);
+
+  const source = offline.createBufferSource();
+  source.buffer = buffer;
+  source.connect(offline.destination);
+  source.start();
+
+  return (await offline.startRendering()).getChannelData(0);
+}
+
+export interface Recording {
+  wav: Blob;
+  seconds: number;
+}
+
+export interface Recorder {
+  /** Stop, release the microphone, and return the recording as WAV. */
+  stop: () => Promise<Recording>;
+  /** Release everything without producing a recording. */
+  cancel: () => void;
+}
+
 /**
- * Decode a recording and re-encode it as 16 kHz mono WAV.
+ * Open the microphone and start collecting samples.
  *
- * Returns the original untouched if this browser cannot decode it. The student
- * reviews every transcript before sending it, so a worse recording is a worse
- * transcript to correct rather than a silent falsehood, and refusing outright
- * would take voice away from a browser that might still manage.
+ * Throws if permission is refused, which is the caller's cue to say so. Nothing
+ * here degrades quietly: a recorder that cannot record raises.
  */
-export async function toWav(recording: Blob): Promise<Blob> {
+export async function startRecording(): Promise<Recorder> {
   const Context = audioContextClass();
-  if (!Context || typeof OfflineAudioContext === 'undefined') return recording;
+  if (!Context) throw new Error('This browser cannot record audio.');
 
-  let context: AudioContext | null = null;
-  try {
-    const bytes = await recording.arrayBuffer();
-    context = new Context();
-    const decoded = await context.decodeAudioData(bytes);
+  const stream = await navigator.mediaDevices.getUserMedia({
+    audio: {
+      channelCount: 1,
+      echoCancellation: true,
+      noiseSuppression: true,
+      autoGainControl: true,
+    },
+  });
 
-    // One channel out of however many went in, at the rate we want. The
-    // rendering graph does the downmix and the resample together, which is both
-    // shorter and better than doing either by hand.
-    const frames = Math.ceil(decoded.duration * TARGET_SAMPLE_RATE);
-    if (frames <= 0) return recording;
+  const context = new Context();
+  const source = context.createMediaStreamSource(stream);
+  const processor = context.createScriptProcessor(BUFFER_SIZE, 1, 1);
 
-    const offline = new OfflineAudioContext(1, frames, TARGET_SAMPLE_RATE);
-    const source = offline.createBufferSource();
-    source.buffer = decoded;
-    source.connect(offline.destination);
-    source.start();
+  // A processor node only runs while it is connected to the destination, and
+  // connecting the microphone to the speakers is feedback. A gain of zero is
+  // what keeps the graph alive without putting the student's voice into their
+  // own ears half a second late.
+  const silence = context.createGain();
+  silence.gain.value = 0;
 
-    const rendered = await offline.startRendering();
-    return encodeWav(rendered.getChannelData(0), TARGET_SAMPLE_RATE);
-  } catch {
-    return recording;
-  } finally {
-    void context?.close();
-  }
+  const chunks: Float32Array[] = [];
+  let frames = 0;
+
+  processor.onaudioprocess = (event) => {
+    const input = event.inputBuffer.getChannelData(0);
+    // Copied, because the event's buffer is reused for the next block.
+    chunks.push(new Float32Array(input));
+    frames += input.length;
+  };
+
+  source.connect(processor);
+  processor.connect(silence);
+  silence.connect(context.destination);
+
+  // Some browsers open a context suspended until a gesture. Recording begins
+  // with a click, so this resolves immediately, but not resuming would give a
+  // recording of perfect silence.
+  if (context.state === 'suspended') await context.resume();
+
+  const release = () => {
+    processor.onaudioprocess = null;
+    processor.disconnect();
+    silence.disconnect();
+    source.disconnect();
+    stream.getTracks().forEach((track) => track.stop());
+    void context.close();
+  };
+
+  return {
+    async stop(): Promise<Recording> {
+      const sampleRate = context.sampleRate;
+      release();
+
+      const merged = new Float32Array(frames);
+      let offset = 0;
+      for (const chunk of chunks) {
+        merged.set(chunk, offset);
+        offset += chunk.length;
+      }
+
+      const seconds = frames / sampleRate;
+      const samples = await resample(merged, sampleRate);
+      return { wav: encodeWav(samples, TARGET_SAMPLE_RATE), seconds };
+    },
+    cancel: release,
+  };
 }

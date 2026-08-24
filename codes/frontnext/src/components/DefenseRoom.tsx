@@ -8,6 +8,7 @@ import { AccountButton } from '@/components/AccountButton';
 import { AgentOverlay } from '@/components/AgentOverlay';
 import { AiWorking } from '@/components/AiWorking';
 import { useAuth } from '@/components/AuthProvider';
+import { DocumentViewer } from '@/components/DocumentViewer';
 import { Hint } from '@/components/Hint';
 import { Icon } from '@/components/Icon';
 import { LocaleSwitch } from '@/components/LocaleSwitch';
@@ -240,7 +241,7 @@ export function DefenseRoom({ initial, dict, locale }: Props) {
         dict={dict}
       />
 
-      <div className="grid min-h-0 grid-cols-[240px_1fr_380px]">
+      <div className="grid min-h-0 grid-cols-[280px_1fr_380px]">
         <QuestionSidebar
           questions={session.questions}
           progress={session.progress}
@@ -385,6 +386,8 @@ export function DefenseRoom({ initial, dict, locale }: Props) {
                     </span>
 
                     <span className="flex flex-wrap items-center gap-2">
+                      <DocumentViewer sessionId={session.session_id} dict={dict} />
+
                       <RubricButton
                         sessionId={session.session_id}
                         dict={dict}

@@ -507,6 +507,20 @@ const en = {
     opening: 'Opening question, not tied to a single finding',
   },
 
+
+  document: {
+    open: 'Your thesis',
+    title: 'Your thesis, as submitted for this session',
+    search: 'Search the document',
+    matchOf: '{current} of {total}',
+    noMatches: 'No matches',
+    previous: 'Previous match',
+    next: 'Next match',
+    loading: 'Opening the document',
+    failed: 'The document could not be opened.',
+    note: 'This is the text this examination was built from, exactly as you submitted it. Every quote the examiner uses was verified against it.',
+  },
+
   rubric: {
     open: 'What is being tested?',
     opened: 'Criteria opened',
@@ -1119,6 +1133,20 @@ const id: Dictionary = {
       'Temuan asal pertanyaan ini. Setiap pertanyaan dalam sidang lahir dari satu bagian yang ditandai di naskah Anda, dan tombol ini membuka bagian itu, sehingga Anda dapat membaca sendiri kalimat yang sedang ditekan alih-alih mempercayai pertanyaannya begitu saja.',
     underExamination: 'Sedang diuji',
     opening: 'Pertanyaan pembuka, tidak terikat pada satu temuan',
+  },
+
+
+  document: {
+    open: 'Dokumen tesis',
+    title: 'Tesis Anda, sebagaimana dikirim untuk sesi ini',
+    search: 'Cari di dokumen',
+    matchOf: '{current} dari {total}',
+    noMatches: 'Tidak ditemukan',
+    previous: 'Hasil sebelumnya',
+    next: 'Hasil berikutnya',
+    loading: 'Membuka dokumen',
+    failed: 'Dokumen gagal dibuka.',
+    note: 'Ini teks yang menjadi dasar pengujian ini, persis seperti yang Anda kirim. Setiap kutipan yang dipakai penguji diverifikasi terhadapnya.',
   },
 
   rubric: {

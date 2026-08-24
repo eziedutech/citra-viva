@@ -64,41 +64,55 @@ def voice_returning(data: bytes, mime_type: str):
 
 
 def test_transcript_is_returned_unchanged():
-    result = transcribe_answer(AUDIO, "audio/webm", transcriber=transcriber_returning(ANSWER))
+    result = transcribe_answer(AUDIO, "audio/wav", transcriber=transcriber_returning(ANSWER))
     assert result == ANSWER
 
 
 def test_codec_parameters_are_stripped_from_the_media_type():
-    """A browser sends `audio/webm;codecs=opus`, which is not a type on its own."""
+    """A media type arrives as `audio/wav;codecs=1`, which is not a type."""
     fake = transcriber_returning(ANSWER)
-    transcribe_answer(AUDIO, "audio/webm;codecs=opus", transcriber=fake)
-    assert fake.calls[0]["mime_type"] == "audio/webm"
+    transcribe_answer(AUDIO, "audio/wav;codecs=1", transcriber=fake)
+    assert fake.calls[0]["mime_type"] == "audio/wav"
+
+
+def test_a_container_the_model_cannot_read_is_refused_rather_than_misread():
+    """WebM used to be accepted, and that was the bug.
+
+    Given audio it cannot decode the model does not refuse; it answers anyway.
+    A student's long spoken answer came back as the words "yes and no", with
+    nothing reported. Refusing here is the only way that failure becomes
+    visible instead of becoming their submitted answer.
+    """
+    fake = transcriber_returning(ANSWER)
+    with pytest.raises(SpeechError, match="cannot be read"):
+        transcribe_answer(AUDIO, "audio/webm;codecs=opus", transcriber=fake)
+    assert fake.calls == [], "Unreadable audio must not reach the model."
 
 
 def test_a_fenced_transcript_is_unwrapped():
     fake = transcriber_returning(f"```\n{ANSWER}\n```")
-    assert transcribe_answer(AUDIO, "audio/webm", transcriber=fake) == ANSWER
+    assert transcribe_answer(AUDIO, "audio/wav", transcriber=fake) == ANSWER
 
 
 def test_a_quoted_transcript_is_unwrapped():
     fake = transcriber_returning(f'"{ANSWER}"')
-    assert transcribe_answer(AUDIO, "audio/webm", transcriber=fake) == ANSWER
+    assert transcribe_answer(AUDIO, "audio/wav", transcriber=fake) == ANSWER
 
 
 def test_silence_is_reported_rather_than_sent_on_as_an_empty_answer():
     with pytest.raises(SpeechError, match="No speech"):
-        transcribe_answer(AUDIO, "audio/webm", transcriber=transcriber_returning("   "))
+        transcribe_answer(AUDIO, "audio/wav", transcriber=transcriber_returning("   "))
 
 
 def test_empty_audio_is_refused():
     with pytest.raises(SpeechError, match="No audio"):
-        transcribe_answer(b"", "audio/webm", transcriber=transcriber_returning(ANSWER))
+        transcribe_answer(b"", "audio/wav", transcriber=transcriber_returning(ANSWER))
 
 
 def test_oversized_audio_is_refused_before_it_reaches_the_model():
     fake = transcriber_returning(ANSWER)
     with pytest.raises(SpeechError, match="10 MB"):
-        transcribe_answer(b"x" * (MAX_AUDIO_BYTES + 1), "audio/webm", transcriber=fake)
+        transcribe_answer(b"x" * (MAX_AUDIO_BYTES + 1), "audio/wav", transcriber=fake)
     assert fake.calls == []
 
 

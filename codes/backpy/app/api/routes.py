@@ -33,6 +33,7 @@ from app.models.weakness_map import AnalysisResult
 from app.orchestrator.orchestrator import Orchestrator
 from app.speech.cache import cache_speech, get_cached_speech
 from app.speech.voice import SpeechError, speak_text, transcribe_answer
+from app.storage.draft_store import DraftNotFoundError, FirestoreDraftStore
 from app.storage.session_store import (
     FirestoreSessionStore,
     SessionConflictError,
@@ -51,7 +52,7 @@ def _translated_errors() -> Iterator[None]:
     """
     try:
         yield
-    except SessionNotFoundError as exc:
+    except (SessionNotFoundError, DraftNotFoundError) as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     except SessionConflictError as exc:
         # 409, not 500. Nothing broke: this turn simply lost a race with
@@ -71,7 +72,7 @@ def _translated_errors() -> Iterator[None]:
 
 def _orchestrator() -> Orchestrator:
     """An Orchestrator backed by Firestore, built fresh for each request."""
-    return Orchestrator(store=FirestoreSessionStore())
+    return Orchestrator(store=FirestoreSessionStore(), drafts=FirestoreDraftStore())
 
 
 def _transcriber():
@@ -142,6 +143,12 @@ class TranscribeResponse(BaseModel):
     text: str = Field(
         description="The spoken answer as text, for the student to review before sending."
     )
+    characters: int = 0
+
+
+class SessionDocumentResponse(BaseModel):
+    session_id: str
+    text: str = Field(description="The manuscript this session was built from.")
     characters: int = 0
 
 
@@ -326,6 +333,26 @@ def answer_endpoint(
     """Submit one answer and receive what the examiner says next."""
     with _translated_errors():
         return _orchestrator().submit_answer(session_id, request.answer, actor_id=user.uid)
+
+
+@router.get("/api/sessions/{session_id}/document", response_model=SessionDocumentResponse)
+def session_document_endpoint(session_id: str, user: CurrentUser) -> SessionDocumentResponse:
+    """The manuscript this session was built from.
+
+    A candidate sits their viva with the thesis in front of them. Being pressed
+    about a sentence while unable to read it is not a defense, it is a memory
+    test, so the document is available throughout the session.
+
+    Read only when asked for. Nothing loads it to render a session, and it is
+    kept in its own record rather than inside the session, which is what stops a
+    long defense from growing a document towards Firestore's size limit.
+    """
+    with _translated_errors():
+        text = _orchestrator().load_document(session_id, actor_id=user.uid)
+
+    return SessionDocumentResponse(
+        session_id=session_id, text=text, characters=len(text)
+    )
 
 
 @router.post("/api/sessions/{session_id}/rubric", response_model=QuestionRubric)

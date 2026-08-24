@@ -135,6 +135,13 @@ export interface SessionState {
   updated_at: string | null;
 }
 
+/** The manuscript a session was built from, read only when asked for. */
+export interface SessionDocument {
+  session_id: string;
+  text: string;
+  characters: number;
+}
+
 /** What one question is testing. The marking scheme, never an answer. */
 export interface QuestionRubric {
   question_id: string;

@@ -23,7 +23,7 @@ interface Props {
  */
 export function Workspace({ dict, locale, children }: Props) {
   return (
-    <div className="flex flex-col lg:grid lg:h-dvh lg:grid-cols-[288px_1fr] lg:overflow-hidden">
+    <div className="flex flex-col lg:grid lg:h-dvh lg:grid-cols-[336px_1fr] lg:overflow-hidden">
       <HistorySidebar dict={dict} locale={locale} />
 
       <div className="panel-scroll min-h-0 bg-[color:var(--color-canvas)]">

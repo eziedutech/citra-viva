@@ -29,7 +29,9 @@ export type IconName =
   | 'speaker'
   | 'plus'
   | 'external'
-  | 'help';
+  | 'help'
+  | 'chevronUp'
+  | 'chevronDown';
 
 const PATHS: Record<IconName, React.ReactNode> = {
   check: <polyline points="20 6 9 17 4 12" />,
@@ -111,6 +113,8 @@ const PATHS: Record<IconName, React.ReactNode> = {
   // and a pause glyph would promise a resume that does not exist.
   square: <rect x="6" y="6" width="12" height="12" rx="1" />,
   plus: <path d="M12 5v14M5 12h14" />,
+  chevronUp: <polyline points="18 15 12 9 6 15" />,
+  chevronDown: <polyline points="6 9 12 15 18 9" />,
   help: (
     <>
       <circle cx="12" cy="12" r="9.25" />
