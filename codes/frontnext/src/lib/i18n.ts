@@ -24,7 +24,7 @@ const en = {
   app: {
     name: 'CITRA Viva',
     tagline:
-      'An agentic thesis defense simulator. Four AI agents read your research draft, plan an examination from its weakest points, question you on them, and report what held.',
+      'An agentic thesis defense simulator. Specialised AI agents read your research draft, plan an examination from its weakest points, question you on them, and report what held.',
   },
 
   nav: {
@@ -60,9 +60,31 @@ const en = {
       'Your draft is read to plan the examination and is not shown to anyone else. Nothing leaves Google Cloud.',
     signInUnavailable: 'Sign-in is not configured on this deployment.',
     footer: 'An adversarial practice viva. It questions your argument. It does not write it.',
-    agentsTitle: 'Four agents, one examination',
-    agents:
-      'Draft Analyzer maps where the argument gives way. Question Strategy turns that map into an examination ordered by pressure. Examiner judges each answer and decides whether to press, allow a clarification, or move on. Session Reflection writes the report from the transcript. Each agent hands the next something narrower than it received, and none of them can reach past its own job.',
+    agentsTitle: 'Four agents run the defense. A fifth checks citations.',
+    agentsLede:
+      'Each hands the next something narrower than it received, and none can reach past its own job: the framework itself refuses the transfer, so the separation does not depend on anyone remembering it.',
+    agents: [
+      {
+        name: 'Draft Analyzer',
+        role: 'Reads the manuscript in full and maps where the argument gives way. Every finding is tied to a sentence quoted from your text and checked back against it.',
+      },
+      {
+        name: 'Question Strategy',
+        role: 'Turns that map into an examination, ordered by how hard a committee is likely to press rather than by where the weaknesses appear in your draft.',
+      },
+      {
+        name: 'Examiner',
+        role: 'Judges each answer and decides in the same breath what to say next: press harder, allow a clarification, or move on. Asking and judging are one agent because a follow-up that does not follow from the judgment is just another question.',
+      },
+      {
+        name: 'Session Reflection',
+        role: 'Writes the closing report from the transcript rather than from an impression of it, in the examiner’s own words.',
+      },
+      {
+        name: 'Claim-Support Checker',
+        role: 'Runs beside the defense rather than inside it, on one citation at a time: does this source actually carry the claim you cited it for?',
+      },
+    ],
     promiseTitle: 'What it will not do',
     promise:
       'It will not write your answers, and it will not record a weakness as unanswered before giving you a chance to clarify. Where a session rule overrides the model, the override is shown to you rather than applied quietly.',
@@ -283,7 +305,7 @@ const en = {
       {
         id: 'how',
         title: 'How a session runs',
-        lead: 'Four agents, in order. Each one hands the next something narrower than what it received.',
+        lead: 'Four agents run a defense, in order, each handing the next something narrower than what it received. A fifth, the citation checker, runs beside them rather than inside them.',
         points: [
           {
             title: '1. The draft is read and mapped',
@@ -583,7 +605,7 @@ const id: Dictionary = {
   app: {
     name: 'CITRA Viva',
     tagline:
-      'Simulator sidang skripsi berbasis agent. Empat agent AI membaca draf riset Anda, menyusun pengujian dari titik terlemahnya, menanyakannya kepada Anda, lalu melaporkan apa yang bertahan.',
+      'Simulator sidang skripsi berbasis agent. Sejumlah agent AI khusus membaca draf riset Anda, menyusun pengujian dari titik terlemahnya, menanyakannya kepada Anda, lalu melaporkan apa yang bertahan.',
   },
 
   nav: {
@@ -619,9 +641,31 @@ const id: Dictionary = {
       'Draf Anda dibaca untuk menyusun rencana pengujian dan tidak diperlihatkan kepada siapa pun. Tidak ada yang keluar dari Google Cloud.',
     signInUnavailable: 'Fitur masuk belum dikonfigurasi pada deployment ini.',
     footer: 'Sidang latihan yang menekan. Ia menguji argumen Anda, bukan menuliskannya.',
-    agentsTitle: 'Empat agent, satu pengujian',
-    agents:
-      'Draft Analyzer memetakan tempat argumen melemah. Question Strategy mengubah peta itu menjadi pengujian yang diurutkan menurut tekanan. Examiner menilai tiap jawaban dan memutuskan apakah menekan, memberi kesempatan klarifikasi, atau berpindah. Session Reflection menyusun laporan dari transkrip. Tiap agent menyerahkan kepada agent berikutnya sesuatu yang lebih sempit daripada yang diterimanya, dan tidak satu pun dapat menjangkau di luar tugasnya sendiri.',
+    agentsTitle: 'Empat agent menjalankan sidang. Yang kelima memeriksa sitasi.',
+    agentsLede:
+      'Masing-masing menyerahkan kepada berikutnya sesuatu yang lebih sempit daripada yang diterimanya, dan tidak satu pun dapat menjangkau di luar tugasnya: kerangka kerjanya sendiri yang menolak perpindahan itu, jadi pemisahannya tidak bergantung pada ingatan siapa pun.',
+    agents: [
+      {
+        name: 'Draft Analyzer',
+        role: 'Membaca naskah secara utuh dan memetakan tempat argumen melemah. Setiap temuan terikat pada kalimat yang dikutip dari teks Anda dan dicocokkan kembali kepadanya.',
+      },
+      {
+        name: 'Question Strategy',
+        role: 'Mengubah peta itu menjadi pengujian, diurutkan menurut seberapa keras penguji biasanya menekan, bukan menurut letak kelemahannya di naskah.',
+      },
+      {
+        name: 'Examiner',
+        role: 'Menilai tiap jawaban dan sekaligus memutuskan apa yang dikatakan berikutnya: menekan lebih dalam, memberi kesempatan klarifikasi, atau berpindah. Bertanya dan menilai adalah satu agent karena pendalaman yang tidak lahir dari penilaiannya hanyalah pertanyaan lain.',
+      },
+      {
+        name: 'Session Reflection',
+        role: 'Menyusun laporan penutup dari transkrip, bukan dari kesan atasnya, dengan kata-kata penguji sendiri.',
+      },
+      {
+        name: 'Claim-Support Checker',
+        role: 'Berjalan di samping sidang, bukan di dalamnya, satu sitasi setiap kali: apakah sumber ini benar-benar memuat klaim yang Anda sitasikan padanya?',
+      },
+    ],
     promiseTitle: 'Yang tidak akan dilakukannya',
     promise:
       'Ia tidak akan menuliskan jawaban Anda, dan tidak akan mencatat sebuah kelemahan sebagai tak terjawab sebelum Anda diberi kesempatan menjelaskan. Ketika aturan sesi menimpa keputusan model, penimpaan itu ditampilkan, bukan dijalankan diam-diam.',
@@ -842,7 +886,7 @@ const id: Dictionary = {
       {
         id: 'how',
         title: 'Bagaimana satu sesi berjalan',
-        lead: 'Empat agent, berurutan. Masing-masing menyerahkan sesuatu yang lebih sempit daripada yang diterimanya.',
+        lead: 'Empat agent menjalankan sidang, berurutan, masing-masing menyerahkan sesuatu yang lebih sempit daripada yang diterimanya. Yang kelima, pemeriksa sitasi, berjalan di sampingnya, bukan di dalamnya.',
         points: [
           {
             title: '1. Draf dibaca dan dipetakan',

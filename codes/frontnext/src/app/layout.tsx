@@ -31,7 +31,7 @@ const jetbrains = JetBrains_Mono({
 export const metadata: Metadata = {
   title: 'CITRA Viva',
   description:
-    'An agentic thesis defense simulator. Four AI agents read your research draft, plan an examination from its weakest points, question you on them, and report what held.',
+    'An agentic thesis defense simulator. Specialised AI agents read your research draft, plan an examination from its weakest points, question you on them, and report what held.',
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {

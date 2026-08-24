@@ -1,6 +1,6 @@
 # CITRA Viva
 
-**An agentic adversarial thesis defense simulator.** Four AI agents read your research draft, plan an examination from its weakest points, question you on them, and report what held.
+**An agentic adversarial thesis defense simulator.** Four agents run a defense in order: one maps where the argument gives way, one plans an examination from that map, one judges each answer and decides what to say next, and one writes the report from the transcript. A fifth runs beside them, on citations.
 
 A companion to C.I.T.R.A (Core Integrity & Trustworthy Research Assistant).
 

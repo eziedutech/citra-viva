@@ -205,9 +205,23 @@ export function PublicLanding({ dict, locale }: Props) {
                 <Icon name="cpu" size={16} />
                 {dict.landing.agentsTitle}
               </h2>
-              <p className="text-caption text-[color:var(--color-ink-600)]">
-                {dict.landing.agents}
+              <p className="text-caption mb-4 text-[color:var(--color-ink-600)]">
+                {dict.landing.agentsLede}
               </p>
+
+              <dl className="space-y-3">
+                {dict.landing.agents.map((agent) => (
+                  <div
+                    key={agent.name}
+                    className="border-t border-[color:var(--color-line)] pt-3 first:border-t-0 first:pt-0"
+                  >
+                    <dt className="text-caption font-medium">{agent.name}</dt>
+                    <dd className="text-caption text-[color:var(--color-ink-600)]">
+                      {agent.role}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
             </section>
 
             <p className="text-caption mt-6 max-w-[72ch] border-l-2 border-[color:var(--color-ai)] bg-[color:var(--color-tint-ai)] px-4 py-3 text-[color:var(--color-ink-600)]">
