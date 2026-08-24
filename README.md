@@ -79,6 +79,8 @@ Built for the **All Things Agentic Hackathon** (Google and Devpost), category *C
 
 **Gemini 3.5 or newer, through Gemini API or Vertex AI.** Every agent calls `gemini-3.5-flash` on the Gemini Enterprise Agent Platform, from the global endpoint. Configured in [`codes/backpy/app/llm/client.py`](codes/backpy/app/llm/client.py).
 
+> **On the name.** Vertex AI became the Gemini Enterprise Agent Platform in April 2026, and this repository uses the current name throughout. The technical identifiers did not follow it, and they are reproduced here exactly as they are actually typed: the environment variable is `GOOGLE_GENAI_USE_VERTEXAI`, the SDK parameter is `vertexai=True`, the API to enable is `aiplatform.googleapis.com`, and the ADK package is `google-cloud-aiplatform`. None of those is a typo or a leftover. Renaming them in the documentation would produce commands that do not run.
+
 **At least one Google agent framework.** Two are used, and it is worth being precise about where each one runs.
 
 *Google ADK* is where the agents are declared. All five are built as ADK `LlmAgent` instances with a declared `output_schema` and with `disallow_transfer_to_parent` and `disallow_transfer_to_peers` set, which is what makes the isolation between them a framework guarantee rather than a promise in a prompt. See [`codes/backpy/app/agents/*/adk_agent.py`](codes/backpy/app/agents). They are executed through the ADK runner by [`scripts/run_adk_agent.py`](scripts/run_adk_agent.py), which runs an agent end to end against the live model, and by 24 tests in [`codes/backpy/tests/test_adk_agents.py`](codes/backpy/tests/test_adk_agents.py).
@@ -755,7 +757,9 @@ CITRA Viva was built entirely within the Submission Period for this hackathon, s
 
 It is a companion to [C.I.T.R.A](https://citra.eziedutech.dev), an existing research integrity application by the same author, in pre-development status. The two share a design system and a name. They share no code, and nothing from that project was reused here. One module was deliberately kept out of scope for exactly this reason: basic mechanical citation verification against Crossref and OpenAlex already exists in that other project, so it is **not** part of this submission, in compliance with the New Projects Only rule.
 
-Development used AI coding assistants, which the rules permit explicitly. All architectural decisions, product decisions, and verification of what shipped are the author's own.
+Development used AI coding assistants, which the rules permit explicitly. Among them was Google Antigravity, running Gemini, used as an assistant while building this. It is named here as a tool that was used, not as an author: all architectural decisions, product decisions, and verification of what shipped are the author's own.
+
+That is a separate matter from the frameworks this project is built on. The agent frameworks in the submission are Google ADK and the Google GenAI SDK, both of which can be pointed at line by line in this repository. Gemini models used through a coding assistant are not integrated into the product and are not claimed as such.
 
 Third-party dependencies are the ones declared in [`codes/backpy/pyproject.toml`](codes/backpy/pyproject.toml) and [`codes/frontnext/package.json`](codes/frontnext/package.json), each used under its own open source licence. No third-party data source is used: the only data the system reads is the manuscript the student supplies.
 
