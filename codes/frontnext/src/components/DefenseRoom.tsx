@@ -46,7 +46,13 @@ export function DefenseRoom({ initial, dict, locale }: Props) {
   const [adjustments, setAdjustments] = useState<string[]>([]);
   const [summary, setSummary] = useState<SessionSummary | null>(initial.summary);
   const [tab, setTab] = useState<Tab>('weakness');
-  const [readAloud, setReadAloud] = useState(false);
+  // On by default. A viva is spoken: the candidate hears the question and
+  // answers it, and practising it in silence trains the wrong thing. The
+  // transcript beside it is the support, not the examination. A browser will
+  // refuse to play audio before the reader has interacted with the page, so the
+  // first question may stay silent until the first click; every question after
+  // it speaks on arrival.
+  const [readAloud, setReadAloud] = useState(true);
   const [focusFinding, setFocusFinding] = useState('');
   const [voiceNote, setVoiceNote] = useState(false);
   const transcriptEnd = useRef<HTMLDivElement>(null);

@@ -43,11 +43,20 @@ export function SpeakButton({ text, dict, autoPlay = false }: Props) {
     };
   }, []);
 
-  async function play() {
+  /**
+   * @param automatic Started by the page rather than by the reader.
+   *
+   * A browser refuses to play audio until the reader has interacted with the
+   * document, and arriving on a fresh page counts as no interaction. That
+   * refusal is expected on the first question of a session and is not a fault
+   * worth reporting: the button is right there, and pressing it both plays the
+   * question and grants the permission every later question needs.
+   */
+  async function play(automatic = false) {
     setError('');
 
     if (audio.current) {
-      void audio.current.play();
+      void audio.current.play().catch(() => setPlaying(false));
       setPlaying(true);
       return;
     }
@@ -65,7 +74,12 @@ export function SpeakButton({ text, dict, autoPlay = false }: Props) {
 
       await element.play();
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : dict.voice.playFailed);
+      const blocked = caught instanceof DOMException && caught.name === 'NotAllowedError';
+      if (automatic && blocked) {
+        setPlaying(false);
+      } else {
+        setError(caught instanceof Error ? caught.message : dict.voice.playFailed);
+      }
     } finally {
       setBusy(false);
     }
@@ -82,7 +96,7 @@ export function SpeakButton({ text, dict, autoPlay = false }: Props) {
     // listening to, or one they deliberately stopped.
     if (!autoPlay || played.current) return;
     played.current = true;
-    void play();
+    void play(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoPlay]);
 

@@ -191,6 +191,15 @@ class SessionState(BaseModel):
     session_id: str
     user_id: str = ""
     draft_id: str = ""
+    judging_since: datetime | None = Field(
+        default=None,
+        description=(
+            "When a turn claimed this session, cleared when it finishes. "
+            "Recorded, never enforced on: a process that dies holding it would "
+            "otherwise lock a student out of their own defense forever. The "
+            "revision is what actually serialises turns."
+        ),
+    )
     revision: int = Field(
         default=0,
         description=(

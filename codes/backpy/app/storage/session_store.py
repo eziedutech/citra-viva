@@ -15,6 +15,7 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from typing import Any, Protocol
 
+from app.llm.retry import call_with_retry
 from app.models.firestore_schemas import COLLECTION_VIVA_SESSIONS
 from app.models.session import SessionDigest, SessionState
 
@@ -115,7 +116,16 @@ class FirestoreSessionStore:
         return self._client
 
     def load(self, session_id: str) -> SessionState:
-        document = self.client.collection(COLLECTION_VIVA_SESSIONS).document(session_id).get()
+        """Read a session, retrying a database that is briefly unavailable.
+
+        A moment of unavailability in the middle of a defense should cost a
+        second, not the turn. The retry is the same one the model calls use, and
+        it only covers the transient conditions listed there: a missing document
+        is still an immediate not-found rather than something to wait for.
+        """
+        document = call_with_retry(
+            lambda: self.client.collection(COLLECTION_VIVA_SESSIONS).document(session_id).get()
+        )
         if not document.exists:
             raise SessionNotFoundError(f"Session {session_id!r} does not exist.")
         return SessionState.model_validate(document.to_dict())
@@ -153,7 +163,10 @@ class FirestoreSessionStore:
             transaction.set(reference, payload)
 
         try:
-            write(client.transaction())
+            # Retried on a database hiccup, never on a conflict: the conflict is
+            # a correct answer, and repeating the write would be an attempt to
+            # win a race the caller already lost.
+            call_with_retry(lambda: write(client.transaction()))
         except SessionConflictError:
             # Leave the caller's object exactly as it was, so a retry compares
             # against the revision it actually holds.

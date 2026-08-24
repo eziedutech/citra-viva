@@ -56,7 +56,10 @@ export type Fetcher = (input: RequestInfo | URL, init?: RequestInit) => Promise<
 
 export async function transcribe(recording: Blob, send: Fetcher = fetch): Promise<string> {
   const form = new FormData();
-  const type = recording.type || 'audio/webm';
+  // The blob's own type, not the recorder's. By the time a recording reaches
+  // here it has usually been re-encoded, and a filename describing the format
+  // it used to be is how a working file gets rejected at the far end.
+  const type = recording.type || 'audio/wav';
   form.append('file', recording, `answer.${extensionFor(type)}`);
 
   const response = await send('/api/speech/transcribe', { method: 'POST', body: form });

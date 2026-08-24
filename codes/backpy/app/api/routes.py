@@ -31,6 +31,7 @@ from app.models.session import (
 )
 from app.models.weakness_map import AnalysisResult
 from app.orchestrator.orchestrator import Orchestrator
+from app.speech.cache import cache_speech, get_cached_speech
 from app.speech.voice import SpeechError, speak_text, transcribe_answer
 from app.storage.session_store import (
     FirestoreSessionStore,
@@ -250,19 +251,30 @@ def speak_endpoint(request: SpeakRequest, user: CurrentUser) -> SpeakResponse:
     The words spoken are the words already in the transcript. Nothing is
     generated a second time here, so what a student hears and what the record
     shows cannot come apart.
+
+    The same line is synthesised once. A student replaying a question they did
+    not catch, or a second student meeting the same opening remark, gets the
+    audio already made rather than a fresh call, which is both quicker for them
+    and the difference between a demo and a bill.
     """
     settings = get_settings()
-    try:
-        speech = speak_text(
-            request.text,
-            voice=settings.gemini_voice_name,
-            synthesizer=_voice(),
+    voice = settings.gemini_voice_name
+
+    cached = get_cached_speech(request.text, voice)
+    if cached is not None:
+        return SpeakResponse(
+            audio_base64=base64.b64encode(cached.data).decode("ascii"),
+            mime_type=cached.mime_type,
         )
+
+    try:
+        speech = speak_text(request.text, voice=voice, synthesizer=_voice())
     except SpeechError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except RuntimeError as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
 
+    cache_speech(request.text, voice, speech)
     return SpeakResponse(
         audio_base64=base64.b64encode(speech.data).decode("ascii"),
         mime_type=speech.mime_type,

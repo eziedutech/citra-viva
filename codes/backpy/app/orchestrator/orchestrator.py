@@ -270,7 +270,21 @@ class Orchestrator:
             else None
         )
 
+        # Claimed before the model is called, not after.
+        #
+        # The write at the end of a turn already refuses to overwrite a newer
+        # revision, so a session could never be corrupted. What it could not
+        # prevent was the waste: a second turn starting alongside the first
+        # spent thirty seconds and a model call before discovering, at the very
+        # last step, that it had lost. Claiming first moves that discovery to
+        # the front, where it costs a single write.
+        #
+        # A claim that is never released is harmless. It advances the revision
+        # and changes nothing else, so a student whose turn died mid-flight
+        # simply loads the newer revision and answers again.
         now = datetime.now(UTC)
+        state.judging_since = now
+        self.store.save(state)
         state.transcript.append(
             TranscriptTurn(
                 role="student", text=answer.strip(), question_id=question.id, timestamp=now
@@ -302,6 +316,7 @@ class Orchestrator:
         )
         if state.is_finished():
             state.status = SessionStatus.COMPLETED
+        state.judging_since = None
         self.store.save(state)
 
         following = state.current_question()

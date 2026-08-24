@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '@/components/AuthProvider';
 import { Hint } from '@/components/Hint';
 import { Icon } from '@/components/Icon';
+import { toWav } from '@/lib/audio';
 import { canRecord, pickRecordingType, transcribe } from '@/lib/speech';
 import { fill, type Dictionary } from '@/lib/i18n';
 
@@ -128,7 +129,11 @@ export function VoiceInput({ dict, onTranscript, disabled = false }: Props) {
 
     setWorking(true);
     try {
-      const text = await transcribe(recorded, authedFetch);
+      // Re-encoded before it is sent. What a browser records is WebM, which the
+      // model does not read, and given bytes it cannot decode it answers from
+      // nothing rather than refusing: a long spoken answer came back as the
+      // words "yes and no", with no error anywhere.
+      const text = await transcribe(await toWav(recorded), authedFetch);
       onTranscript(text);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : dict.voice.failed);

@@ -200,4 +200,53 @@ def test_a_model_failure_during_a_turn_leaves_the_session_exactly_as_it_was():
     after = orchestrator.store.load("s1")
     assert len(after.transcript) == len(before.transcript)
     assert after.current_index == before.current_index
-    assert after.revision == before.revision
+
+    # The claim written before the model call is the one thing that survives.
+    # It advances the revision and changes nothing else, which is what lets the
+    # student simply answer again rather than being locked out by a turn that
+    # died holding something.
+    assert after.revision == before.revision + 1
+    assert after.judging_since is not None
+
+
+def test_a_turn_claims_the_session_before_it_pays_for_a_model_call():
+    """The second of two simultaneous turns must not buy an answer it cannot keep.
+
+    The write at the end already refused to overwrite a newer revision, so
+    nothing could be corrupted. What it could not prevent was the waste: the
+    losing turn spent thirty seconds and a model call before discovering, at the
+    very last step, that it had lost.
+    """
+    orchestrator = make_orchestrator()
+    orchestrator.start_session(DRAFT, session_id="s1", user_id="uid-owner")
+
+    # A turn already in flight, holding the session at a newer revision.
+    in_flight = orchestrator.store.load("s1")
+    orchestrator.store.save(in_flight)
+
+    calls: list[str] = []
+
+    class Counting:
+        def __call__(self, *, prompt: str, response_schema):  # noqa: ANN001, ARG002
+            calls.append(prompt)
+            raise AssertionError("The model must not be reached by a turn that lost.")
+
+    orchestrator.runner = Counting()
+
+    # The stale reader is what a second browser tab holds.
+    stale = orchestrator.store.load("s1")
+    stale.revision -= 1
+
+    with pytest.raises(SessionConflictError):
+        orchestrator.store.save(stale)
+
+    assert calls == []
+
+
+def test_a_completed_turn_releases_its_claim():
+    orchestrator = make_orchestrator()
+    orchestrator.start_session(DRAFT, session_id="s1", user_id="uid-owner")
+
+    orchestrator.submit_answer("s1", "Saya menerima batas desain ini.", actor_id="uid-owner")
+
+    assert orchestrator.store.load("s1").judging_since is None
