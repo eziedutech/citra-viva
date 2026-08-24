@@ -20,7 +20,7 @@ Built for the **All Things Agentic Hackathon** (Google and Devpost), category *C
 ## Table of contents
 
 - [Submission summary](#submission-summary)
-  - [How the mandatory requirements are met](#how-the-mandatory-requirements-are-met)
+  - [Meeting the tech mandatories](#meeting-the-tech-mandatories)
   - [Testing instructions for judges](#testing-instructions-for-judges)
 - [The problem](#the-problem)
 - [What CITRA Viva does](#what-citra-viva-does)
@@ -74,19 +74,29 @@ Built for the **All Things Agentic Hackathon** (Google and Devpost), category *C
 | **Hosted** | Yes, both the web app and the API |
 | **Repository** | Public |
 
-### How the mandatory requirements are met
+### Meeting the tech mandatories
 
-**Gemini 3.5 or newer, through Gemini API or Vertex AI.** Every agent calls `gemini-3.5-flash` on the Gemini Enterprise Agent Platform, from the global endpoint. Configured in [`codes/backpy/app/llm/client.py`](codes/backpy/app/llm/client.py).
+Compliance with the three the rules require: Gemini 3.5 or newer, at least one Google agent framework, and at least one Google Cloud service. Each is met twice over, and the two columns are not the same claim. One is what the running product is made of. The other is what was used to build it, which for the cloud services is not a figure of speech: no deployable artifact was ever produced on a local machine.
+
+| Google technology | Used while building it | Used inside the application |
+|---|---|---|
+| **Gemini 3.5 Flash** | Prompts were tuned against the live model through `scripts/run_draft_analyzer.py`, `scripts/run_viva_session.py`, and four gated live test files. A prompt cannot be developed against anything but real output | The reasoning behind all five agents. Structured JSON, global endpoint |
+| **Gemini 2.5 Flash TTS** | Measured directly, which is how a phrase in our own prompt was found to be making the voice read at 13.7 seconds where 8.1 was correct | The examiner's voice, synthesised alongside the question rather than after it |
+| **Gemini Live 2.5 Flash Native Audio** | Four of its behaviours were established by testing rather than documentation, including that automatic turn detection silently truncates a long answer | Streaming transcription of a spoken answer, over a WebSocket, while it is being spoken |
+| **Google ADK** | The framework that enforced the architecture while it was being written. The no-handoff rule is an ADK flag, held in place by 24 tests on every change, and `scripts/run_adk_agent.py` exists solely to prove the ADK path runs end to end against the live model | Declares all five agents as `LlmAgent` with a bound `output_schema`, and refuses transfer between them |
+| **Google GenAI SDK** | Drove every development script and live test that called the model | The serving path. The FastAPI service calls the same prompts and schemas through `google-genai` |
+| **Cloud Build** | Literally the build system. 44 builds. There is no local Docker step in this project at all | Not at runtime |
+| **Artifact Registry** | 42 images produced during development | The source of the images Cloud Run serves |
+| **Cloud Run** | 42 revisions deployed while building, each one a real deployment rather than a local server | Hosts the FastAPI service and the Next.js web app as two independent containers |
+| **Firestore** | Used during development to prove that two concurrent turns cannot overwrite each other, against the real database rather than a fake | Every piece of state: the session, the manuscript, the weakness profile carried between sessions |
+| **Firebase Authentication** | The sign-in provider and web app were created and configured as part of building | Verifies every ID token and decides who may open a session |
+| **Cloud Trace** | Used to verify the reasoning chain, by reading a real trace back out rather than assuming the export worked | One span per agent call, nested under the request |
+
+Even the parts that feel local were not. The development scripts reach the model through Google Cloud credentials obtained with `gcloud`, so when those credentials expired mid-project, everything stopped until they were renewed.
 
 > **On the name.** Vertex AI became the Gemini Enterprise Agent Platform in April 2026, and this repository uses the current name throughout. The technical identifiers did not follow it, and they are reproduced here exactly as they are actually typed: the environment variable is `GOOGLE_GENAI_USE_VERTEXAI`, the SDK parameter is `vertexai=True`, the API to enable is `aiplatform.googleapis.com`, and the ADK package is `google-cloud-aiplatform`. None of those is a typo or a leftover. Renaming them in the documentation would produce commands that do not run.
 
-**At least one Google agent framework.** Two are used, and it is worth being precise about where each one runs.
-
-*Google ADK* is where the agents are declared. All five are built as ADK `LlmAgent` instances with a declared `output_schema` and with `disallow_transfer_to_parent` and `disallow_transfer_to_peers` set, which is what makes the isolation between them a framework guarantee rather than a promise in a prompt. See [`codes/backpy/app/agents/*/adk_agent.py`](codes/backpy/app/agents). They are executed through the ADK runner by [`scripts/run_adk_agent.py`](scripts/run_adk_agent.py), which runs an agent end to end against the live model, and by 24 tests in [`codes/backpy/tests/test_adk_agents.py`](codes/backpy/tests/test_adk_agents.py).
-
-*The Google GenAI SDK* is the serving path. The FastAPI service calls the same prompts and the same schemas through `google-genai`, which keeps the request path free of the ADK dependency tree and is why the container image is small. Both are named frameworks in the rules, and the split between them is a deliberate engineering decision rather than an omission.
-
-**At least one Google Cloud infrastructure service.** Cloud Run runs both services, built by Cloud Build into Artifact Registry. Firestore holds every piece of session state: the session itself, the manuscript, and the weakness profile carried between sessions. Firebase Authentication decides who may open any of it, and Cloud Trace receives a span for every agent call. Details in [Technology](#technology).
+**Why two frameworks rather than one.** ADK is where the agents are declared, because `disallow_transfer_to_parent` and `disallow_transfer_to_peers` are what make the isolation between them a framework guarantee rather than a promise in a prompt. The GenAI SDK is the serving path, which keeps the request path free of the ADK dependency tree and the container image small. Both are named frameworks in the rules, and the split is a deliberate engineering decision rather than an omission.
 
 ### Testing instructions for judges
 
