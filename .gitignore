@@ -13,6 +13,7 @@ service-account*.json
 # Leading slashes anchor these to the repository root, so application packages
 # such as codes/backpy/app/agents/ are not caught by them.
 /agents/
+/antigravity/
 /resources/
 /kickoff-prompt.md
 /bug-report-*.md
