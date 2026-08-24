@@ -38,6 +38,7 @@ from app.models.session import (
     TranscriptTurn,
 )
 from app.models.weakness_map import AnalysisResult
+from app.observability import agent_span, record
 from app.storage.draft_store import DraftStore, InMemoryDraftStore
 from app.storage.firestore import save_weakness_map
 from app.storage.session_store import (
@@ -108,7 +109,15 @@ class Orchestrator:
         analysis that already succeeded. During a live demo, a database write
         failing must not throw away a result that is already in hand.
         """
-        result = analyze_draft(draft_text, runner=self.runner)
+        with agent_span(
+            "agent.draft_analyzer", draft_characters=len(draft_text)
+        ) as span:
+            result = analyze_draft(draft_text, runner=self.runner)
+            record(
+                span,
+                findings_kept=len(result.weakness_map.findings),
+                findings_dropped=len(result.dropped),
+            )
         logger.info(
             "draft_analyzer finished: %d findings kept, %d dropped",
             len(result.weakness_map.findings),
@@ -137,9 +146,19 @@ class Orchestrator:
         recurring_gaps: list[str] | None = None,
     ) -> StrategyResult:
         """Step two: a Weakness Map becomes an ordered examination plan."""
-        result = plan_questions(
-            analysis.weakness_map, recurring_gaps=recurring_gaps, runner=self.runner
-        )
+        with agent_span(
+            "agent.question_strategy",
+            findings_in=len(analysis.weakness_map.findings),
+            recurring_gaps_in=len(recurring_gaps or []),
+        ) as span:
+            result = plan_questions(
+                analysis.weakness_map, recurring_gaps=recurring_gaps, runner=self.runner
+            )
+            record(
+                span,
+                questions_kept=len(result.strategy.questions),
+                questions_dropped=len(result.dropped),
+            )
         logger.info(
             "question_strategy finished: %d questions kept, %d dropped",
             len(result.strategy.questions),
@@ -301,16 +320,30 @@ class Orchestrator:
             )
         )
 
-        evaluation, adjustments = evaluate_answer(
-            question=question,
-            answer=answer,
-            progress=progress,
-            language=state.language,
-            finding=state.finding_for(question.finding_id),
-            transcript=state.transcript,
-            next_question=next_question,
-            runner=self.runner,
-        )
+        with agent_span(
+            "agent.examiner_session",
+            session_id=session_id,
+            question_id=question.id,
+            question_number=state.current_index + 1,
+            follow_ups_so_far=progress.follow_ups_asked,
+        ) as span:
+            evaluation, adjustments = evaluate_answer(
+                question=question,
+                answer=answer,
+                progress=progress,
+                language=state.language,
+                finding=state.finding_for(question.finding_id),
+                transcript=state.transcript,
+                next_question=next_question,
+                runner=self.runner,
+            )
+            # The decision and how strong the answer was, never the answer.
+            record(
+                span,
+                decision=evaluation.decision.value,
+                strength=evaluation.strength.value,
+                rules_applied=len(adjustments),
+            )
 
         self._apply_decision(state, progress, evaluation)
 
@@ -388,7 +421,19 @@ class Orchestrator:
     def close_session(self, session_id: str, actor_id: str = "") -> SessionClosing:
         """Reflect on a finished session and store the summary."""
         state = self.load_session(session_id, actor_id)
-        summary, adjustments = reflect_on_session(state, runner=self.runner)
+        with agent_span(
+            "agent.session_reflection",
+            session_id=session_id,
+            turns=len(state.transcript),
+            questions=len(state.questions),
+        ) as span:
+            summary, adjustments = reflect_on_session(state, runner=self.runner)
+            record(
+                span,
+                remaining_gaps=len(summary.remaining_gaps),
+                recurring_patterns=len(summary.recurring_gap_patterns),
+                corrections_applied=len(adjustments),
+            )
 
         # Taken from the record rather than asked of the model, in the same
         # way defended points and gaps are. A summary that could quietly omit

@@ -48,12 +48,6 @@ class Settings(BaseSettings):
     # Firestore
     firestore_database: str = "(default)"
 
-    # Cloud Storage
-    gcs_draft_bucket: str = ""
-
-    # Agent Runtime
-    agent_staging_bucket: str = ""
-
     # Authentication
     # Off by default so the test suite and a bare local backend run without a
     # Firebase project. Every deployment sets it explicitly.
@@ -63,6 +57,10 @@ class Settings(BaseSettings):
     # Application
     app_env: str = "local"
     log_level: str = "INFO"
+
+    # Observability. One span per agent call, exported to Cloud Trace. Off by
+    # default so a local run and the test suite export nothing and need no
+    # credentials for it.
     enable_cloud_trace: bool = False
 
     def require_gcp(self) -> None:

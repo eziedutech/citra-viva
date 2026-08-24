@@ -31,6 +31,7 @@ from app.models.session import (
     SessionTurnResult,
 )
 from app.models.weakness_map import AnalysisResult
+from app.observability import agent_span, record
 from app.orchestrator.orchestrator import Orchestrator
 from app.speech.cache import cache_speech, get_cached_speech
 from app.speech.voice import SpeechError, speak_text, transcribe_answer
@@ -474,7 +475,19 @@ def check_claim_endpoint(request: CheckClaimRequest, user: CurrentUser) -> Claim
     question the author can answer.
     """
     with _translated_errors():
-        return check_claim_support(request.claim, request.source)
+        with agent_span(
+            "agent.claim_support",
+            claim_characters=len(request.claim),
+            source_characters=len(request.source.text),
+        ) as span:
+            result = check_claim_support(request.claim, request.source)
+            # The verdict, never the claim or the source text.
+            record(
+                span,
+                verdict=result.check.verdict.value,
+                rules_applied=len(result.adjustments),
+            )
+            return result
 
 
 @router.get("/api/sessions", response_model=SessionHistoryResponse)

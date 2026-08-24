@@ -54,6 +54,7 @@ Built for the **All Things Agentic Hackathon** (Google and Devpost), category *C
 - [The web interface](#the-web-interface)
 - [Identity, and who may open a session](#identity-and-who-may-open-a-session)
 - [State, concurrency, and failure tolerance](#state-concurrency-and-failure-tolerance)
+- [Observability](#observability)
 - [Repository layout](#repository-layout)
 - [Findings and learnings](#findings-and-learnings)
 - [Disclosure](#disclosure)
@@ -68,7 +69,7 @@ Built for the **All Things Agentic Hackathon** (Google and Devpost), category *C
 | **Category** | Collaborative Partner |
 | **Model** | `gemini-3.5-flash`, on the Gemini Enterprise Agent Platform (formerly Vertex AI) |
 | **Google agent framework** | **Google ADK** and the **Google GenAI SDK** |
-| **Google Cloud services** | Cloud Run, Firestore, Firebase Authentication, Cloud Build, Artifact Registry |
+| **Google Cloud services** | Cloud Run, Firestore, Firebase Authentication, Cloud Trace, Cloud Build, Artifact Registry |
 | **Additional Google AI models** | `gemini-2.5-flash-tts` for the examiner's voice, `gemini-live-2.5-flash-native-audio` for streaming transcription of the student's |
 | **Project started** | 23 August 2026, inside the submission period. First commit 24 August 2026 |
 | **Hosted** | Yes, both the web app and the API |
@@ -84,7 +85,7 @@ Built for the **All Things Agentic Hackathon** (Google and Devpost), category *C
 
 *The Google GenAI SDK* is the serving path. The FastAPI service calls the same prompts and the same schemas through `google-genai`, which keeps the request path free of the ADK dependency tree and is why the container image is small. Both are named frameworks in the rules, and the split between them is a deliberate engineering decision rather than an omission.
 
-**At least one Google Cloud infrastructure service.** Cloud Run runs both services, built by Cloud Build into Artifact Registry. Firestore holds every piece of session state: the session itself, the manuscript, and the weakness profile carried between sessions. Firebase Authentication decides who may open any of it. Details in [Technology](#technology).
+**At least one Google Cloud infrastructure service.** Cloud Run runs both services, built by Cloud Build into Artifact Registry. Firestore holds every piece of session state: the session itself, the manuscript, and the weakness profile carried between sessions. Firebase Authentication decides who may open any of it, and Cloud Trace receives a span for every agent call. Details in [Technology](#technology).
 
 ### Testing instructions for judges
 
@@ -169,6 +170,7 @@ flowchart TD
     GEM["Gemini 3.5 Flash<br/>Gemini Enterprise Agent Platform"]
 
     ORCH <-->|"session state, manuscript, weakness profile"| FS[("Firestore")]
+    ORCH -.->|"one span per agent call"| OT["Cloud Trace"]
 
     style DA fill:#E8F0FE,stroke:#1A73E8
     style QS fill:#E8F0FE,stroke:#1A73E8
@@ -216,6 +218,7 @@ The practical value is containment. A misbehaving agent cannot recruit another o
 | Examiner's voice | `gemini-2.5-flash-tts` |
 | Student's voice | `gemini-live-2.5-flash-native-audio`, streamed over a WebSocket |
 | Deployment | Cloud Run, two services, built by Cloud Build into Artifact Registry |
+| Observability | OpenTelemetry to Cloud Trace, one span per agent call, nested under the request |
 | Tests | pytest, 197 passing, including failure-path tests |
 
 ---
@@ -339,7 +342,7 @@ It expects the API at `CITRA_API_BASE_URL`, which defaults to the deployed servi
 ### 10. Deploy to Cloud Run
 
 ```bash
-gcloud services enable run.googleapis.com cloudbuild.googleapis.com artifactregistry.googleapis.com aiplatform.googleapis.com firestore.googleapis.com --project=YOUR_PROJECT_ID
+gcloud services enable run.googleapis.com cloudbuild.googleapis.com artifactregistry.googleapis.com aiplatform.googleapis.com firestore.googleapis.com cloudtrace.googleapis.com telemetry.googleapis.com --project=YOUR_PROJECT_ID
 ```
 
 ```bash
@@ -586,7 +589,9 @@ So the text lands in an editable field. The student reads it, fixes anything ext
 | A file that is not what it claims | One readable sentence, never a stack trace about zip files |
 | A draft beyond 400,000 characters | Refused by size, rather than accepted and silently truncated somewhere in the middle |
 
-The uploaded file itself is read into memory and discarded. Only the text the student chose to submit goes any further, and it is stored in its own document with ownership recorded on the record.
+The uploaded file itself is read into memory and discarded, so no PDF or DOCX is ever written anywhere. What is stored is the text the student reviewed and chose to submit, in a Firestore document of its own with ownership recorded on the record.
+
+It is stored rather than held for the length of a request because the student needs it during the defense. A question naming a passage is worth little if the manuscript it came from is in another window, so the room can open the submitted text beside the examination. That is also the copy every quote was verified against, which makes it the right copy to be reading.
 
 ---
 
@@ -654,6 +659,40 @@ The principle underneath all of it: *verify what can be verified, bound what can
 
 ---
 
+## Observability
+
+One span per agent call, exported to Cloud Trace, nested under the request that caused it. A single turn of a defense reads as one trace: the HTTP request, and inside it the agent that judged the answer, with how long it took and what it decided.
+
+```
+GET /api/sessions/prepare                         55.1s
+   agent.draft_analyzer                           21.9s   findings_kept=5  findings_dropped=0  draft_characters=1915
+   agent.question_strategy                        33.3s   questions_kept=6  questions_dropped=0  findings_in=5
+```
+
+That is a real trace, read back out of Cloud Trace rather than drawn for the README.
+
+**Attributes carry counts, ids, and decisions. Never content.** No draft text, no answers, no transcripts. A trace is readable by anyone with console access to the project, which is a wider audience than the one a session is written for.
+
+**Tracing never costs an answer.** It is off unless `ENABLE_CLOUD_TRACE` is set, and every failure path inside it degrades to no spans rather than to a failed request: a missing package, a missing project, an exporter that cannot reach Google. A student mid-defense does not lose a turn because telemetry broke.
+
+**It also found the class of bug this project keeps meeting.** The obvious exporter, `CloudTraceSpanExporter` from `opentelemetry-exporter-gcp-trace`, is deprecated and fails in the worst available way: it accepts spans, raises nothing, logs nothing, and delivers nothing. It was only caught because the trace was read back afterwards instead of assumed. What works is OTLP over HTTP to the Telemetry API, with two details that are not guessable from an error message: the endpoint carries no project, and the project has to travel as a `gcp.project_id` resource attribute or the request is refused.
+
+To turn it on for your own deployment:
+
+```bash
+gcloud services enable cloudtrace.googleapis.com telemetry.googleapis.com --project=YOUR_PROJECT_ID
+```
+
+```bash
+gcloud projects add-iam-policy-binding YOUR_PROJECT_ID --member="serviceAccount:PROJECT_NUMBER-compute@developer.gserviceaccount.com" --role="roles/cloudtrace.agent"
+```
+
+```bash
+gcloud run services update citra-viva-api --region=asia-southeast2 --update-env-vars="ENABLE_CLOUD_TRACE=true"
+```
+
+---
+
 ## Repository layout
 
 ```
@@ -679,6 +718,7 @@ codes/backpy/                     Python backend
     storage/draft_store.py        the manuscript, kept in its own document
     llm/client.py                 Gemini access through Agent Platform
     llm/adk_env.py                environment ADK reads for itself
+    observability/tracing.py      one span per agent call, and nothing that can break a turn
     llm/retry.py                  backoff for quota and availability failures
     common/text.py                helpers shared by agents, so no agent imports another
     storage/firestore.py          the only module that talks to the database

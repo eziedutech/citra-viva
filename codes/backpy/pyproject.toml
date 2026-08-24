@@ -17,6 +17,15 @@ dependencies = [
     "pypdf>=5.1",
     "python-docx>=1.1",
     "python-multipart>=0.0.20",
+
+    # Telemetry. One span per agent call, so the chain of decisions behind a
+    # single turn can be read after the fact instead of inferred from logs.
+    # Present in the image but inert: nothing is exported until
+    # ENABLE_CLOUD_TRACE is set, and every failure here degrades to no spans
+    # rather than to a failed request.
+    "opentelemetry-sdk>=1.29",
+    "opentelemetry-exporter-otlp-proto-http>=1.29",
+    "opentelemetry-instrumentation-fastapi>=0.50b0",
 ]
 
 [project.optional-dependencies]
