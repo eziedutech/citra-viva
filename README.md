@@ -68,7 +68,7 @@ Built for the **All Things Agentic Hackathon** (Google and Devpost), category *C
 | **Category** | Collaborative Partner |
 | **Model** | `gemini-3.5-flash`, on the Gemini Enterprise Agent Platform (formerly Vertex AI) |
 | **Google agent framework** | **Google ADK** and the **Google GenAI SDK** |
-| **Google Cloud services** | Cloud Run, Firestore, Cloud Storage, Firebase Authentication, Cloud Trace, Artifact Registry, Cloud Build |
+| **Google Cloud services** | Cloud Run, Firestore, Firebase Authentication, Cloud Build, Artifact Registry |
 | **Additional Google AI models** | `gemini-2.5-flash-tts` for the examiner's voice, `gemini-live-2.5-flash-native-audio` for streaming transcription of the student's |
 | **Project started** | 23 August 2026, inside the submission period. First commit 24 August 2026 |
 | **Hosted** | Yes, both the web app and the API |
@@ -84,7 +84,7 @@ Built for the **All Things Agentic Hackathon** (Google and Devpost), category *C
 
 *The Google GenAI SDK* is the serving path. The FastAPI service calls the same prompts and the same schemas through `google-genai`, which keeps the request path free of the ADK dependency tree and is why the container image is small. Both are named frameworks in the rules, and the split between them is a deliberate engineering decision rather than an omission.
 
-**At least one Google Cloud infrastructure service.** Cloud Run runs both services. Firestore holds every piece of session state. Cloud Storage holds uploaded manuscripts. Details in [Technology](#technology).
+**At least one Google Cloud infrastructure service.** Cloud Run runs both services, built by Cloud Build into Artifact Registry. Firestore holds every piece of session state: the session itself, the manuscript, and the weakness profile carried between sessions. Firebase Authentication decides who may open any of it. Details in [Technology](#technology).
 
 ### Testing instructions for judges
 
@@ -141,7 +141,7 @@ The same rule decided a feature that was proposed and refused. Answer recommenda
 
 ```mermaid
 flowchart TD
-    U["Student"] -->|"research draft"| GCS[("Cloud Storage")]
+    U["Student"] -->|"research draft"| WEB
     U -->|"answers during the session"| API
 
     WEB["Next.js on Cloud Run"] --> API
@@ -168,8 +168,7 @@ flowchart TD
     SR -.-> GEM
     GEM["Gemini 3.5 Flash<br/>Gemini Enterprise Agent Platform"]
 
-    ORCH <-->|"session state, weakness profile"| FS[("Firestore")]
-    ORCH -.->|"traces"| OT["Cloud Trace"]
+    ORCH <-->|"session state, manuscript, weakness profile"| FS[("Firestore")]
 
     style DA fill:#E8F0FE,stroke:#1A73E8
     style QS fill:#E8F0FE,stroke:#1A73E8
@@ -213,11 +212,10 @@ The practical value is containment. A misbehaving agent cannot recruit another o
 | Frontend | Next.js 16, React 19, Tailwind 4, TypeScript |
 | Sign-in | Firebase Authentication, Google provider |
 | Database | Firestore, native mode, optimistic concurrency through a revision check inside a transaction |
-| Draft storage | Cloud Storage |
+| Manuscript storage | Firestore, in a document of its own with ownership on the record |
 | Examiner's voice | `gemini-2.5-flash-tts` |
 | Student's voice | `gemini-live-2.5-flash-native-audio`, streamed over a WebSocket |
 | Deployment | Cloud Run, two services, built by Cloud Build into Artifact Registry |
-| Observability | OpenTelemetry to Cloud Trace, one span per agent call |
 | Tests | pytest, 197 passing, including failure-path tests |
 
 ---
@@ -245,7 +243,7 @@ gcloud auth application-default login
 ```
 
 ```bash
-gcloud services enable aiplatform.googleapis.com firestore.googleapis.com storage.googleapis.com --project=YOUR_PROJECT_ID
+gcloud services enable aiplatform.googleapis.com firestore.googleapis.com --project=YOUR_PROJECT_ID
 ```
 
 ### 3. Configure
@@ -376,7 +374,7 @@ Finally, tell the API which web origin may open the streaming speech socket:
 gcloud run services update citra-viva-api --region=asia-southeast2 --update-env-vars="ALLOWED_WEB_ORIGINS=YOUR_WEB_URL"
 ```
 
-No secret is passed on any of those command lines. The services reach Gemini, Firestore, and Cloud Storage through their own service identity, so there is no key file anywhere in the deployment.
+No secret is passed on any of those command lines. The services reach Gemini and Firestore through their own service identity, so there is no key file anywhere in the deployment.
 
 ### 11. Set up sign-in
 
