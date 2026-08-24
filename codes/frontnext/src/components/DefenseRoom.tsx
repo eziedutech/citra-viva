@@ -4,7 +4,9 @@ import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 
 import { AccountButton } from '@/components/AccountButton';
+import { AgentOverlay } from '@/components/AgentOverlay';
 import { AiWorking } from '@/components/AiWorking';
+import { Hint } from '@/components/Hint';
 import { Icon } from '@/components/Icon';
 import { LocaleSwitch } from '@/components/LocaleSwitch';
 import { QuestionSidebar } from '@/components/QuestionSidebar';
@@ -131,14 +133,20 @@ export function DefenseRoom({ initial, dict, locale }: Props) {
         </div>
 
         <div className="flex items-center gap-5">
-          <span className="text-body-sm text-[color:var(--color-ink-600)]">
-            {fill(dict.room.questionProgress, {
-              current: Math.min(session.current_index + 1, session.questions.length),
-              total: session.questions.length,
-            })}
+          <span className="flex items-center gap-[6px]">
+            <span className="text-body-sm text-[color:var(--color-ink-600)]">
+              {fill(dict.room.questionProgress, {
+                current: Math.min(session.current_index + 1, session.questions.length),
+                total: session.questions.length,
+              })}
+            </span>
+            <Hint text={dict.room.hints.progress} align="end" />
           </span>
-          <span className="text-caption text-[color:var(--color-ink-400)]">
-            {fill(dict.room.answersSaved, { count: answered })}
+          <span className="flex items-center gap-[6px]">
+            <span className="text-caption text-[color:var(--color-ink-400)]">
+              {fill(dict.room.answersSaved, { count: answered })}
+            </span>
+            <Hint text={dict.room.hints.saved} align="end" />
           </span>
           <AccountButton dict={dict} />
           <LocaleSwitch locale={locale} dict={dict} />
@@ -150,6 +158,11 @@ export function DefenseRoom({ initial, dict, locale }: Props) {
         label={closing ? dict.room.buildingReport : dict.room.thinking}
         dict={dict}
         reassure
+      />
+      <AgentOverlay
+        active={thinking || closing}
+        stage={closing ? 'reporting' : 'judging'}
+        dict={dict}
       />
 
       <div className="grid min-h-0 grid-cols-[240px_1fr_380px]">
@@ -163,6 +176,10 @@ export function DefenseRoom({ initial, dict, locale }: Props) {
         <main className="grid min-h-0 grid-rows-[1fr_auto] bg-[color:var(--color-canvas)]">
           <div className="panel-scroll px-8 py-6" tabIndex={0} aria-label={dict.room.transcriptLabel}>
             <div className="mx-auto max-w-[680px] space-y-5">
+              <p className="text-micro flex items-center gap-[6px] text-[color:var(--color-ink-400)]">
+                {dict.room.transcriptLabel}
+                <Hint text={dict.room.hints.transcript} />
+              </p>
               {session.transcript.map((turn, index) => (
                 <article
                   key={`${index}-${turn.text.slice(0, 24)}`}
@@ -210,8 +227,9 @@ export function DefenseRoom({ initial, dict, locale }: Props) {
 
               {adjustments.length > 0 ? (
                 <div className="border border-[color:var(--color-line)] bg-[color:var(--color-surface)] p-3">
-                  <p className="text-micro mb-1 font-medium text-[color:var(--color-ink-600)]">
+                  <p className="text-micro mb-1 flex items-center gap-[6px] font-medium text-[color:var(--color-ink-600)]">
                     {dict.room.adjustmentsTitle}
+                    <Hint text={dict.slideover.hints.adjustments} />
                   </p>
                   <ul className="text-caption space-y-1 text-[color:var(--color-ink-600)]">
                     {adjustments.map((note) => (
@@ -242,6 +260,7 @@ export function DefenseRoom({ initial, dict, locale }: Props) {
                   <p className="text-body-sm text-[color:var(--color-ink-600)]">
                     {dict.room.allAnswered}
                   </p>
+                  <Hint text={dict.room.hints.report} side="top" align="end" className="ml-auto" />
                   <button
                     type="button"
                     onClick={() => {
@@ -255,34 +274,54 @@ export function DefenseRoom({ initial, dict, locale }: Props) {
                   </button>
                 </div>
               ) : (
-                <div className="flex items-end gap-3">
-                  <label htmlFor="answer" className="sr-only">
-                    {dict.room.answerLabel}
-                  </label>
-                  <textarea
-                    id="answer"
-                    value={answer}
-                    onChange={(event) => setAnswer(event.target.value)}
-                    onKeyDown={(event) => {
-                      if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) {
-                        event.preventDefault();
-                        void submit();
-                      }
-                    }}
-                    disabled={thinking}
-                    rows={3}
-                    placeholder={dict.room.answerPlaceholder}
-                    className="text-body flex-1 resize-none border border-[color:var(--color-line)] p-3 outline-none focus:border-[color:var(--color-primary-500)] disabled:bg-[color:var(--color-primary-050)]"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => void submit()}
-                    disabled={thinking || answer.trim().length === 0}
-                    className="text-body-sm flex h-10 items-center gap-2 rounded-[var(--radius-action)] bg-[color:var(--color-primary-700)] px-4 font-medium text-white transition-colors duration-150 hover:bg-[color:var(--color-primary-900)] disabled:bg-[color:var(--color-ink-400)]"
-                  >
-                    <Icon name="send" size={18} />
-                    {dict.room.send}
-                  </button>
+                <div>
+                  <span className="mb-2 flex items-center gap-[6px]">
+                    <label
+                      htmlFor="answer"
+                      className="text-caption font-medium text-[color:var(--color-ink-600)]"
+                    >
+                      {dict.room.answerLabel}
+                    </label>
+                    <Hint text={dict.room.hints.answer} side="top" />
+                  </span>
+
+                  {/* One bordered field with the send control inside it, rather
+                      than a box and a button that happen to sit next to each
+                      other. The border follows the focus of the textarea, so
+                      the whole composer reads as the thing being typed into. */}
+                  <div className="border border-[color:var(--color-line)] bg-[color:var(--color-surface)] transition-colors duration-150 focus-within:border-[color:var(--color-primary-500)]">
+                    <textarea
+                      id="answer"
+                      value={answer}
+                      onChange={(event) => setAnswer(event.target.value)}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) {
+                          event.preventDefault();
+                          void submit();
+                        }
+                      }}
+                      disabled={thinking}
+                      rows={3}
+                      placeholder={dict.room.answerPlaceholder}
+                      className="text-body block w-full resize-none bg-transparent p-3 outline-none disabled:bg-[color:var(--color-primary-050)]"
+                    />
+                    <div className="flex items-center justify-between gap-3 border-t border-[color:var(--color-line)] px-3 py-2">
+                      <span className="text-micro tabular-nums text-[color:var(--color-ink-400)]">
+                        {answer.trim().length > 0
+                          ? `${answer.trim().length.toLocaleString(locale)} ${dict.intake.characters}`
+                          : ''}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => void submit()}
+                        disabled={thinking || answer.trim().length === 0}
+                        className="text-body-sm flex h-9 items-center gap-2 rounded-[var(--radius-action)] bg-[color:var(--color-primary-700)] px-4 font-medium text-white transition-colors duration-150 hover:bg-[color:var(--color-primary-900)] disabled:bg-[color:var(--color-ink-400)]"
+                      >
+                        <Icon name="send" size={16} />
+                        {dict.room.send}
+                      </button>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>

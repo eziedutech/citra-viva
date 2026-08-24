@@ -1,5 +1,6 @@
 'use client';
 
+import { Hint } from '@/components/Hint';
 import { Icon } from '@/components/Icon';
 import type { Dictionary } from '@/lib/i18n';
 import type { PlannedQuestion, QuestionProgress } from '@/lib/types';
@@ -26,8 +27,9 @@ export function QuestionSidebar({ questions, progress, currentIndex, dict }: Pro
       tabIndex={0}
     >
       <div className="px-5 py-4">
-        <h2 className="text-caption mb-3 font-medium text-[color:var(--color-ink-600)]">
+        <h2 className="text-caption mb-3 flex items-center gap-[6px] font-medium text-[color:var(--color-ink-600)]">
           {dict.sidebar.plan}
+          <Hint text={dict.sidebar.planHint} />
         </h2>
 
         <ol className="space-y-1">

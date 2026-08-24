@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 
+import { Hint } from '@/components/Hint';
 import { Icon } from '@/components/Icon';
 import type { Dictionary } from '@/lib/i18n';
 import type {
@@ -23,11 +24,12 @@ function severityTone(severity: string): string {
 }
 
 /** Purple marks AI territory throughout. Nothing else in the app uses it. */
-function AiLabel({ children }: { children: React.ReactNode }) {
+function AiLabel({ children, hint }: { children: React.ReactNode; hint?: string }) {
   return (
     <p className="text-micro mb-3 flex items-center gap-[6px] text-[color:var(--color-ai)]">
       <Icon name="cpu" size={16} />
       {children}
+      {hint ? <Hint text={hint} /> : null}
     </p>
   );
 }
@@ -42,6 +44,7 @@ function FindingCard({ finding, dict }: { finding: WeaknessFinding; dict: Dictio
         >
           {dict.slideover.severity[finding.severity] ?? finding.severity}
         </span>
+        <Hint text={dict.slideover.hints.severity} />
         <span className="text-micro text-[color:var(--color-ink-600)]">
           {dict.slideover.category[finding.category] ?? finding.category}
         </span>
@@ -53,6 +56,7 @@ function FindingCard({ finding, dict }: { finding: WeaknessFinding; dict: Dictio
           <p className="text-micro mt-2 flex items-center gap-[6px] text-[color:var(--color-success)]">
             <Icon name="check" size={14} />
             {dict.slideover.quoteVerified}
+            <Hint text={dict.slideover.hints.quote} />
           </p>
         ) : null}
       </blockquote>
@@ -79,7 +83,7 @@ function EvaluationPanel({
 
   return (
     <div className="border border-[color:var(--color-line)] bg-[color:var(--color-surface)] p-4">
-      <AiLabel>{dict.slideover.evaluationIntro}</AiLabel>
+      <AiLabel hint={dict.slideover.hints.evaluation}>{dict.slideover.evaluationIntro}</AiLabel>
 
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <span className="text-body-sm font-medium">
@@ -174,7 +178,7 @@ function ReportPanel({
 
   return (
     <div className="space-y-6">
-      <AiLabel>{dict.slideover.reportIntro}</AiLabel>
+      <AiLabel hint={dict.slideover.hints.report}>{dict.slideover.reportIntro}</AiLabel>
 
       <section>
         <h4 className="text-caption mb-2 font-medium text-[color:var(--color-success)]">
@@ -212,6 +216,7 @@ function ReportPanel({
         <h4 className="text-caption mb-2 flex items-center gap-[6px] font-medium">
           <Icon name="history" size={16} />
           {dict.slideover.patterns}
+          <Hint text={dict.slideover.hints.patterns} align="end" />
         </h4>
         <ul className="text-body-sm space-y-2">
           {summary.recurring_gap_patterns.map((item) => (
@@ -303,7 +308,7 @@ export function Slideover({
       <div className="panel-scroll p-5" tabIndex={0}>
         {activeTab === 'weakness' ? (
           <div className="space-y-3">
-            <AiLabel>{dict.slideover.weaknessIntro}</AiLabel>
+            <AiLabel hint={dict.slideover.hints.weakness}>{dict.slideover.weaknessIntro}</AiLabel>
             {findings.map((finding) => (
               <FindingCard key={finding.id} finding={finding} dict={dict} />
             ))}

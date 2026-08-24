@@ -27,6 +27,33 @@ const en = {
       'A thesis defense simulator that reads your research draft and tests the weakest points of your argument.',
   },
 
+  nav: {
+    label: 'Sections',
+    defense: 'Practice defense',
+    claims: 'Citation check',
+  },
+
+  landing: {
+    eyebrow: 'Adversarial practice, before the committee does it for real',
+    steps: [
+      {
+        title: 'It reads the whole draft',
+        body: 'Every finding is tied to a sentence you actually wrote, quoted word for word and checked back against your text. A finding whose quote cannot be found is discarded rather than shown.',
+      },
+      {
+        title: 'It plans the examination',
+        body: 'Questions are ordered by how hard a committee is likely to press. Weaknesses you left unresolved in an earlier session are asked about first.',
+      },
+      {
+        title: 'It judges, then reports',
+        body: 'Each answer is weighed against what the question was asking for. The report separates what you held from what is still open, in the examiner’s own words.',
+      },
+    ],
+    promiseTitle: 'What it will not do',
+    promise:
+      'It will not write your answers, and it will not record a weakness as unanswered before giving you a chance to clarify. Where a session rule overrides the model, the override is shown to you rather than applied quietly.',
+  },
+
   intake: {
     heading: 'Test your draft before an examiner does',
     lede: 'Paste your manuscript. The agent reads it in full, maps where your argument gives way under pressure, then examines you the way a real committee would. It will not write your answers for you.',
@@ -56,6 +83,15 @@ const en = {
       'Planning the order of questions',
     ],
     signInPrompt: 'Sign in to keep your sessions and let the examiner remember them.',
+    hints: {
+      heading:
+        'A practice viva. The agent reads your manuscript, finds where the argument gives way, then questions you about it the way a committee would.',
+      draft: 'Paste or upload the chapters you want tested. Introduction, methodology, and findings give the examiner the most to work with.',
+      upload: 'PDF, DOCX, TXT, or Markdown, up to 10 MB. The text is extracted into the box below for you to check, and the file itself is never stored.',
+      samples: 'A short worked manuscript, already carrying the kinds of weakness a committee looks for. Useful for seeing how a session runs before submitting your own work.',
+      gaps: 'Anything a previous session left unanswered. Questions attacking these are asked first, even when other findings look more severe.',
+      start: 'Analysis takes about half a minute. The session is saved as it goes, so you can close the tab and come back to it.',
+    },
   },
 
   room: {
@@ -75,10 +111,19 @@ const en = {
     answerFailed: 'The answer could not be sent.',
     reportFailed: 'The report could not be written.',
     adjustmentsTitle: 'Session rules applied over the model decision',
+    hints: {
+      progress: 'How far the examination plan has been worked through. A question can take several turns before it closes.',
+      saved: 'Every answer is written to storage as soon as it is judged. Refreshing, or coming back tomorrow on another machine, loses nothing.',
+      answer: 'Answer in your own words. The examiner is judging whether you can defend the point, so a short precise answer beats a long one.',
+      transcript: 'The full exchange, in order. This is what the closing report is built from, which is why nothing is deleted from it.',
+      report: 'Written from the transcript, not from a fresh impression. Points recorded as defended and gaps recorded as open are both carried through in the examiner’s own words.',
+    },
   },
 
   sidebar: {
     plan: 'Examination plan',
+    planHint:
+      'Ordered before the defense begins, by how hard a committee is likely to press on each finding. Questions ahead of you stay closed: a defense you can read in advance is not a defense.',
     recurringGap: 'Recurring gap',
     done: 'Done',
     doneWithGap: 'Done, recorded as a gap',
@@ -94,6 +139,15 @@ const en = {
 
   slideover: {
     label: 'Contextual panel',
+    hints: {
+      weakness: 'Where the argument gives way, each one tied to a sentence quoted from your own manuscript.',
+      evaluation: 'How the examiner read your last answer, and why it decided to press further, offer a clarification, or move on.',
+      report: 'The closing account of the session: what held, what is still open, and the patterns worth carrying into the next one.',
+      quote: 'The quoted sentence was matched back against the manuscript you submitted. A finding whose quote could not be found there is discarded before it reaches this panel.',
+      adjustments: 'Rules enforced in code rather than in the prompt. A gap cannot be recorded before you have been offered a chance to clarify, and follow-ups on one question are capped, so the model cannot decide otherwise.',
+      patterns: 'Carry these into your next session in the field for unresolved weaknesses, and they will be tested first.',
+      severity: 'How hard an examiner is likely to press on this, not a mark against the quality of your research. It is what sets the order of questions.',
+    },
     tabs: {
       weakness: 'Weakness map',
       evaluation: 'Judgment',
@@ -141,6 +195,14 @@ const en = {
 
   claims: {
     nav: 'Check a citation',
+    hints: {
+      claim: 'One sentence, copied exactly as it stands in your manuscript. The verdict is about this sentence and this source, not about the topic they share.',
+      source: 'Bibliographic details are for the record. The judgment itself rests only on the text you paste below.',
+      abstract: 'Paste the abstract, or the specific passage you cited. What is not in this text cannot be used, and that is what keeps the verdict checkable.',
+      verdict: 'A statement about the fit between one claim and one source. A claim of support has to point at the passage carrying it, or it is downgraded to undecided.',
+      passage: 'The sentence the verdict rests on, matched back against the source text you supplied.',
+      question: 'Marking a citation wrong without a way to answer is an accusation. A negative verdict has to come with a question, or it is downgraded to undecided.',
+    },
     heading: 'Does this source actually support this claim?',
     lede: 'A resolving DOI proves the paper exists. It does not prove the paper carries the sentence you cited it for, and topical relevance passes every mechanical check ever written. Paste a claim and the source text, and the agent judges the specific fit.',
     claimLabel: 'The claim, as written in your manuscript',
@@ -173,6 +235,42 @@ const en = {
     },
     disclosure:
       'Mechanical citation verification, matching a DOI against Crossref or OpenAlex, belongs to a separate project and is deliberately outside this submission. What runs here is the reasoning layer built on top of it.',
+  },
+
+
+  agent: {
+    working: 'Agent at work',
+    dismiss: 'Hide this',
+    stages: {
+      extracting: {
+        title: 'Lifting the text out of your document',
+        body: 'Page furniture such as running headers is dropped, words broken across a line break are rejoined, and the result is handed back to you to check. The file itself is not kept.',
+      },
+      reading: {
+        title: 'Reading the draft and marking key claims',
+        body: 'The whole manuscript is read once, and the sentences an examiner would stop at are marked where they stand.',
+      },
+      verifying: {
+        title: 'Checking every quote against your manuscript',
+        body: 'Each marked sentence is matched back to your text. Anything that cannot be found there is discarded rather than shown to you, because a finding about a sentence you never wrote is an accusation.',
+      },
+      planning: {
+        title: 'Putting the questions in order',
+        body: 'Questions are ordered by how hard a committee is likely to press. Anything you carried in from an earlier session is moved to the front.',
+      },
+      judging: {
+        title: 'Weighing your answer',
+        body: 'Your answer is read against what the question was actually asking for, and the examiner decides whether to press further, offer you a chance to clarify, or move on.',
+      },
+      reporting: {
+        title: 'Writing the session report',
+        body: 'What you defended and what is still open are both taken from the transcript in the examiner’s own words, so the report cannot contradict the session it describes.',
+      },
+      citation: {
+        title: 'Reading the source against your claim',
+        body: 'The source text is searched for the passage that would actually carry your claim. Sharing a topic is not the same as supporting a sentence.',
+      },
+    },
   },
 
   ai: {
@@ -231,6 +329,33 @@ const id: Dictionary = {
       'Simulator sidang skripsi yang membaca draf riset Anda dan menguji titik terlemah argumennya.',
   },
 
+  nav: {
+    label: 'Bagian',
+    defense: 'Sidang latihan',
+    claims: 'Periksa sitasi',
+  },
+
+  landing: {
+    eyebrow: 'Latihan yang menekan, sebelum penguji sungguhan melakukannya',
+    steps: [
+      {
+        title: 'Membaca draf secara utuh',
+        body: 'Setiap temuan terikat pada kalimat yang benar-benar Anda tulis, dikutip apa adanya dan dicocokkan kembali ke naskah. Temuan yang kutipannya tidak ditemukan dibuang, bukan ditampilkan.',
+      },
+      {
+        title: 'Menyusun rencana pengujian',
+        body: 'Pertanyaan diurutkan menurut seberapa keras penguji biasanya menekan. Kelemahan yang belum Anda selesaikan di sesi sebelumnya ditanyakan lebih dulu.',
+      },
+      {
+        title: 'Menilai, lalu menyusun laporan',
+        body: 'Tiap jawaban ditimbang terhadap apa yang sebenarnya diminta pertanyaan. Laporan memisahkan yang berhasil Anda pertahankan dari yang masih terbuka, dengan kata-kata penguji sendiri.',
+      },
+    ],
+    promiseTitle: 'Yang tidak akan dilakukannya',
+    promise:
+      'Ia tidak akan menuliskan jawaban Anda, dan tidak akan mencatat sebuah kelemahan sebagai tak terjawab sebelum Anda diberi kesempatan menjelaskan. Ketika aturan sesi menimpa keputusan model, penimpaan itu ditampilkan, bukan dijalankan diam-diam.',
+  },
+
   intake: {
     heading: 'Uji draf Anda sebelum penguji yang melakukannya',
     lede: 'Tempel naskah riset Anda. Agent membacanya utuh, menyusun peta titik terlemah argumen, lalu menguji Anda seperti penguji sungguhan. Ia tidak akan menuliskan jawaban untuk Anda.',
@@ -260,6 +385,15 @@ const id: Dictionary = {
       'Menyusun urutan pertanyaan penguji',
     ],
     signInPrompt: 'Masuk agar sesi Anda tersimpan dan dapat diingat penguji.',
+    hints: {
+      heading:
+        'Sidang latihan. Agent membaca naskah Anda, mencari tempat argumennya melemah, lalu menanyakannya kepada Anda seperti penguji sungguhan.',
+      draft: 'Tempel atau unggah bab yang ingin diuji. Pendahuluan, metodologi, dan hasil memberi penguji bahan paling banyak.',
+      upload: 'PDF, DOCX, TXT, atau Markdown, maksimal 10 MB. Teksnya diekstrak ke kotak di bawah untuk Anda periksa, dan berkasnya sendiri tidak pernah disimpan.',
+      samples: 'Naskah contoh singkat yang memang memuat jenis kelemahan yang dicari penguji. Berguna untuk melihat jalannya sesi sebelum mengirim naskah Anda sendiri.',
+      gaps: 'Apa pun yang belum terjawab di sesi sebelumnya. Pertanyaan yang menyasar poin ini diajukan lebih dulu, meski temuan lain tampak lebih berat.',
+      start: 'Analisis memakan waktu sekitar setengah menit. Sesi tersimpan sambil berjalan, jadi tab boleh ditutup dan dibuka lagi nanti.',
+    },
   },
 
   room: {
@@ -279,10 +413,19 @@ const id: Dictionary = {
     answerFailed: 'Jawaban gagal dikirim.',
     reportFailed: 'Laporan gagal disusun.',
     adjustmentsTitle: 'Aturan sesi yang diterapkan atas keputusan model',
+    hints: {
+      progress: 'Sejauh mana rencana pengujian telah dijalani. Satu pertanyaan bisa memakan beberapa giliran sebelum ditutup.',
+      saved: 'Setiap jawaban ditulis ke penyimpanan begitu selesai dinilai. Memuat ulang, atau kembali besok dari perangkat lain, tidak menghilangkan apa pun.',
+      answer: 'Jawab dengan kata-kata Anda sendiri. Penguji menilai apakah Anda dapat mempertahankan poinnya, jadi jawaban pendek yang tepat lebih baik daripada yang panjang.',
+      transcript: 'Seluruh percakapan, berurutan. Laporan penutup disusun dari sini, dan itulah sebabnya tidak ada yang dihapus darinya.',
+      report: 'Disusun dari transkrip, bukan dari kesan baru. Poin yang tercatat bertahan dan celah yang tercatat terbuka sama-sama dibawa dengan kata-kata penguji sendiri.',
+    },
   },
 
   sidebar: {
     plan: 'Rencana pengujian',
+    planHint:
+      'Disusun sebelum sidang dimulai, menurut seberapa keras penguji biasanya menekan tiap temuan. Pertanyaan di depan tetap tertutup: sidang yang dapat dibaca lebih dulu bukan sidang.',
     recurringGap: 'Celah berulang',
     done: 'Selesai',
     doneWithGap: 'Selesai, tercatat sebagai celah',
@@ -298,6 +441,15 @@ const id: Dictionary = {
 
   slideover: {
     label: 'Panel kontekstual',
+    hints: {
+      weakness: 'Tempat argumen melemah, masing-masing terikat pada kalimat yang dikutip dari naskah Anda sendiri.',
+      evaluation: 'Bagaimana penguji membaca jawaban terakhir Anda, dan mengapa ia memutuskan menekan lebih jauh, memberi kesempatan klarifikasi, atau berpindah topik.',
+      report: 'Catatan penutup sesi: apa yang bertahan, apa yang masih terbuka, dan pola yang layak dibawa ke sesi berikutnya.',
+      quote: 'Kalimat yang dikutip dicocokkan kembali ke naskah yang Anda kirim. Temuan yang kutipannya tidak ditemukan di sana dibuang sebelum sampai ke panel ini.',
+      adjustments: 'Aturan yang ditegakkan di kode, bukan di prompt. Celah tidak boleh dicatat sebelum Anda diberi kesempatan menjelaskan, dan pendalaman pada satu pertanyaan dibatasi, sehingga model tidak dapat memutuskan sebaliknya.',
+      patterns: 'Bawa poin ini ke sesi berikutnya lewat kolom kelemahan yang belum selesai, dan poin itu akan diuji lebih dulu.',
+      severity: 'Perkiraan seberapa keras penguji akan menekan hal ini, bukan penilaian atas mutu riset Anda. Inilah yang menentukan urutan pertanyaan.',
+    },
     tabs: {
       weakness: 'Peta kelemahan',
       evaluation: 'Penilaian',
@@ -345,6 +497,14 @@ const id: Dictionary = {
 
   claims: {
     nav: 'Periksa sitasi',
+    hints: {
+      claim: 'Satu kalimat, disalin persis seperti tertulis di naskah Anda. Vonisnya tentang kalimat ini dan sumber ini, bukan tentang topik yang sama-sama mereka bahas.',
+      source: 'Detail bibliografis untuk catatan. Penilaiannya sendiri hanya bersandar pada teks yang Anda tempel di bawah.',
+      abstract: 'Tempel abstrak, atau bagian spesifik yang Anda sitasikan. Yang tidak ada di teks ini tidak dapat dipakai, dan itulah yang membuat vonisnya dapat diperiksa.',
+      verdict: 'Pernyataan tentang kecocokan satu klaim dengan satu sumber. Vonis mendukung wajib menunjuk bagian yang memuatnya, atau vonisnya turun menjadi tidak dapat dipastikan.',
+      passage: 'Kalimat yang menjadi dasar vonis, dicocokkan kembali ke teks sumber yang Anda berikan.',
+      question: 'Menandai sitasi salah tanpa jalan untuk menjawab adalah tuduhan. Vonis negatif wajib disertai pertanyaan, atau vonisnya turun menjadi tidak dapat dipastikan.',
+    },
     heading: 'Apakah sumber ini benar-benar mendukung klaim tersebut?',
     lede: 'DOI yang resolve membuktikan makalahnya ada. Itu tidak membuktikan makalahnya memuat kalimat yang Anda sitasikan padanya, dan kesamaan topik lolos dari semua pemeriksaan mekanis yang pernah ditulis. Tempel klaim dan teks sumbernya, lalu agent menilai kecocokan spesifiknya.',
     claimLabel: 'Klaim, persis seperti tertulis di naskah Anda',
@@ -377,6 +537,42 @@ const id: Dictionary = {
     },
     disclosure:
       'Verifikasi sitasi mekanis, pencocokan DOI ke Crossref atau OpenAlex, adalah proyek terpisah dan sengaja berada di luar submission ini. Yang berjalan di sini adalah lapisan penalaran di atasnya.',
+  },
+
+
+  agent: {
+    working: 'Agent sedang bekerja',
+    dismiss: 'Sembunyikan',
+    stages: {
+      extracting: {
+        title: 'Mengangkat teks dari dokumen Anda',
+        body: 'Elemen halaman seperti header berulang dibuang, kata yang terpotong di ujung baris disambung kembali, dan hasilnya dikembalikan kepada Anda untuk diperiksa. Berkasnya sendiri tidak disimpan.',
+      },
+      reading: {
+        title: 'Membaca draf dan menandai klaim kunci',
+        body: 'Seluruh naskah dibaca sekali, dan kalimat yang akan membuat penguji berhenti ditandai di tempatnya.',
+      },
+      verifying: {
+        title: 'Memeriksa setiap kutipan terhadap naskah',
+        body: 'Tiap kalimat yang ditandai dicocokkan kembali ke teks Anda. Yang tidak ditemukan di sana dibuang, bukan ditampilkan, karena temuan atas kalimat yang tidak pernah Anda tulis adalah tuduhan.',
+      },
+      planning: {
+        title: 'Menyusun urutan pertanyaan',
+        body: 'Pertanyaan diurutkan menurut seberapa keras penguji biasanya menekan. Apa pun yang Anda bawa dari sesi sebelumnya dipindahkan ke depan.',
+      },
+      judging: {
+        title: 'Menimbang jawaban Anda',
+        body: 'Jawaban Anda dibaca terhadap apa yang sebenarnya diminta pertanyaan, lalu penguji memutuskan untuk menekan lebih jauh, memberi kesempatan klarifikasi, atau berpindah topik.',
+      },
+      reporting: {
+        title: 'Menyusun laporan sesi',
+        body: 'Yang berhasil Anda pertahankan dan yang masih terbuka sama-sama diambil dari transkrip dengan kata-kata penguji sendiri, sehingga laporannya tidak dapat bertentangan dengan sesi yang dilaporkannya.',
+      },
+      citation: {
+        title: 'Membaca sumber terhadap klaim Anda',
+        body: 'Teks sumber ditelusuri untuk bagian yang benar-benar memuat klaim Anda. Kesamaan topik bukan berarti dukungan atas sebuah kalimat.',
+      },
+    },
   },
 
   ai: {

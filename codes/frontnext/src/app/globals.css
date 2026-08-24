@@ -188,6 +188,166 @@
   }
 }
 
+/**
+ * The agent working animations.
+ *
+ * Each one draws the actual step being carried out: a page being scanned, a
+ * quote being matched back to its sentence, questions being put in order. The
+ * point is not decoration. A student waiting forty seconds should be able to
+ * tell what is happening from the picture alone, and should be able to see that
+ * the quote checking step is a real step rather than a claim in the marketing.
+ *
+ * Every keyframe moves opacity or transform only, so none of them cost layout,
+ * and every element is authored in its finished state. That is what makes the
+ * reduced motion rule below safe: with the animation switched off, each drawing
+ * still reads as the completed step rather than collapsing to nothing.
+ */
+@keyframes agent-scan {
+  0% {
+    transform: translateY(0);
+    opacity: 0.12;
+  }
+  50% {
+    opacity: 0.3;
+  }
+  100% {
+    transform: translateY(74px);
+    opacity: 0.12;
+  }
+}
+
+@keyframes agent-mark {
+  0%,
+  8% {
+    opacity: 0;
+    transform: scaleX(0);
+  }
+  24%,
+  78% {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scaleX(1);
+  }
+}
+
+@keyframes agent-draw {
+  0% {
+    stroke-dashoffset: 140;
+  }
+  45%,
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes agent-appear {
+  0%,
+  40% {
+    opacity: 0;
+  }
+  55%,
+  88% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes agent-rise {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  45%,
+  75% {
+    transform: translateY(-27px);
+  }
+}
+
+@keyframes agent-fall {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  45%,
+  75% {
+    transform: translateY(27px);
+  }
+}
+
+@keyframes agent-gather {
+  0% {
+    transform: translateX(var(--agent-from, -20px));
+    opacity: 0.3;
+  }
+  55%,
+  100% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes agent-sweep {
+  0%,
+  10% {
+    transform: translateX(0);
+  }
+  70%,
+  100% {
+    transform: translateX(62px);
+  }
+}
+
+.agent-anim .a-scan {
+  animation: agent-scan 2.8s ease-in-out infinite alternate;
+}
+
+.agent-anim .a-mark {
+  transform-origin: left center;
+  animation: agent-mark 3.4s ease-in-out infinite;
+}
+
+.agent-anim .a-draw {
+  stroke-dasharray: 140;
+  animation: agent-draw 3s ease-in-out infinite;
+}
+
+.agent-anim .a-appear {
+  animation: agent-appear 3s ease-in-out infinite;
+}
+
+.agent-anim .a-rise {
+  animation: agent-rise 3.2s ease-in-out infinite;
+}
+
+.agent-anim .a-fall {
+  animation: agent-fall 3.2s ease-in-out infinite;
+}
+
+.agent-anim .a-gather {
+  animation: agent-gather 3s ease-in-out infinite;
+}
+
+.agent-anim .a-sweep {
+  animation: agent-sweep 3.2s ease-in-out infinite alternate;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* Not merely shortened. The blanket rule above collapses a duration to a
+     hundredth of a millisecond, which for an infinite animation means it
+     restarts continuously: the fastest possible flicker, handed to exactly the
+     person who asked for less movement. These stop instead, and every drawing
+     is authored to stand still as its finished state. */
+  .agent-anim,
+  .agent-anim * {
+    animation: none !important;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
