@@ -134,9 +134,14 @@ export function HistorySidebar({ dict, locale }: Props) {
     }
   }, [dict.workspace.failed]);
 
+  // Without Firebase there is no cookie to wait for. With it, the wait is the
+  // whole point: asking before the token has been posted returns a 401, and the
+  // sidebar would tell a signed-in student to sign in.
+  const canLoad = !auth.enabled || (auth.ready && Boolean(auth.user) && auth.sessionReady);
+
   useEffect(() => {
-    void load();
-  }, [load]);
+    if (canLoad) void load();
+  }, [canLoad, load]);
 
   const name = auth.user?.displayName || auth.user?.email || '';
 
@@ -164,10 +169,10 @@ export function HistorySidebar({ dict, locale }: Props) {
       <div className="panel-scroll" tabIndex={0}>
         <h2 className="text-micro flex items-center gap-[6px] px-4 pt-4 pb-2 font-medium tracking-[0.06em] text-[color:var(--color-ink-400)] uppercase">
           {dict.workspace.history}
-          <Hint text={dict.workspace.historyHint} />
+          <Hint text={dict.workspace.historyHint} align="center" />
         </h2>
 
-        {loading ? (
+        {loading || !canLoad ? (
           <p className="text-caption px-4 py-2 text-[color:var(--color-ink-400)]">
             {dict.workspace.loading}
           </p>

@@ -272,7 +272,7 @@ export function DefenseRoom({ initial, dict, locale }: Props) {
             </div>
           </div>
 
-          <div className="border-t border-[color:var(--color-line)] bg-[color:var(--color-surface)] px-8 py-4">
+          <div className="border-t border-[color:var(--color-line)] px-8 py-4">
             <div className="mx-auto max-w-[680px]">
               {error ? (
                 <p

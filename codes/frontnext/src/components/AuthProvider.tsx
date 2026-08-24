@@ -17,6 +17,15 @@ interface AuthState {
   /** null while still checking, then the user or false for signed out. */
   user: FirebaseUser | null;
   ready: boolean;
+  /**
+   * Whether the ID token has reached the server yet.
+   *
+   * `ready` says Firebase has decided who this is. This says the cookie
+   * carrying that answer has been written, which is a later moment and the one
+   * that matters to anything about to call the API. Asking in between produces
+   * a 401 and tells a signed-in student to sign in.
+   */
+  sessionReady: boolean;
   /** False when Firebase is not configured. The app still runs; sign-in does not. */
   enabled: boolean;
   signIn: () => Promise<void>;
@@ -26,6 +35,7 @@ interface AuthState {
 const AuthContext = createContext<AuthState>({
   user: null,
   ready: true,
+  sessionReady: true,
   enabled: false,
   signIn: async () => {},
   signOut: async () => {},
@@ -69,6 +79,7 @@ export function AuthProvider({
 }) {
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [ready, setReady] = useState(!config);
+  const [sessionReady, setSessionReady] = useState(!config);
 
   useEffect(() => {
     if (!config) return;
@@ -92,6 +103,11 @@ export function AuthProvider({
         // The cookie could not be synced. The next token refresh tries again,
         // and until then the server simply sees a signed out visitor, which is
         // the safe direction to fail in.
+      } finally {
+        // Released on failure too. A caller waiting on this should get a real
+        // error from the API rather than wait forever on a sync that will not
+        // arrive until the next hourly refresh.
+        setSessionReady(true);
       }
     });
   }, [config]);
@@ -108,8 +124,8 @@ export function AuthProvider({
   }, [config]);
 
   const value = useMemo<AuthState>(
-    () => ({ user, ready, enabled: Boolean(config), signIn, signOut }),
-    [user, ready, config, signIn, signOut],
+    () => ({ user, ready, sessionReady, enabled: Boolean(config), signIn, signOut }),
+    [user, ready, sessionReady, config, signIn, signOut],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -3,14 +3,18 @@
 import { useEffect, useRef, useState } from 'react';
 
 type Side = 'top' | 'bottom';
-type Align = 'start' | 'end';
+type Align = 'start' | 'center' | 'end';
 
 interface Props {
   /** One or two sentences. What this label means, or what to do with it. */
   text: string;
   /** Which way the bubble opens. Use `top` inside a bar pinned to the bottom. */
   side?: Side;
-  /** Which edge the bubble lines up with. Use `end` near the right margin. */
+  /**
+   * Where the bubble sits relative to the icon. `end` near a right margin,
+   * `center` inside a narrow column such as the sidebar, where a bubble hung
+   * from either edge of a small icon leaves the column entirely.
+   */
   align?: Align;
   className?: string;
 }
@@ -91,10 +95,14 @@ export function Hint({ text, side = 'bottom', align = 'start', className }: Prop
           role="tooltip"
           aria-hidden="true"
           className={[
-            'pointer-events-none absolute z-50 w-[264px] max-w-[70vw] border border-[color:var(--color-line)] bg-[color:var(--color-surface)] px-3 py-2 shadow-[0_6px_20px_rgba(31,39,51,0.14)]',
-            'text-caption leading-[1.5] font-normal text-[color:var(--color-ink-600)]',
+            'pointer-events-none absolute z-50 w-[264px] max-w-[calc(100vw-2rem)] border border-[color:var(--color-line)] bg-[color:var(--color-surface)] px-3 py-2 shadow-[0_6px_20px_rgba(31,39,51,0.14)]',
+            // Every inherited text style is reset. These sit beside headings
+            // that are uppercase and letter spaced, beside medium weight
+            // labels, and inside coloured status lines, and a tooltip has to
+            // read as running prose in all of them.
+            'text-caption text-left leading-[1.5] font-normal normal-case tracking-normal text-[color:var(--color-ink-600)]',
             side === 'top' ? 'bottom-full mb-2' : 'top-full mt-2',
-            align === 'end' ? 'right-0' : 'left-0',
+            align === 'end' ? 'right-0' : align === 'center' ? 'left-1/2 -translate-x-1/2' : 'left-0',
           ].join(' ')}
         >
           {text}
