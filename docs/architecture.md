@@ -131,6 +131,20 @@ Calls go through `client.models.generate_content` with a Pydantic `response_sche
 
 The newer Interactions API keeps conversation state server-side through `previous_interaction_id`. It was considered for the session loop and not adopted: server-held conversation state is the thing this design deliberately avoids, since it puts the session somewhere a restart cannot reach. Every call here is single-shot, and the conversation lives in Firestore where it can be read, resumed, and audited.
 
+## Voice is a layer, not a second pipeline
+
+A student can speak an answer, and the examiner's questions can be read aloud. Neither changes the pipeline underneath.
+
+The obvious implementation was a live bidirectional audio session, and it was rejected. Every rule this system enforces lives in the text path: a gap cannot be recorded before the student has been offered a chance to clarify, follow-ups on a single question are capped, a finding whose quote cannot be found in the manuscript is discarded, and each override of a model decision is written into an audit trail. A raw audio conversation passes through none of it. A live session also holds its own state in a connection that expires after roughly ten minutes, which is precisely the property this design avoids everywhere else.
+
+So speech is converted at the edges and rejoins the same path a typed answer takes.
+
+**Inbound.** A recording is transcribed in one call and the text is returned to the student, not submitted for them. This is the rule document extraction already follows, for the same reason: a defense transcript is a permanent record, and a word recognition got wrong has to be correctable before it becomes part of one. The corrected text then travels the ordinary answer endpoint, so a spoken answer is held to exactly the same session rules as a typed one.
+
+**Outbound.** The voice reads the text already in the transcript. Nothing is generated a second time, so what a student hears and what the record shows cannot come apart. The examiner's words are handed to the voice model as material to read rather than as a prompt to act on, and the sample rate is read from the response rather than assumed, because guessing it would produce speech at the wrong pitch with nothing raised anywhere.
+
+Both directions are ordinary single-shot calls. An interrupted defense is still resumable from another machine, because no state ever lives in an audio connection.
+
 ## Data handling
 
 Manuscript text is never written to Firestore, only its character count. The document itself stays in this project's Cloud Storage bucket. No third party sees the draft beyond Google Cloud and the Gemini API.

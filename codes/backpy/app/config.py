@@ -28,6 +28,13 @@ class Settings(BaseSettings):
     gemini_max_retries: int = 4
     gemini_retry_base_delay: float = 2.0
 
+    # Voice. Speech is a layer over the text loop, never a replacement for it,
+    # so these are two ordinary models rather than a live audio session. See
+    # app/speech/voice.py for why that choice was made.
+    gemini_speech_model: str = "gemini-3.5-flash"
+    gemini_voice_model: str = "gemini-2.5-flash-tts"
+    gemini_voice_name: str = "Charon"
+
     # Firestore
     firestore_database: str = "(default)"
 

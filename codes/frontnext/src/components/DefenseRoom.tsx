@@ -11,6 +11,8 @@ import { Icon } from '@/components/Icon';
 import { LocaleSwitch } from '@/components/LocaleSwitch';
 import { QuestionSidebar } from '@/components/QuestionSidebar';
 import { Slideover, type Tab } from '@/components/Slideover';
+import { SpeakButton } from '@/components/SpeakButton';
+import { VoiceInput } from '@/components/VoiceInput';
 import { fill, type Dictionary, type Locale } from '@/lib/i18n';
 import { normalizeSession } from '@/lib/session';
 import type {
@@ -38,10 +40,21 @@ export function DefenseRoom({ initial, dict, locale }: Props) {
   const [adjustments, setAdjustments] = useState<string[]>([]);
   const [summary, setSummary] = useState<SessionSummary | null>(initial.summary);
   const [tab, setTab] = useState<Tab>('weakness');
+  const [readAloud, setReadAloud] = useState(false);
+  const [voiceNote, setVoiceNote] = useState(false);
   const transcriptEnd = useRef<HTMLDivElement>(null);
+  const answerBox = useRef<HTMLTextAreaElement>(null);
 
   const finished = session.current_index >= session.questions.length;
   const answered = session.transcript.filter((turn) => turn.role === 'student').length;
+
+  // Only the question a student is actually facing is spoken on arrival.
+  // Reading an old turn aloud again because the list re-rendered would talk
+  // over the one they are trying to answer.
+  const lastExaminerTurn = session.transcript.reduce(
+    (latest, turn, index) => (turn.role === 'examiner' ? index : latest),
+    -1,
+  );
 
   useEffect(() => {
     transcriptEnd.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
@@ -67,6 +80,7 @@ export function DefenseRoom({ initial, dict, locale }: Props) {
     };
     setSession((current) => ({ ...current, transcript: [...current.transcript, optimistic] }));
     setAnswer('');
+    setVoiceNote(false);
 
     try {
       const response = await fetch(`/api/sessions/${session.session_id}/answer`, {
@@ -148,6 +162,15 @@ export function DefenseRoom({ initial, dict, locale }: Props) {
             </span>
             <Hint text={dict.room.hints.saved} align="end" />
           </span>
+          <label className="text-caption flex items-center gap-2 text-[color:var(--color-ink-600)]">
+            <input
+              type="checkbox"
+              checked={readAloud}
+              onChange={(event) => setReadAloud(event.target.checked)}
+              className="h-[14px] w-[14px] accent-[color:var(--color-ai)]"
+            />
+            {dict.voice.readAloud}
+          </label>
           <AccountButton dict={dict} />
           <LocaleSwitch locale={locale} dict={dict} />
         </div>
@@ -202,6 +225,15 @@ export function DefenseRoom({ initial, dict, locale }: Props) {
                     {turn.question_id ? (
                       <span className="font-normal text-[color:var(--color-ink-400)]">
                         {turn.question_id}
+                      </span>
+                    ) : null}
+                    {turn.role === 'examiner' ? (
+                      <span className="ml-auto">
+                        <SpeakButton
+                          text={turn.text}
+                          dict={dict}
+                          autoPlay={readAloud && index === lastExaminerTurn}
+                        />
                       </span>
                     ) : null}
                   </p>
@@ -275,15 +307,36 @@ export function DefenseRoom({ initial, dict, locale }: Props) {
                 </div>
               ) : (
                 <div>
-                  <span className="mb-2 flex items-center gap-[6px]">
-                    <label
-                      htmlFor="answer"
-                      className="text-caption font-medium text-[color:var(--color-ink-600)]"
-                    >
-                      {dict.room.answerLabel}
-                    </label>
-                    <Hint text={dict.room.hints.answer} side="top" />
-                  </span>
+                  <div className="mb-2 flex flex-wrap items-center justify-between gap-3">
+                    <span className="flex items-center gap-[6px]">
+                      <label
+                        htmlFor="answer"
+                        className="text-caption font-medium text-[color:var(--color-ink-600)]"
+                      >
+                        {dict.room.answerLabel}
+                      </label>
+                      <Hint text={dict.room.hints.answer} side="top" />
+                    </span>
+
+                    <VoiceInput
+                      dict={dict}
+                      disabled={thinking}
+                      onTranscript={(text) => {
+                        // Added to whatever is already there rather than
+                        // replacing it, so a second attempt at a sentence does
+                        // not silently delete the first.
+                        setAnswer((current) => (current ? `${current.trim()} ${text}` : text));
+                        setVoiceNote(true);
+                        answerBox.current?.focus();
+                      }}
+                    />
+                  </div>
+
+                  {voiceNote ? (
+                    <p className="text-caption mb-2 border-l-2 border-[color:var(--color-ai)] bg-[color:var(--color-tint-ai)] px-3 py-2 text-[color:var(--color-ink-600)]">
+                      {dict.voice.transcriptAdded}
+                    </p>
+                  ) : null}
 
                   {/* One bordered field with the send control inside it, rather
                       than a box and a button that happen to sit next to each
@@ -292,6 +345,7 @@ export function DefenseRoom({ initial, dict, locale }: Props) {
                   <div className="border border-[color:var(--color-line)] bg-[color:var(--color-surface)] transition-colors duration-150 focus-within:border-[color:var(--color-primary-500)]">
                     <textarea
                       id="answer"
+                      ref={answerBox}
                       value={answer}
                       onChange={(event) => setAnswer(event.target.value)}
                       onKeyDown={(event) => {

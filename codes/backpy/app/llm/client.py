@@ -77,3 +77,79 @@ class GeminiRunner:
                 "The model returned an empty response. Check quota and region in .env."
             )
         return text
+
+
+class GeminiTranscriber:
+    """Speech to text, through the same client as everything else.
+
+    One HTTP request per spoken turn, deliberately. A live audio socket would
+    add a second place for session state to live and a connection that expires
+    part way through a defense, and buy nothing: the transcript still has to
+    reach the student for review before it is judged.
+    """
+
+    def __init__(self, model: str | None = None) -> None:
+        settings = get_settings()
+        self.model = model or settings.gemini_speech_model
+        self._settings = settings
+
+    def __call__(self, *, audio: bytes, mime_type: str, instruction: str) -> str:
+        from google.genai import types
+
+        client = get_genai_client()
+        response = call_with_retry(
+            lambda: client.models.generate_content(
+                model=self.model,
+                contents=[
+                    types.Part.from_bytes(data=audio, mime_type=mime_type),
+                    instruction,
+                ],
+                # A transcript has one correct answer. Sampling would only
+                # introduce differences between what was said and what is
+                # recorded.
+                config=types.GenerateContentConfig(temperature=0.0),
+            ),
+            max_attempts=self._settings.gemini_max_retries,
+            base_delay=self._settings.gemini_retry_base_delay,
+        )
+        return response.text or ""
+
+
+class GeminiVoice:
+    """Text to speech, returning the audio bytes and their media type."""
+
+    def __init__(self, model: str | None = None) -> None:
+        settings = get_settings()
+        self.model = model or settings.gemini_voice_model
+        self._settings = settings
+
+    def __call__(self, *, text: str, voice: str) -> tuple[bytes, str]:
+        from google.genai import types
+
+        client = get_genai_client()
+        response = call_with_retry(
+            lambda: client.models.generate_content(
+                model=self.model,
+                contents=text,
+                config=types.GenerateContentConfig(
+                    response_modalities=["AUDIO"],
+                    speech_config=types.SpeechConfig(
+                        voice_config=types.VoiceConfig(
+                            prebuilt_voice_config=types.PrebuiltVoiceConfig(
+                                voice_name=voice
+                            )
+                        )
+                    ),
+                ),
+            ),
+            max_attempts=self._settings.gemini_max_retries,
+            base_delay=self._settings.gemini_retry_base_delay,
+        )
+
+        for candidate in response.candidates or []:
+            for part in (candidate.content.parts if candidate.content else []) or []:
+                blob = getattr(part, "inline_data", None)
+                if blob and blob.data:
+                    return blob.data, blob.mime_type or ""
+
+        raise RuntimeError("The voice model returned no audio. Check quota and region in .env.")

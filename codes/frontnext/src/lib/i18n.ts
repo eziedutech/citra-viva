@@ -238,6 +238,26 @@ const en = {
   },
 
 
+
+  voice: {
+    speak: 'Speak your answer',
+    stop: 'Stop and transcribe',
+    transcribing: 'Turning your answer into text',
+    play: 'Hear this',
+    stopPlaying: 'Stop',
+    loading: 'Preparing the voice',
+    readAloud: 'Read questions aloud',
+    denied:
+      'The microphone was not available. Allow it for this site in your browser, or type your answer instead.',
+    unsupported: 'This browser cannot record audio. Type your answer instead.',
+    empty: 'Nothing was recorded. Check the microphone and try again.',
+    failed: 'The recording could not be transcribed.',
+    playFailed: 'That could not be read aloud.',
+    transcriptAdded:
+      'Your spoken answer is in the box below. Read it before you send it: the examiner judges what you send, not what was heard.',
+    hint: 'Speech becomes text in the answer box for you to correct, and is sent only when you send it. The examiner judges the words you submit, and a spoken answer is held to exactly the same session rules as a typed one.',
+  },
+
   agent: {
     working: 'Agent at work',
     dismiss: 'Hide this',
@@ -539,6 +559,26 @@ const id: Dictionary = {
       'Verifikasi sitasi mekanis, pencocokan DOI ke Crossref atau OpenAlex, adalah proyek terpisah dan sengaja berada di luar submission ini. Yang berjalan di sini adalah lapisan penalaran di atasnya.',
   },
 
+
+
+  voice: {
+    speak: 'Jawab dengan suara',
+    stop: 'Berhenti dan transkripkan',
+    transcribing: 'Mengubah jawaban Anda menjadi teks',
+    play: 'Dengarkan',
+    stopPlaying: 'Hentikan',
+    loading: 'Menyiapkan suara',
+    readAloud: 'Bacakan pertanyaan',
+    denied:
+      'Mikrofon tidak tersedia. Izinkan untuk situs ini di peramban Anda, atau ketik jawaban Anda.',
+    unsupported: 'Peramban ini tidak dapat merekam audio. Silakan ketik jawaban Anda.',
+    empty: 'Tidak ada yang terekam. Periksa mikrofon lalu coba lagi.',
+    failed: 'Rekaman gagal ditranskripkan.',
+    playFailed: 'Bagian ini gagal dibacakan.',
+    transcriptAdded:
+      'Jawaban lisan Anda ada di kotak di bawah. Baca dulu sebelum mengirim: penguji menilai apa yang Anda kirim, bukan apa yang terdengar.',
+    hint: 'Suara menjadi teks di kotak jawaban untuk Anda perbaiki, dan hanya terkirim ketika Anda mengirimnya. Penguji menilai kata-kata yang Anda kirim, dan jawaban lisan tunduk pada aturan sesi yang persis sama dengan jawaban tertulis.',
+  },
 
   agent: {
     working: 'Agent sedang bekerja',

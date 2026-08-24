@@ -8,6 +8,7 @@ sessions, and a restart mid-defense costs nothing.
 
 from __future__ import annotations
 
+import base64
 from collections.abc import Iterator
 from contextlib import contextmanager
 from typing import Annotated
@@ -24,6 +25,7 @@ from app.models.question_strategy import StrategyResult
 from app.models.session import SessionState, SessionSummary, SessionTurnResult
 from app.models.weakness_map import AnalysisResult
 from app.orchestrator.orchestrator import Orchestrator
+from app.speech.voice import SpeechError, speak_text, transcribe_answer
 from app.storage.session_store import FirestoreSessionStore, SessionNotFoundError
 
 router = APIRouter()
@@ -49,6 +51,19 @@ def _translated_errors() -> Iterator[None]:
 def _orchestrator() -> Orchestrator:
     """An Orchestrator backed by Firestore, built fresh for each request."""
     return Orchestrator(store=FirestoreSessionStore())
+
+
+def _transcriber():
+    """Built per request, and imported here so no credential is needed to import."""
+    from app.llm.client import GeminiTranscriber
+
+    return GeminiTranscriber()
+
+
+def _voice():
+    from app.llm.client import GeminiVoice
+
+    return GeminiVoice()
 
 
 class AnalyzeDraftRequest(BaseModel):
@@ -100,6 +115,22 @@ class ExtractDraftResponse(BaseModel):
 
 class AnswerRequest(BaseModel):
     answer: str = Field(description="What the student said.")
+
+
+class TranscribeResponse(BaseModel):
+    text: str = Field(
+        description="The spoken answer as text, for the student to review before sending."
+    )
+    characters: int = 0
+
+
+class SpeakRequest(BaseModel):
+    text: str = Field(description="Examiner text to read aloud, exactly as written.")
+
+
+class SpeakResponse(BaseModel):
+    audio_base64: str = Field(description="The spoken audio, base64 encoded.")
+    mime_type: str = "audio/wav"
 
 
 class CloseSessionResponse(BaseModel):
@@ -156,6 +187,61 @@ async def extract_draft_endpoint(
         page_count=extracted.page_count,
         characters=len(extracted.text),
         notes=extracted.notes,
+    )
+
+
+@router.post("/api/speech/transcribe", response_model=TranscribeResponse)
+async def transcribe_endpoint(
+    user: CurrentUser, file: Annotated[UploadFile, File()]
+) -> TranscribeResponse:
+    """Turn one spoken answer into text.
+
+    The text is returned, not submitted. A student reads it, fixes anything the
+    recognition got wrong, and sends it themselves, so what the examiner judges
+    is what they meant to say rather than what a model heard. It then travels
+    the ordinary answer endpoint, which means every session rule still applies
+    to a spoken answer exactly as it does to a typed one.
+
+    Nothing is stored. The recording is read into memory and discarded.
+    """
+    data = await file.read()
+    try:
+        text = transcribe_answer(
+            data,
+            file.content_type or "",
+            transcriber=_transcriber(),
+        )
+    except SpeechError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except RuntimeError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+
+    return TranscribeResponse(text=text, characters=len(text))
+
+
+@router.post("/api/speech/say", response_model=SpeakResponse)
+def speak_endpoint(request: SpeakRequest, user: CurrentUser) -> SpeakResponse:
+    """Read examiner text aloud.
+
+    The words spoken are the words already in the transcript. Nothing is
+    generated a second time here, so what a student hears and what the record
+    shows cannot come apart.
+    """
+    settings = get_settings()
+    try:
+        speech = speak_text(
+            request.text,
+            voice=settings.gemini_voice_name,
+            synthesizer=_voice(),
+        )
+    except SpeechError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except RuntimeError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+
+    return SpeakResponse(
+        audio_base64=base64.b64encode(speech.data).decode("ascii"),
+        mime_type=speech.mime_type,
     )
 
 
