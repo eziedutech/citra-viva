@@ -474,6 +474,15 @@ const en = {
   },
 
 
+
+  link: {
+    attacks: 'From {id}',
+    attacksHint:
+      'The finding this question came from. Every question in a defense is generated from one marked passage in your manuscript, and this opens the passage it was built on, so you can read the sentence being pressed rather than take the question on trust.',
+    underExamination: 'Being examined now',
+    opening: 'Opening question, not tied to a single finding',
+  },
+
   rubric: {
     open: 'What is being tested?',
     opened: 'Criteria opened',
@@ -1054,6 +1063,15 @@ const id: Dictionary = {
     signedInAs: 'Masuk sebagai',
   },
 
+
+
+  link: {
+    attacks: 'Dari {id}',
+    attacksHint:
+      'Temuan asal pertanyaan ini. Setiap pertanyaan dalam sidang lahir dari satu bagian yang ditandai di naskah Anda, dan tombol ini membuka bagian itu, sehingga Anda dapat membaca sendiri kalimat yang sedang ditekan alih-alih mempercayai pertanyaannya begitu saja.',
+    underExamination: 'Sedang diuji',
+    opening: 'Pertanyaan pembuka, tidak terikat pada satu temuan',
+  },
 
   rubric: {
     open: 'Apa yang sedang diuji?',

@@ -47,12 +47,37 @@ export function DefenseRoom({ initial, dict, locale }: Props) {
   const [summary, setSummary] = useState<SessionSummary | null>(initial.summary);
   const [tab, setTab] = useState<Tab>('weakness');
   const [readAloud, setReadAloud] = useState(false);
+  const [focusFinding, setFocusFinding] = useState('');
   const [voiceNote, setVoiceNote] = useState(false);
   const transcriptEnd = useRef<HTMLDivElement>(null);
   const answerBox = useRef<HTMLTextAreaElement>(null);
 
   const finished = session.current_index >= session.questions.length;
   const answered = session.transcript.filter((turn) => turn.role === 'student').length;
+
+  /**
+   * The finding a question was generated from.
+   *
+   * This link is the whole architecture in one lookup, and it was in the data
+   * from the beginning without ever being shown. Every question exists because
+   * of one marked passage in the manuscript, so a student under pressure should
+   * be able to reach the sentence being pressed rather than take the question on
+   * trust. Opening and closing questions have none, which is correct: they
+   * belong to the examination, not to a specific weakness.
+   */
+  function findingFor(questionId: string): string {
+    return session.questions.find((question) => question.id === questionId)?.finding_id ?? '';
+  }
+
+  const activeFinding = findingFor(session.questions[session.current_index]?.id ?? '');
+
+  function showFinding(findingId: string) {
+    setTab('weakness');
+    // Cleared straight after, so asking for the same finding twice scrolls to
+    // it twice. A value that stayed set would make the second click do nothing.
+    setFocusFinding(findingId);
+    window.setTimeout(() => setFocusFinding(''), 100);
+  }
 
   // Only the question a student is actually facing is spoken on arrival.
   // Reading an old turn aloud again because the list re-rendered would talk
@@ -237,6 +262,20 @@ export function DefenseRoom({ initial, dict, locale }: Props) {
                         {turn.question_id}
                       </span>
                     ) : null}
+                    {turn.role === 'examiner' && findingFor(turn.question_id) ? (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => showFinding(findingFor(turn.question_id))}
+                          className="text-micro flex items-center gap-1 rounded-[var(--radius-chip)] bg-[color:var(--color-tint-ai)] px-2 py-[2px] font-medium text-[color:var(--color-ai)] transition-colors duration-150 hover:bg-[color:var(--color-hover)]"
+                        >
+                          <Icon name="quote" size={13} />
+                          {fill(dict.link.attacks, { id: findingFor(turn.question_id) })}
+                        </button>
+                        <Hint text={dict.link.attacksHint} />
+                      </>
+                    ) : null}
+
                     {turn.role === 'examiner' ? (
                       <span className="ml-auto">
                         <SpeakButton
@@ -414,6 +453,8 @@ export function DefenseRoom({ initial, dict, locale }: Props) {
 
         <Slideover
           findings={session.findings}
+          activeFindingId={activeFinding}
+          focusFindingId={focusFinding}
           evaluation={evaluation}
           summary={summary}
           finished={finished}

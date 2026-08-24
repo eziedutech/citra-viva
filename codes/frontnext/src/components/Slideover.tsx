@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { Hint } from '@/components/Hint';
 import { Icon } from '@/components/Icon';
@@ -34,11 +34,43 @@ function AiLabel({ children, hint }: { children: React.ReactNode; hint?: string 
   );
 }
 
-function FindingCard({ finding, dict }: { finding: WeaknessFinding; dict: Dictionary }) {
+function FindingCard({
+  finding,
+  dict,
+  active,
+  focused,
+}: {
+  finding: WeaknessFinding;
+  dict: Dictionary;
+  /** The finding the question now on the table came from. */
+  active?: boolean;
+  /** Just jumped to from the transcript, so it is scrolled into view. */
+  focused?: boolean;
+}) {
+  const card = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    if (focused) card.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, [focused]);
+
   return (
-    <article className="border border-[color:var(--color-line)] bg-[color:var(--color-surface)] p-4">
+    <article
+      ref={card}
+      className={[
+        'border bg-[color:var(--color-surface)] p-4 transition-colors duration-150',
+        active
+          ? 'border-[color:var(--color-ai)] shadow-[0_0_0_1px_var(--color-ai)]'
+          : 'border-[color:var(--color-line)]',
+      ].join(' ')}
+    >
       <header className="mb-2 flex flex-wrap items-center gap-2">
         <span className="text-body-sm font-medium">{finding.id}</span>
+        {active ? (
+          <span className="text-micro flex items-center gap-1 rounded-[var(--radius-chip)] bg-[color:var(--color-tint-ai)] px-2 py-[2px] font-medium text-[color:var(--color-ai)]">
+            <Icon name="dot" size={12} />
+            {dict.link.underExamination}
+          </span>
+        ) : null}
         <span
           className={`text-micro rounded-[var(--radius-chip)] px-2 py-[2px] font-medium ${severityTone(finding.severity)}`}
         >
@@ -270,6 +302,10 @@ type Tab = 'weakness' | 'evaluation' | 'report';
 
 interface Props {
   findings: WeaknessFinding[];
+  /** The finding behind the question currently open. */
+  activeFindingId?: string;
+  /** A finding the student asked to see, from the transcript. */
+  focusFindingId?: string;
   evaluation: AnswerEvaluation | null;
   summary: SessionSummary | null;
   finished: boolean;
@@ -282,6 +318,8 @@ interface Props {
 
 export function Slideover({
   findings,
+  activeFindingId = '',
+  focusFindingId = '',
   evaluation,
   summary,
   finished,
@@ -329,7 +367,13 @@ export function Slideover({
           <div className="space-y-3">
             <AiLabel hint={dict.slideover.hints.weakness}>{dict.slideover.weaknessIntro}</AiLabel>
             {findings.map((finding) => (
-              <FindingCard key={finding.id} finding={finding} dict={dict} />
+              <FindingCard
+                key={finding.id}
+                finding={finding}
+                dict={dict}
+                active={finding.id === activeFindingId}
+                focused={finding.id === focusFindingId}
+              />
             ))}
           </div>
         ) : null}
