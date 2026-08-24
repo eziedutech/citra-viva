@@ -1,13 +1,101 @@
 # CITRA Viva
 
-**An agentic adversarial thesis defense simulator.** Four agents run a defense in order: one maps where the argument gives way, one plans an examination from that map, one judges each answer and decides what to say next, and one writes the report from the transcript. A fifth runs beside them, on citations.
+**An agentic adversarial thesis defense simulator.** Five agents run a defense: one maps where the argument gives way, one plans an examination from that map, one judges each answer and decides what to say next, one writes the report from the transcript, and one runs beside them on citations.
 
-A companion to C.I.T.R.A (Core Integrity & Trustworthy Research Assistant).
+The agent never answers for the student. It reads, it plans, it presses, and it records. Every question it asks is anchored to a line the student actually wrote.
 
-Built for the **All Things Agentic Hackathon** (Google / Devpost), category *Collaborative Partner*.
+A companion to [C.I.T.R.A](https://citra.eziedutech.dev) (Core Integrity and Trustworthy Research Assistant).
 
-**Try it:** https://citra-viva-web-40911677848.asia-southeast2.run.app
-**API:** https://citra-viva-api-40911677848.asia-southeast2.run.app/docs
+Built for the **All Things Agentic Hackathon** (Google and Devpost), category *Collaborative Partner*.
+
+| | |
+|---|---|
+| **Try it** | https://citra-viva-web-40911677848.asia-southeast2.run.app |
+| **Guide, no sign-in needed** | https://citra-viva-web-40911677848.asia-southeast2.run.app/panduan |
+| **API and interactive docs** | https://citra-viva-api-40911677848.asia-southeast2.run.app/docs |
+| **Architecture diagram** | [docs/architecture-diagram.png](docs/architecture-diagram.png) |
+
+---
+
+## Table of contents
+
+- [Submission summary](#submission-summary)
+  - [How the mandatory requirements are met](#how-the-mandatory-requirements-are-met)
+  - [Testing instructions for judges](#testing-instructions-for-judges)
+- [The problem](#the-problem)
+- [What CITRA Viva does](#what-citra-viva-does)
+  - [Why this is an agent system and not a chatbot](#why-this-is-an-agent-system-and-not-a-chatbot)
+  - [The constraint that shapes everything](#the-constraint-that-shapes-everything)
+- [Architecture](#architecture)
+  - [The five agents](#the-five-agents)
+  - [Separation of concerns is enforced, not requested](#separation-of-concerns-is-enforced-not-requested)
+  - [Technology](#technology)
+- [Spin-up instructions](#spin-up-instructions)
+  - [1. Prerequisites](#1-prerequisites)
+  - [2. Authenticate](#2-authenticate)
+  - [3. Configure](#3-configure)
+  - [4. Install dependencies](#4-install-dependencies)
+  - [5. Run the tests](#5-run-the-tests)
+  - [6. Analyze the sample draft with the real model](#6-analyze-the-sample-draft-with-the-real-model)
+  - [7. Run a full mock defense from the terminal](#7-run-a-full-mock-defense-from-the-terminal)
+  - [8. Run the API](#8-run-the-api)
+  - [9. Run the web app](#9-run-the-web-app)
+  - [10. Deploy to Cloud Run](#10-deploy-to-cloud-run)
+  - [11. Set up sign-in](#11-set-up-sign-in)
+  - [12. Drive a full defense against the deployed service](#12-drive-a-full-defense-against-the-deployed-service)
+- [The Draft Analyzer Agent](#the-draft-analyzer-agent)
+- [The Question Strategy Agent](#the-question-strategy-agent)
+- [The Examiner Session Agent](#the-examiner-session-agent)
+- [The Session Reflection Agent](#the-session-reflection-agent)
+- [The Claim-Support Checker](#the-claim-support-checker)
+- [Voice](#voice)
+- [Cross-session memory](#cross-session-memory)
+- [Reading an uploaded manuscript](#reading-an-uploaded-manuscript)
+- [The web interface](#the-web-interface)
+- [Identity, and who may open a session](#identity-and-who-may-open-a-session)
+- [State, concurrency, and failure tolerance](#state-concurrency-and-failure-tolerance)
+- [Repository layout](#repository-layout)
+- [Findings and learnings](#findings-and-learnings)
+- [Disclosure](#disclosure)
+- [License](#license)
+
+---
+
+## Submission summary
+
+| Field | Answer |
+|---|---|
+| **Category** | Collaborative Partner |
+| **Model** | `gemini-3.5-flash`, on the Gemini Enterprise Agent Platform (formerly Vertex AI) |
+| **Google agent framework** | **Google ADK** and the **Google GenAI SDK** |
+| **Google Cloud services** | Cloud Run, Firestore, Cloud Storage, Firebase Authentication, Cloud Trace, Artifact Registry, Cloud Build |
+| **Additional Google AI models** | `gemini-2.5-flash-tts` for the examiner's voice, `gemini-live-2.5-flash-native-audio` for streaming transcription of the student's |
+| **Project started** | 23 August 2026, inside the submission period. First commit 24 August 2026 |
+| **Hosted** | Yes, both the web app and the API |
+| **Repository** | Public |
+
+### How the mandatory requirements are met
+
+**Gemini 3.5 or newer, through Gemini API or Vertex AI.** Every agent calls `gemini-3.5-flash` on the Gemini Enterprise Agent Platform, from the global endpoint. Configured in [`codes/backpy/app/llm/client.py`](codes/backpy/app/llm/client.py).
+
+**At least one Google agent framework.** Two are used, and it is worth being precise about where each one runs.
+
+*Google ADK* is where the agents are declared. All five are built as ADK `LlmAgent` instances with a declared `output_schema` and with `disallow_transfer_to_parent` and `disallow_transfer_to_peers` set, which is what makes the isolation between them a framework guarantee rather than a promise in a prompt. See [`codes/backpy/app/agents/*/adk_agent.py`](codes/backpy/app/agents). They are executed through the ADK runner by [`scripts/run_adk_agent.py`](scripts/run_adk_agent.py), which runs an agent end to end against the live model, and by 24 tests in [`codes/backpy/tests/test_adk_agents.py`](codes/backpy/tests/test_adk_agents.py).
+
+*The Google GenAI SDK* is the serving path. The FastAPI service calls the same prompts and the same schemas through `google-genai`, which keeps the request path free of the ADK dependency tree and is why the container image is small. Both are named frameworks in the rules, and the split between them is a deliberate engineering decision rather than an omission.
+
+**At least one Google Cloud infrastructure service.** Cloud Run runs both services. Firestore holds every piece of session state. Cloud Storage holds uploaded manuscripts. Details in [Technology](#technology).
+
+### Testing instructions for judges
+
+The application is free to use and requires no credentials from us.
+
+1. Open https://citra-viva-web-40911677848.asia-southeast2.run.app
+2. Sign in with **any Google account**. Sign-in exists because a session holds somebody's unpublished manuscript, and a session id should not be the only thing protecting it. Nothing else is required, and nothing is charged.
+3. Paste a draft, or upload a PDF or DOCX. A sample draft is in the repository at [`codes/backpy/tests/fixtures/sample_draft_en.txt`](codes/backpy/tests/fixtures/sample_draft_en.txt), with an Indonesian one beside it.
+4. The guide at [`/panduan`](https://citra-viva-web-40911677848.asia-southeast2.run.app/panduan) is public and needs no sign-in.
+
+To see the agents work without the interface at all, the fastest route is [step 7](#7-run-a-full-mock-defense-from-the-terminal): one command takes a raw draft to a closing report against the live model.
 
 ---
 
@@ -21,10 +109,18 @@ Students therefore walk into their defense having never been tested on the real 
 
 1. **Reads the full research draft** before the session begins: research question, methodology, findings, stated limitations.
 2. **Builds a Weakness Map**, a synthesis nobody has written down before, locating the points where a skeptical examiner would press hardest.
-3. **Runs an adaptive examination.** A strong answer earns a harder follow-up on the next gap. A weak answer earns a chance to clarify before it is recorded as a gap.
-4. **Remembers across sessions.** The second mock defense targets the weaknesses left unfixed after the first.
+3. **Plans an examination** from that map, ordered so the session builds rather than wanders.
+4. **Runs it adaptively.** A strong answer earns a harder follow-up on the next gap. A weak answer earns a chance to clarify before it is recorded as a gap.
+5. **Speaks and listens.** The examiner's question is spoken as it appears. A spoken answer is transcribed while it is being said.
+6. **Remembers across sessions.** The second mock defense targets the weaknesses left unfixed after the first.
 
-This is not a question-and-answer chatbot. It is a reasoning loop: read the draft, identify weaknesses, plan an interrogation, listen to the answer, decide what to do next, update the student's weakness profile.
+### Why this is an agent system and not a chatbot
+
+A chatbot answers what it is asked. This system decides what to ask.
+
+The loop is: read the draft, identify the weaknesses, plan an interrogation, listen to an answer, judge it, decide what to do next, and update a profile that changes the next session. The student never picks a question from a list. The system picks, from evidence it gathered itself, and it changes that choice based on how the student performs.
+
+It also mutates data rather than reading it. A manuscript goes in as unstructured prose. What comes out is a structured Weakness Map, an ordered examination plan, a judged transcript, and a persistent weakness profile. None of those existed before the system built them.
 
 ### The constraint that shapes everything
 
@@ -32,9 +128,16 @@ This is not a question-and-answer chatbot. It is a reasoning loop: read the draf
 
 That is inherited from CITRA's *Integrity First* principle, and it is enforced in the schema rather than left to good intentions: there is no "suggested fix" field and no "replacement sentence" field anywhere in the Weakness Map. There is also no pass/fail verdict and no research quality score, because a machine should not hand down a judgment it cannot trace to evidence.
 
+The same rule decided a feature that was proposed and refused. Answer recommendations, behind a button, would have been easy to build and would have destroyed the product: a student who can see a suggested answer before replying is not defending anything. What shipped instead is the marking scheme. The student may reveal what a good answer *would need to contain*, never what to say, and the reveal is recorded in the transcript so it appears in the report.
+
 ---
 
 ## Architecture
+
+![CITRA Viva architecture](docs/architecture-diagram.png)
+
+<details>
+<summary>The same diagram as Mermaid source</summary>
 
 ```mermaid
 flowchart TD
@@ -76,45 +179,60 @@ flowchart TD
     style WEB fill:#E8F0FE,stroke:#1A73E8
 ```
 
+</details>
+
 A longer discussion of the design decisions is in [docs/architecture.md](docs/architecture.md).
+
+### The five agents
+
+| Agent | Input | Output | The decision it owns | Status |
+|---|---|---|---|---|
+| **Draft Analyzer** | Full manuscript text | Weakness Map, every finding quoted | Where the argument gives way | Implemented and tested |
+| **Question Strategy** | Weakness Map, prior weakness profile | Ordered questions, each anchored to a finding | What to ask, and in what order | Implemented and tested |
+| **Examiner Session** | One question, one answer | A judgement and the next move | Press deeper, clarify, move on, or record a gap | Implemented and tested |
+| **Session Reflection** | The full transcript | Closing report and profile adjustments | What the student should work on next | Implemented and tested |
+| **Claim-Support Checker** | A claim and its cited source | Whether the source carries the claim | Runs beside the defense, not inside it | Implemented and tested |
+
+Asking and judging are deliberately one agent. A follow-up question that does not arise from the judgement of the previous answer is just another question, and the entire premise of the product is that it is not.
+
+A full mock defense goes from raw draft text to a closing report in one command. PDF, DOCX, and plain text are accepted.
+
+### Separation of concerns is enforced, not requested
 
 **Sub-agents never call one another.** Every exchange goes through the Orchestrator and through state in Firestore. This is enforced at the framework level rather than by convention: every agent sets `disallow_transfer_to_parent` and `disallow_transfer_to_peers`, so ADK itself refuses a handoff between them. The Question Strategy Agent receives a Weakness Map as data, never a reference to the agent that produced it.
 
-### Build status
-
-| Sub-agent | Status |
-|---|---|
-| **Draft Analyzer Agent** | Implemented and tested |
-| **Question Strategy Agent** | Implemented and tested |
-| **Examiner Session Agent** | Implemented and tested |
-| **Session Reflection Agent** | Implemented and tested |
-
-All four sub-agents run, and a full mock defense goes from raw draft text to a closing report in one command. PDF, DOCX, and plain text are accepted. The Claim-Support Checker runs as a supporting layer alongside them.
+The practical value is containment. A misbehaving agent cannot recruit another one. If the Draft Analyzer returns something malformed, the Orchestrator sees it and the failure stops there.
 
 ### Technology
 
 | Component | Choice |
 |---|---|
-| Model | `gemini-3.5-flash` on **Gemini Enterprise Agent Platform** (formerly Vertex AI) |
-| Agent framework | **Google ADK**, `google-cloud-aiplatform[agent_engines,adk]` |
-| Backend | Python 3.12, FastAPI |
+| Model | `gemini-3.5-flash` on **Gemini Enterprise Agent Platform** (formerly Vertex AI), global endpoint |
+| Agent framework | **Google ADK** for the agent definitions, **Google GenAI SDK** for the serving path |
+| Backend | Python 3.12, FastAPI, Pydantic v2, managed with `uv` |
 | Frontend | Next.js 16, React 19, Tailwind 4, TypeScript |
 | Sign-in | Firebase Authentication, Google provider |
-| Database | Firestore, native mode |
+| Database | Firestore, native mode, optimistic concurrency through a revision check inside a transaction |
 | Draft storage | Cloud Storage |
-| Deployment | Cloud Run for the API and the web app, Agent Runtime for the ADK agents |
-| Observability | OpenTelemetry to Cloud Trace |
+| Examiner's voice | `gemini-2.5-flash-tts` |
+| Student's voice | `gemini-live-2.5-flash-native-audio`, streamed over a WebSocket |
+| Deployment | Cloud Run, two services, built by Cloud Build into Artifact Registry |
+| Observability | OpenTelemetry to Cloud Trace, one span per agent call |
+| Tests | pytest, 197 passing, including failure-path tests |
 
 ---
 
-## Running it locally
+## Spin-up instructions
+
+Everything below has been run on a clean machine. No credential is hardcoded anywhere in the source, and `.env` is never committed.
 
 ### 1. Prerequisites
 
 - Python 3.12 or newer
 - [`uv`](https://docs.astral.sh/uv/)
-- Google Cloud SDK (`gcloud`)
-- A Google Cloud project with the Agent Platform / Vertex AI API enabled
+- [Node.js 20 or newer](https://nodejs.org) and [`pnpm`](https://pnpm.io), for the web app
+- [Google Cloud SDK](https://cloud.google.com/sdk/docs/install) (`gcloud`)
+- A Google Cloud project with billing enabled
 
 ### 2. Authenticate
 
@@ -127,7 +245,7 @@ gcloud auth application-default login
 ```
 
 ```bash
-gcloud services enable aiplatform.googleapis.com firestore.googleapis.com --project=YOUR_PROJECT_ID
+gcloud services enable aiplatform.googleapis.com firestore.googleapis.com storage.googleapis.com --project=YOUR_PROJECT_ID
 ```
 
 ### 3. Configure
@@ -136,9 +254,9 @@ gcloud services enable aiplatform.googleapis.com firestore.googleapis.com --proj
 cd codes/backpy && cp .env.example .env
 ```
 
-Open `.env` and set one value at minimum: `GOOGLE_CLOUD_PROJECT`. No credential is hardcoded anywhere in the source, and `.env` is never committed.
+Open `.env` and set one value at minimum: `GOOGLE_CLOUD_PROJECT`. Every variable in that file is named and documented, and the ones that are secret are left blank for you to fill in.
 
-Leave `GOOGLE_CLOUD_LOCATION` at `global`. Recent Gemini models are served from the global endpoint first, so a regional value such as `us-central1` fails with `404 NOT_FOUND` for a model that has not been regionalized yet.
+Leave `GOOGLE_CLOUD_LOCATION` at `global`. Recent Gemini models are served from the global endpoint first, so a regional value such as `us-central1` fails with `404 NOT_FOUND` for a model that has not been regionalized yet. The one exception is the live audio model, which carries its own location because it is served only from `us-central1`.
 
 ### 4. Install dependencies
 
@@ -146,7 +264,7 @@ Leave `GOOGLE_CLOUD_LOCATION` at `global`. Recent Gemini models are served from 
 cd codes/backpy && uv sync
 ```
 
-The ADK layer ships as an optional extra. Install it to run the agent tests and the live ADK check, and to deploy to Agent Runtime:
+The ADK layer ships as an optional extra. Install it to run the agent tests and the live ADK check:
 
 ```bash
 cd codes/backpy && uv sync --extra adk
@@ -155,7 +273,7 @@ cd codes/backpy && uv sync --extra adk
 Run one agent through the framework end to end, against the live model:
 
 ```bash
-cd codes/backpy && uv run python ../../scripts/run_adk_agent.py
+cd codes/backpy && uv run python ../../scripts/run_adk_agent.py --agent draft_analyzer
 ```
 
 ### 5. Run the tests
@@ -164,7 +282,7 @@ cd codes/backpy && uv run python ../../scripts/run_adk_agent.py
 cd codes/backpy && uv run pytest
 ```
 
-The unit tests run **fully offline** against a fake model: no credentials, no network, no cost. They test our code, not the provider's weather.
+The unit tests run **fully offline** against a fake model: no credentials, no network, no cost. They test our code, not the provider's weather. Live tests exist and are skipped by default.
 
 ### 6. Analyze the sample draft with the real model
 
@@ -174,7 +292,7 @@ cd codes/backpy && uv run python ../../scripts/run_draft_analyzer.py tests/fixtu
 
 The sample draft is in Indonesian on purpose. Findings come back in the language of the draft, which is what a defense in an Indonesian university actually needs. An English draft is in `tests/fixtures/sample_draft_en.txt`.
 
-### 6b. Run a full mock defense
+### 7. Run a full mock defense from the terminal
 
 Interactive, you answer as the student:
 
@@ -194,13 +312,13 @@ Simulate a second defense that remembers the first, by passing gaps the student 
 cd codes/backpy && uv run python ../../scripts/run_viva_session.py tests/fixtures/sample_draft_id.txt --gaps "generalisasi berlebihan ke populasi yang lebih luas"
 ```
 
-### 7. Run the API
+### 8. Run the API
 
 ```bash
 cd codes/backpy && uv run uvicorn app.main:app --reload --port 8080
 ```
 
-Interactive documentation at `http://localhost:8080/docs`.
+Interactive documentation at http://localhost:8080/docs.
 
 ```bash
 curl -X POST http://localhost:8080/api/sessions/prepare -H "Content-Type: application/json" -d "{\"draft_text\":\"your research draft text here\"}"
@@ -208,19 +326,29 @@ curl -X POST http://localhost:8080/api/sessions/prepare -H "Content-Type: applic
 
 `/api/drafts/analyze` runs the Draft Analyzer alone. `/api/sessions/prepare` runs the full preparation chain: analyze the draft, then plan the examination that follows from it.
 
-### 8. Deploy to Cloud Run
-
-The service is already deployed and running at the URL above. To deploy your own:
+### 9. Run the web app
 
 ```bash
-gcloud services enable run.googleapis.com cloudbuild.googleapis.com aiplatform.googleapis.com firestore.googleapis.com --project=YOUR_PROJECT_ID
+cd codes/frontnext && pnpm install && cp .env.example .env.local
+```
+
+```bash
+cd codes/frontnext && pnpm dev
+```
+
+It expects the API at `CITRA_API_BASE_URL`, which defaults to the deployed service. Point it at `http://localhost:8080` to develop against a local backend. Leave the Firebase values blank and set `AUTH_REQUIRED=false` on the API to run without sign-in.
+
+### 10. Deploy to Cloud Run
+
+```bash
+gcloud services enable run.googleapis.com cloudbuild.googleapis.com artifactregistry.googleapis.com aiplatform.googleapis.com firestore.googleapis.com --project=YOUR_PROJECT_ID
 ```
 
 ```bash
 gcloud firestore databases create --location=asia-southeast2 --type=firestore-native --project=YOUR_PROJECT_ID
 ```
 
-The Cloud Run service account needs to reach Gemini and Firestore. Grant it both, replacing `PROJECT_NUMBER` with the number from `gcloud projects describe`:
+The Cloud Run service account needs to reach Gemini and Firestore. Grant it both, replacing `PROJECT_NUMBER` with the number from `gcloud projects describe YOUR_PROJECT_ID`:
 
 ```bash
 gcloud projects add-iam-policy-binding YOUR_PROJECT_ID --member="serviceAccount:PROJECT_NUMBER-compute@developer.gserviceaccount.com" --role="roles/aiplatform.user"
@@ -230,28 +358,66 @@ gcloud projects add-iam-policy-binding YOUR_PROJECT_ID --member="serviceAccount:
 gcloud projects add-iam-policy-binding YOUR_PROJECT_ID --member="serviceAccount:PROJECT_NUMBER-compute@developer.gserviceaccount.com" --role="roles/datastore.user"
 ```
 
+Deploy the API:
+
 ```bash
-cd codes/backpy && gcloud run deploy citra-viva-api --source . --region=asia-southeast2 --allow-unauthenticated --memory=1Gi --timeout=600 --set-env-vars="GOOGLE_CLOUD_PROJECT=YOUR_PROJECT_ID,GOOGLE_CLOUD_LOCATION=global,GOOGLE_GENAI_USE_VERTEXAI=true,GEMINI_MODEL=gemini-3.5-flash"
+cd codes/backpy && gcloud run deploy citra-viva-api --source . --region=asia-southeast2 --allow-unauthenticated --memory=1Gi --timeout=600 --set-env-vars="GOOGLE_CLOUD_PROJECT=YOUR_PROJECT_ID,GOOGLE_CLOUD_LOCATION=global,GOOGLE_GENAI_USE_VERTEXAI=true,GEMINI_MODEL=gemini-3.5-flash,GEMINI_VOICE_MODEL=gemini-2.5-flash-tts,GEMINI_LIVE_MODEL=gemini-live-2.5-flash-native-audio,GEMINI_LIVE_LOCATION=us-central1"
 ```
 
-No secret is passed on the command line. The service reads Gemini and Firestore through its own service identity, so there is no key file anywhere in the deployment.
-
-### 9. Drive a full defense against the deployed service
+Then the web app, pointing at the API URL the previous command printed:
 
 ```bash
-curl -s -X POST https://citra-viva-api-40911677848.asia-southeast2.run.app/api/sessions/start -H "Content-Type: application/json" -d "{\"draft_text\":\"your research draft text here\"}"
+cd codes/frontnext && gcloud run deploy citra-viva-web --source . --region=asia-southeast2 --allow-unauthenticated --memory=1Gi --set-env-vars="CITRA_API_BASE_URL=YOUR_API_URL"
+```
+
+Finally, tell the API which web origin may open the streaming speech socket:
+
+```bash
+gcloud run services update citra-viva-api --region=asia-southeast2 --update-env-vars="ALLOWED_WEB_ORIGINS=YOUR_WEB_URL"
+```
+
+No secret is passed on any of those command lines. The services reach Gemini, Firestore, and Cloud Storage through their own service identity, so there is no key file anywhere in the deployment.
+
+### 11. Set up sign-in
+
+Firebase has to be attached to your Google Cloud project through the console. The terms must be accepted by a person, and enabling the Google provider is what creates the OAuth client, which no API will do for you.
+
+1. In the [Firebase console](https://console.firebase.google.com), create a project, then use **Add Firebase to Google Cloud project** at the bottom of the page and pick your existing project. This does not create a second project.
+2. **Authentication, then Sign-in method, then Google, then Enable**.
+3. **Authentication, then Settings, then Authorized domains**, and add your Cloud Run web domain.
+
+The rest is scriptable. Create a web app and read its config:
+
+```bash
+curl -X POST -H "Authorization: Bearer $(gcloud auth print-access-token)" -H "x-goog-user-project: YOUR_PROJECT_ID" -H "Content-Type: application/json" -d "{\"displayName\":\"CITRA Viva Web\"}" "https://firebase.googleapis.com/v1beta1/projects/YOUR_PROJECT_ID/webApps"
+```
+
+```bash
+curl -H "Authorization: Bearer $(gcloud auth print-access-token)" -H "x-goog-user-project: YOUR_PROJECT_ID" "https://firebase.googleapis.com/v1beta1/projects/YOUR_PROJECT_ID/webApps/YOUR_APP_ID/config"
+```
+
+Put those four values into the web service as `FIREBASE_API_KEY`, `FIREBASE_AUTH_DOMAIN`, `FIREBASE_PROJECT_ID`, and `FIREBASE_APP_ID`, and set `AUTH_REQUIRED=true` plus `FIREBASE_PROJECT_ID` on the API service.
+
+None of those four is a secret. A Firebase web API key identifies the project to Google's endpoints and authorises nothing on its own, which is exactly why access is enforced by verifying ID tokens in the backend rather than by hiding a key. They are deliberately **not** `NEXT_PUBLIC_` variables: those are frozen into the bundle at build time, while Cloud Run supplies environment to the running container, so the config would be empty in production and correct only on a developer machine.
+
+### 12. Drive a full defense against the deployed service
+
+With `AUTH_REQUIRED=true`, these calls need a Firebase ID token in an `Authorization: Bearer` header. Against a local backend with authentication off, they work as written:
+
+```bash
+curl -s -X POST http://localhost:8080/api/sessions/start -H "Content-Type: application/json" -d "{\"draft_text\":\"your research draft text here\"}"
 ```
 
 Then answer, using the `session_id` the previous call returned:
 
 ```bash
-curl -s -X POST https://citra-viva-api-40911677848.asia-southeast2.run.app/api/sessions/SESSION_ID/answer -H "Content-Type: application/json" -d "{\"answer\":\"your defense\"}"
+curl -s -X POST http://localhost:8080/api/sessions/SESSION_ID/answer -H "Content-Type: application/json" -d "{\"answer\":\"your defense\"}"
 ```
 
 Repeat until the response reports `"finished": true`, then close the session to get the report:
 
 ```bash
-curl -s -X POST https://citra-viva-api-40911677848.asia-southeast2.run.app/api/sessions/SESSION_ID/close
+curl -s -X POST http://localhost:8080/api/sessions/SESSION_ID/close
 ```
 
 ---
@@ -285,7 +451,7 @@ Every rejected finding is **recorded with its reason** in the `dropped` field ra
 
 - No pass/fail verdict and no research quality score. Only individual findings, each tied to evidence.
 - No "suggested fix" field. The agent states what is weak and what must be defended, never the defense itself.
-- No mechanical citation verification (Crossref/OpenAlex DOI matching). That module belongs to a separate project outside this hackathon and is deliberately out of scope.
+- No mechanical citation verification (Crossref or OpenAlex DOI matching). That module belongs to a separate project outside this hackathon and is deliberately out of scope.
 
 ---
 
@@ -299,6 +465,8 @@ The Draft Analyzer had to prove each finding against the manuscript. This agent 
 
 Opening and closing questions address the work as a whole and are the only ones allowed to stand without an anchor. An unrecognized question type falls back to `probe`, which deliberately keeps it inside the anchoring requirement rather than letting an unknown label become a loophole.
 
+In the interface, each question shows the passage it came from. The student can see, at any moment, which line of their own manuscript put them in this position.
+
 ### Memory changes the order, not the content
 
 When prior-session gaps are supplied, questions attacking them are asked first even when their finding carries lower severity. A weakness the student already failed to fix once is the most valuable thing to test again.
@@ -307,7 +475,9 @@ Whether a question addresses a previously recorded gap is a semantic judgment th
 
 ### The rubric is not an answer
 
-Each question carries `evaluation_criteria`, describing what the Examiner Session Agent should listen for when judging a reply. It is written as things to check for, never as a model answer, and it is never shown to the student. That distinction is what keeps the "agent never writes the student's argument" rule intact once the session loop is built on top of it.
+Each question carries `evaluation_criteria`, describing what the Examiner Session Agent should listen for when judging a reply. It is written as things to check for, never as a model answer.
+
+The student may reveal it, deliberately, from a button. That is the compromise that replaced answer recommendations: it says what a good answer would need to *contain*, never what to say, and every reveal is recorded in the transcript so it appears in the closing report. Help that hides itself from the record is not help, it is a way to arrive at a real defense believing you were ready.
 
 ---
 
@@ -350,112 +520,9 @@ Input: a finished transcript. Output: what held, what is still undefended, and t
 
 Restoration always uses the examiner's own words, captured at the moment the point was conceded. Our code never writes prose crediting or blaming the student. When something held but the examiner never named what, the contradiction is logged rather than papered over.
 
-`recurring_gap_patterns` is the field that makes the next session sharper than this one. It is written to be recognisable in a different manuscript months later, so "treats correlational findings as causal when writing conclusions" rather than "question 3 was weak". Feed it back in through `recurring_gaps` and the next examination attacks those points first.
+`recurring_gap_patterns` is the field that makes the next session sharper than this one. It is written to be recognisable in a different manuscript months later, so "treats correlational findings as causal when writing conclusions" rather than "question 3 was weak".
 
----
-
-## The web interface
-
-Three screens: paste a draft, defend it, read the report.
-
-```
-+----------------------------------------------------------------+
-| HEADER   CITRA Viva  ·  Pertanyaan 3 dari 7  ·  4 jawaban       |
-+----------+---------------------------+-------------------------+
-| SIDEBAR  |  DEFENSE ROOM             |  SLIDEOVER              |
-| 240px    |                           |  380px                  |
-|          |  Examiner asks            |  Weakness Map           |
-| Q1 done  |  Student answers          |  Judgment of the answer |
-| Q2 done  |  Examiner presses         |  Session report         |
-| Q3 now   |                           |                         |
-| Q4 lock  |  [answer box, sticky]     |  AI territory in purple |
-+----------+---------------------------+-------------------------+
-```
-
-The interface follows the CITRA design system without reinterpreting it: blue is the human domain and purple marks every AI contribution, corners are square except buttons and chips, font weight never reaches 700, icons are inline SVG from one set, and emoji appear nowhere. Each of the three panels scrolls independently, so reading a finding on the right never moves the transcript in the middle.
-
-Three decisions are worth naming.
-
-**The browser never talks to the API.** Every call goes through a Next route handler, so the API URL is not shipped to the client, there is no CORS to configure, and the API can be locked down later without touching the interface.
-
-**Nothing about a session lives in the tab.** The room reads its state from the server on every visit, which is what makes a refresh mid-defense harmless. That mirrors the backend rule: the session lives in Firestore, not in a process or a page.
-
-**The boundary is treated as untrusted even though it is our own service.** A session created by an older API revision came back without its Weakness Map and took the whole room to an error page over one missing array. During a real defense that is the worst possible trade, so missing fields are now filled in at the boundary. A panel with nothing in it is a bad panel; a blank screen is a broken product.
-
-### Running the web app
-
-```bash
-cd codes/frontnext && pnpm install && cp .env.example .env.local
-```
-
-```bash
-cd codes/frontnext && pnpm dev
-```
-
-It expects the API at `CITRA_API_BASE_URL`, which defaults to the deployed service. Point it at `http://localhost:8080` to develop against a local backend.
-
-```bash
-cd codes/frontnext && gcloud run deploy citra-viva-web --source . --region=asia-southeast2 --allow-unauthenticated --memory=1Gi --set-env-vars="CITRA_API_BASE_URL=YOUR_API_URL"
-```
-
----
-
-## Identity, and who may open a session
-
-A session carries a student's manuscript and the map of where their argument gives way. Before sign-in existed, a guessed session id was enough to read both. For a product whose premise is research integrity that is not a missing feature, it is a contradiction, so it is closed.
-
-**Firebase ID tokens, verified against Google's public keys.** The backend verifies every token before trusting a single claim in it, and keys ownership on the Firebase subject rather than the email, because an email can change hands and a subject cannot.
-
-**A session can only be opened by the account that created it.** The refusal is `404`, not `403`. Telling a stranger that a session exists but is not theirs confirms the id is real, which is the one useful thing an id guesser could learn.
-
-**The token never reaches any script on the page.** After sign-in the browser posts it to a route handler that stores it in an HttpOnly cookie, and everything else reads it from there: server rendered pages, route handlers, and the calls they forward. An injected script cannot read it, the session page can still render on the server, and no component has to remember to attach a header, which is how one endpoint ends up unauthenticated while the rest are fine.
-
-**Sessions with no owner stay readable.** Those were created before sign-in existed, or while it is switched off. Orphaning them would punish a user for a change they did not make.
-
-`AUTH_REQUIRED=false` turns the whole check off, so the test suite and a bare local backend run without a Firebase project. Every deployment sets it explicitly, because with it off a session id is the only thing standing between a stranger and someone's manuscript.
-
-### Setting up sign-in for your own deployment
-
-Firebase must be attached to your Google Cloud project through the console. The terms have to be accepted by a person, and enabling the Google provider is what creates the OAuth client, which no API will do for you.
-
-1. In the [Firebase console](https://console.firebase.google.com), click through to create a project, then use **Add Firebase to Google Cloud project** at the bottom of the page and pick your existing project. This does not create a second project.
-2. **Authentication → Sign-in method → Google → Enable**.
-3. **Authentication → Settings → Authorized domains**, add your Cloud Run web domain.
-
-The rest is scriptable. Create a web app and read its config:
-
-```bash
-curl -X POST -H "Authorization: Bearer $(gcloud auth print-access-token)" -H "x-goog-user-project: YOUR_PROJECT_ID" -H "Content-Type: application/json" -d "{\"displayName\":\"CITRA Viva Web\"}" "https://firebase.googleapis.com/v1beta1/projects/YOUR_PROJECT_ID/webApps"
-```
-
-```bash
-curl -H "Authorization: Bearer $(gcloud auth print-access-token)" -H "x-goog-user-project: YOUR_PROJECT_ID" "https://firebase.googleapis.com/v1beta1/projects/YOUR_PROJECT_ID/webApps/YOUR_APP_ID/config"
-```
-
-Put those four values into the web service as `FIREBASE_API_KEY`, `FIREBASE_AUTH_DOMAIN`, `FIREBASE_PROJECT_ID`, and `FIREBASE_APP_ID`, and set `AUTH_REQUIRED=true` plus `FIREBASE_PROJECT_ID` on the API service.
-
-None of those four is a secret. A Firebase web API key identifies the project to Google's endpoints and authorises nothing on its own, which is exactly why access is enforced by verifying ID tokens in the backend rather than by hiding a key. They are deliberately **not** `NEXT_PUBLIC_` variables: those are frozen into the bundle at build time, while Cloud Run supplies environment to the running container, so the config would be empty in production and correct on every developer machine.
-
----
-
-## Reading an uploaded manuscript
-
-PDF, DOCX, and plain text. The extracted text is **returned to the student and shown to them** rather than analysed straight away, and that is the whole design rather than a convenience.
-
-Every finding must quote the draft verbatim, and every quote is verified against the text we were given. If extraction happened invisibly, those quotes would be checked against a version of the manuscript the student has never seen: a two column layout read in the wrong order, a running header repeated on every page, a ligature that arrived as a character they cannot type. They would be shown a quote they cannot find in their own document, and told an examiner will attack it.
-
-So the text lands in an editable field. The student reads it, fixes anything extraction got wrong, and submits deliberately. What the analyzer reads is what they saw.
-
-| Case | What happens |
-|---|---|
-| Scanned PDF with no text layer | Refused with "this PDF has no selectable text", not "your draft is too short", which would send a student hunting for a problem in their writing |
-| Password protected PDF | Named as such. An empty password is tried, because it unlocks many "protected" files; nothing else is guessed |
-| Running headers and page numbers | Removed when a short line repeats on more than half the pages, and the removal is reported. A line repeated across only two pages survives, because two pages is not evidence of a header |
-| Tables in a DOCX | Kept. Methodology and results live in tables in most theses, and those are the sections an examiner presses hardest on |
-| Hyphenated line breaks, ligatures | Normalised, so a quote does not contain characters the student cannot type |
-| A file that is not what it claims | One readable sentence, never a stack trace about zip files |
-
-Nothing is persisted. The file is read into memory and discarded, and only the text the student chose to submit goes any further.
+The report can be downloaded as Markdown from the session, so it survives the browser it was made in.
 
 ---
 
@@ -479,13 +546,123 @@ Against the live model, the same source produces three different verdicts depend
 
 ---
 
+## Voice
+
+A defense is spoken, so this one is too. Voice is a **layer over the text loop, never a second pipeline**, and that decision is what keeps every session rule applying equally to a spoken answer and a typed one.
+
+**The examiner speaks as it appears.** The question's audio is synthesised inside the wait the student is already having, rather than after it. A turn that takes 20 seconds to judge comes back with 22 seconds of finished audio attached. There is no button and no second wait. When synthesis fails, the turn is unaffected: the text is there, and a button to play it by hand is still there.
+
+**The student's answer is transcribed while they speak.** 16 kHz mono PCM is captured directly through the Web Audio API and streamed over a WebSocket in 100 millisecond frames to `gemini-live-2.5-flash-native-audio`. The complete transcript arrives under a second after they press stop, rather than four seconds after.
+
+**The transcript lands in the answer box, not in the session.** The student reads it, corrects anything the recognition got wrong, and sends it deliberately. A defense transcript is a permanent record, and a word the model misheard must be correctable before it becomes part of one.
+
+Four things about the Live API were established by testing rather than assumed, and each one is documented at the top of [`codes/backpy/app/speech/live.py`](codes/backpy/app/speech/live.py). The most costly: with automatic activity detection on, the API closes the turn at the first pause and treats everything said afterwards as an interruption. Four sentences went in and one came out. A student pausing for breath is not a student who has finished, and only the student knows when they have, so detection is off and the turn boundaries are sent explicitly.
+
+---
+
+## Cross-session memory
+
+The second mock defense is not the first one repeated.
+
+When a session closes, the Session Reflection Agent returns recurring gap patterns, and those are merged into a **weakness profile** held in Firestore against the student's account. The next examination reads that profile and moves questions attacking unfixed weaknesses to the front, even when their finding carries lower severity.
+
+The managed Memory Bank service was examined and deliberately not adopted. It requires an Agent Engine resource, so using it would mean standing up infrastructure the product does not otherwise need. The deeper reason is that a free-form memory about a person is exactly the kind of unverifiable claim this product refuses everywhere else. The weakness profile is structured instead: every entry traces back to a specific finding in a specific manuscript, so it can be read, checked, and corrected.
+
+---
+
+## Reading an uploaded manuscript
+
+PDF, DOCX, and plain text. The extracted text is **returned to the student and shown to them** rather than analysed straight away, and that is the whole design rather than a convenience.
+
+Every finding must quote the draft verbatim, and every quote is verified against the text we were given. If extraction happened invisibly, those quotes would be checked against a version of the manuscript the student has never seen: a two column layout read in the wrong order, a running header repeated on every page, a ligature that arrived as a character they cannot type. They would be shown a quote they cannot find in their own document, and told an examiner will attack it.
+
+So the text lands in an editable field. The student reads it, fixes anything extraction got wrong, and submits deliberately. What the analyzer reads is what they saw.
+
+| Case | What happens |
+|---|---|
+| Scanned PDF with no text layer | Refused with "this PDF has no selectable text", not "your draft is too short", which would send a student hunting for a problem in their writing |
+| Password protected PDF | Named as such. An empty password is tried, because it unlocks many "protected" files; nothing else is guessed |
+| Running headers and page numbers | Removed when a short line repeats on more than half the pages, and the removal is reported. A line repeated across only two pages survives, because two pages is not evidence of a header |
+| Tables in a DOCX | Kept. Methodology and results live in tables in most theses, and those are the sections an examiner presses hardest on |
+| Hyphenated line breaks, ligatures | Normalised, so a quote does not contain characters the student cannot type |
+| A file that is not what it claims | One readable sentence, never a stack trace about zip files |
+| A draft beyond 400,000 characters | Refused by size, rather than accepted and silently truncated somewhere in the middle |
+
+The uploaded file itself is read into memory and discarded. Only the text the student chose to submit goes any further, and it is stored in its own document with ownership recorded on the record.
+
+---
+
+## The web interface
+
+Four surfaces: a public landing page, a workspace, the defense room, and a public guide.
+
+```
++----------------------------------------------------------------+
+| HEADER   CITRA Viva  ·  Pertanyaan 3 dari 7  ·  4 jawaban       |
++----------+---------------------------+-------------------------+
+| SIDEBAR  |  DEFENSE ROOM             |  SLIDEOVER              |
+| 240px    |                           |  380px                  |
+|          |  Examiner asks            |  Weakness Map           |
+| Q1 done  |  Student answers          |  Judgment of the answer |
+| Q2 done  |  Examiner presses         |  Session report         |
+| Q3 now   |                           |                         |
+| Q4 lock  |  [answer box, sticky]     |  AI territory in purple |
++----------+---------------------------+-------------------------+
+```
+
+The interface follows the CITRA design system without reinterpreting it: blue is the human domain and purple marks every AI contribution, corners are square except buttons and chips, font weight never reaches 700, icons are inline SVG from one set, and emoji appear nowhere. Each of the three panels scrolls independently, so reading a finding on the right never moves the transcript in the middle.
+
+While an agent is working, a contextual animation names which stage is running: extracting, reading, verifying, planning, judging, reporting, or checking a citation. A wait with no indicator is indistinguishable from a broken button.
+
+Three decisions are worth naming.
+
+**The browser never talks to the API.** Every call goes through a Next route handler, so the API URL is not shipped to the client, there is no CORS to configure, and the API can be locked down later without touching the interface. The one exception is the streaming speech socket, because a route handler cannot carry a WebSocket upgrade, and it is handled deliberately: the credential travels in the subprotocol rather than in a query string that proxies and logs would keep.
+
+**Nothing about a session lives in the tab.** The room reads its state from the server on every visit, which is what makes a refresh mid-defense harmless. That mirrors the backend rule: the session lives in Firestore, not in a process or a page.
+
+**The boundary is treated as untrusted even though it is our own service.** A session created by an older API revision came back without its Weakness Map and took the whole room to an error page over one missing array. During a real defense that is the worst possible trade, so missing fields are now filled in at the boundary. A panel with nothing in it is a bad panel; a blank screen is a broken product.
+
+---
+
+## Identity, and who may open a session
+
+A session carries a student's manuscript and the map of where their argument gives way. Before sign-in existed, a guessed session id was enough to read both. For a product whose premise is research integrity that is not a missing feature, it is a contradiction, so it is closed.
+
+**Firebase ID tokens, verified against Google's public keys.** The backend verifies every token before trusting a single claim in it, and keys ownership on the Firebase subject rather than the email, because an email can change hands and a subject cannot.
+
+**A session can only be opened by the account that created it.** The refusal is `404`, not `403`. Telling a stranger that a session exists but is not theirs confirms the id is real, which is the one useful thing an id guesser could learn.
+
+**The comparison has no exemption for a session with no owner.** An earlier version let those through, so that sessions predating authentication would not be orphaned by it. That was affordable only while nobody real had used the service. The moment every visitor signs in, an ownerless document is one that anyone who guesses its id can open, and what it holds is somebody's unpublished manuscript. The loophole is closed, including for anyone who only wants to try the demo.
+
+**The token never reaches any script on the page.** After sign-in the browser posts it to a route handler that stores it in an HttpOnly cookie, and everything else reads it from there: server rendered pages, route handlers, and the calls they forward. An injected script cannot read it, the session page can still render on the server, and no component has to remember to attach a header, which is how one endpoint ends up unauthenticated while the rest are fine.
+
+`AUTH_REQUIRED=false` turns the whole check off, so the test suite and a bare local backend run without a Firebase project. Every deployment sets it explicitly, because with it off a session id is the only thing standing between a stranger and someone's manuscript.
+
+---
+
+## State, concurrency, and failure tolerance
+
+**State lives outside the agent.** Session state is in Firestore, never in an agent's memory. A defense survives a restart, a redeploy, a closed tab, and a cold Cloud Run instance. It also means the reasoning loop is inspectable: the state of a session at any turn is a document you can read.
+
+**Two concurrent turns cannot overwrite each other.** Every session record carries a revision number, and a write reads that revision inside a Firestore transaction and refuses if it has moved. Before this, two answers submitted at nearly the same moment would both succeed and one would quietly disappear. It was found by looking for it rather than by being reported, and it is now covered by a test that runs against real Firestore.
+
+**Transient failures are absorbed.** Quota exhaustion and service-unavailable responses are retried with exponential backoff. A `429` in the middle of a defense must not end the defense.
+
+**Persistence failures are non-fatal in the other direction.** If the analysis succeeds and the Firestore write fails, the analysis is still returned. A database hiccup should not throw away a result that is already in hand, least of all during a live demo.
+
+**Failures that used to succeed quietly now refuse.** An audio format the model cannot read used to produce a confident and completely invented transcript rather than an error. A finding quoting text that does not exist in the manuscript used to reach the student. A draft of any size used to be accepted. Each of these now refuses, by name, with a sentence that says what went wrong.
+
+The principle underneath all of it: *verify what can be verified, bound what cannot, and never let an unverifiable claim reach a place where being wrong would harm the student.*
+
+---
+
 ## Repository layout
 
 ```
 codes/frontnext/                  Next.js web app
   src/app/                        pages, plus route handlers acting as the BFF
   src/components/                 app shell, defense room, slideover, icons
-  src/lib/                        API client, shared types, boundary normalizer
+  src/lib/                        API client, audio capture, live socket, report export
 codes/backpy/                     Python backend
   app/
     agents/draft_analyzer/        prompt.py, core.py (pure logic), adk_agent.py (ADK wrapper)
@@ -496,26 +673,53 @@ codes/backpy/                     Python backend
     ingest/extract.py             PDF, DOCX, and text into reviewable text
     orchestrator/orchestrator.py  coordination between sub-agents
     api/routes.py                 FastAPI endpoints
+    api/live_routes.py            the WebSocket a spoken answer streams into
+    speech/voice.py               synthesis and whole-file transcription
+    speech/live.py                the Live API session, and what testing established
     models/                       weakness_map.py, question_strategy.py, session.py
     storage/session_store.py      session persistence, Firestore and in-memory
+    storage/draft_store.py        the manuscript, kept in its own document
+    llm/client.py                 Gemini access through Agent Platform
+    llm/adk_env.py                environment ADK reads for itself
     llm/retry.py                  backoff for quota and availability failures
     common/text.py                helpers shared by agents, so no agent imports another
-    llm/client.py                 Gemini access through Agent Platform
     storage/firestore.py          the only module that talks to the database
     auth.py                       token verification and who the caller is
     config.py                     all configuration from environment variables
     main.py
   tests/                          offline tests, plus live tests skipped by default
   .env.example, Dockerfile, pyproject.toml
-docs/                             architecture notes
+docs/                             architecture notes and the architecture diagram
 scripts/                          tooling outside the application
 ```
 
 ---
 
+## Findings and learnings
+
+**The most expensive bug had no error message.** A student spoke a long answer and the transcript came back as the words "yes and no". Not truncated, not garbled: a short plausible sentence with nothing to do with what they said. `MediaRecorder` in Chrome produces a WebM container, and Gemini reads WAV, MP3, AIFF, AAC, OGG, and FLAC. Given bytes it cannot decode, the model does not refuse. It answers anyway, from nothing.
+
+**The first fix made it worse.** It recorded WebM and converted afterwards, falling back to the original when conversion failed, which meant a failed conversion looked exactly like a successful one. The real fix removed the container entirely and wrote raw samples from the microphone straight into a WAV. The lesson generalised into a rule the rest of the system now follows: *a fallback that hides the failure it is falling back from is worse than no fallback.*
+
+**Silence is a failure mode, and it needs an instrument.** After that came a transcript of the single word "Null", which is the model reporting it heard nothing. Two causes: asking for a specific channel count made some devices return a track that was live and silent, and a gain of exactly zero let the audio graph conclude the branch could not be heard and stop pulling it. Both are fixed, and a level meter now runs while recording, because a meter that does not move while somebody is speaking says more in two seconds than any error message can afterwards.
+
+**An instruction about pace was read as an instruction about speed.** The examiner's voice was unusably slow, and the cause was a phrase in our own prompt asking it to read "at the measured pace of an examiner". Replacing it with a plain request for normal conversational speed took the same sentence from 13.7 seconds to 8.1.
+
+**Some configuration is worth not setting.** `ActivityHandling` and `TurnCoverage` on the Live session were tried and changed nothing measurable, so they are absent. Configuration that has not been shown to matter is a future reader's false lead.
+
+**A feature worth refusing is a design decision.** Answer recommendations were considered and rejected, and the marking scheme shipped instead. Both of those are described above, under [the constraint that shapes everything](#the-constraint-that-shapes-everything).
+
+---
+
 ## Disclosure
 
-CITRA Viva and the Claim-Support Checker reasoning layer were built entirely during the Submission Period (August 2026), as a new module of CITRA, an independent research project in pre-development status. The basic mechanical citation verification module (Crossref/OpenAlex API matching), previously built outside this hackathon, is **not** part of this submission, in compliance with the New Projects Only rule.
+CITRA Viva was built entirely within the Submission Period for this hackathon, starting 23 August 2026. No pre-existing code was incorporated.
+
+It is a companion to [C.I.T.R.A](https://citra.eziedutech.dev), an existing research integrity application by the same author, in pre-development status. The two share a design system and a name. They share no code, and nothing from that project was reused here. One module was deliberately kept out of scope for exactly this reason: basic mechanical citation verification against Crossref and OpenAlex already exists in that other project, so it is **not** part of this submission, in compliance with the New Projects Only rule.
+
+Development used AI coding assistants, which the rules permit explicitly. All architectural decisions, product decisions, and verification of what shipped are the author's own.
+
+Third-party dependencies are the ones declared in [`codes/backpy/pyproject.toml`](codes/backpy/pyproject.toml) and [`codes/frontnext/package.json`](codes/frontnext/package.json), each used under its own open source licence. No third-party data source is used: the only data the system reads is the manuscript the student supplies.
 
 ## License
 
