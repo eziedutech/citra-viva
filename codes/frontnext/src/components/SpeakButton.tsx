@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 
+import { useAuth } from '@/components/AuthProvider';
 import { Icon } from '@/components/Icon';
 import type { Dictionary } from '@/lib/i18n';
 import { speak } from '@/lib/speech';
@@ -24,6 +25,7 @@ interface Props {
  * and should not pay for one either.
  */
 export function SpeakButton({ text, dict, autoPlay = false }: Props) {
+  const { authedFetch } = useAuth();
   const [busy, setBusy] = useState(false);
   const [playing, setPlaying] = useState(false);
   const [error, setError] = useState('');
@@ -52,7 +54,7 @@ export function SpeakButton({ text, dict, autoPlay = false }: Props) {
 
     setBusy(true);
     try {
-      const source = await speak(text);
+      const source = await speak(text, authedFetch);
       url.current = source;
 
       const element = new Audio(source);

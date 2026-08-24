@@ -123,7 +123,7 @@ export function HistorySidebar({ dict, locale }: Props) {
     setLoading(true);
     setError('');
     try {
-      const response = await fetch('/api/sessions/history');
+      const response = await auth.authedFetch('/api/sessions/history');
       const data = await response.json();
       if (!response.ok) throw new Error(data.error ?? dict.workspace.failed);
       setRows((data as SessionHistory).sessions ?? []);
@@ -132,7 +132,7 @@ export function HistorySidebar({ dict, locale }: Props) {
     } finally {
       setLoading(false);
     }
-  }, [dict.workspace.failed]);
+  }, [auth, dict.workspace.failed]);
 
   // Without Firebase there is no cookie to wait for. With it, the wait is the
   // whole point: asking before the token has been posted returns a 401, and the

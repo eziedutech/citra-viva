@@ -3,13 +3,16 @@
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 
+
 import { AccountButton } from '@/components/AccountButton';
 import { AgentOverlay } from '@/components/AgentOverlay';
 import { AiWorking } from '@/components/AiWorking';
+import { useAuth } from '@/components/AuthProvider';
 import { Hint } from '@/components/Hint';
 import { Icon } from '@/components/Icon';
 import { LocaleSwitch } from '@/components/LocaleSwitch';
 import { QuestionSidebar } from '@/components/QuestionSidebar';
+import { SignedOutNotice } from '@/components/SignedOutNotice';
 import { Slideover, type Tab } from '@/components/Slideover';
 import { SpeakButton } from '@/components/SpeakButton';
 import { VoiceInput } from '@/components/VoiceInput';
@@ -32,6 +35,7 @@ interface Props {
 }
 
 export function DefenseRoom({ initial, dict, locale }: Props) {
+  const auth = useAuth();
   const [session, setSession] = useState(initial);
   const [answer, setAnswer] = useState('');
   const [thinking, setThinking] = useState(false);
@@ -84,7 +88,7 @@ export function DefenseRoom({ initial, dict, locale }: Props) {
     setVoiceNote(false);
 
     try {
-      const response = await fetch(`/api/sessions/${session.session_id}/answer`, {
+      const response = await auth.authedFetch(`/api/sessions/${session.session_id}/answer`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ answer: text }),
@@ -99,7 +103,7 @@ export function DefenseRoom({ initial, dict, locale }: Props) {
 
       // The server is the source of truth for the transcript, so the optimistic
       // turn is replaced rather than appended to.
-      const fresh = await fetch(`/api/sessions/${session.session_id}`);
+      const fresh = await auth.authedFetch(`/api/sessions/${session.session_id}`);
       if (fresh.ok) setSession(normalizeSession((await fresh.json()) as SessionState));
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : dict.room.answerFailed);
@@ -117,7 +121,7 @@ export function DefenseRoom({ initial, dict, locale }: Props) {
     setClosing(true);
     setError('');
     try {
-      const response = await fetch(`/api/sessions/${session.session_id}/close`, {
+      const response = await auth.authedFetch(`/api/sessions/${session.session_id}/close`, {
         method: 'POST',
       });
       const data = await response.json();
@@ -128,6 +132,14 @@ export function DefenseRoom({ initial, dict, locale }: Props) {
     } finally {
       setClosing(false);
     }
+  }
+
+  // Signing out has to take the manuscript off the screen, not just change the
+  // button in the corner. This page was rendered on the server and would
+  // otherwise sit there intact, showing someone's unpublished research to
+  // whoever is at the machine next.
+  if (auth.enabled && auth.ready && !auth.user) {
+    return <SignedOutNotice dict={dict} reason="signedOut" />;
   }
 
   return (

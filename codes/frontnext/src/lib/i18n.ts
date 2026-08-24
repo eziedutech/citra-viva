@@ -515,6 +515,13 @@ const en = {
     required: 'Sign in to begin a defense',
     requiredHelp:
       'Your manuscript and your session belong to you. Signing in is what lets the service keep them apart from everyone else’s.',
+    restoring: 'Restoring your session',
+    signedOutTitle: 'You have signed out',
+    signedOutBody:
+      'This defense is no longer shown on this screen. Nothing has been lost: sign in again with the same account and it resumes at the question it stopped on.',
+    lockedTitle: 'Sign in to open this defense',
+    lockedBody:
+      'A defense belongs to the account that started it. Sign in with that account and it opens where it stopped.',
     failed: 'Sign in failed.',
     notYours: 'This session belongs to a different account.',
   },
@@ -1046,6 +1053,13 @@ const id: Dictionary = {
     required: 'Masuk untuk memulai sidang',
     requiredHelp:
       'Naskah dan sesi Anda adalah milik Anda. Masuk adalah yang membuat layanan ini dapat memisahkannya dari milik orang lain.',
+    restoring: 'Memulihkan sesi Anda',
+    signedOutTitle: 'Anda telah keluar',
+    signedOutBody:
+      'Sidang ini tidak lagi ditampilkan di layar ini. Tidak ada yang hilang: masuk kembali dengan akun yang sama dan sidangnya dilanjutkan dari pertanyaan tempatnya berhenti.',
+    lockedTitle: 'Masuk untuk membuka sidang ini',
+    lockedBody:
+      'Sebuah sidang adalah milik akun yang memulainya. Masuk dengan akun tersebut dan sidangnya terbuka dari tempatnya berhenti.',
     failed: 'Gagal masuk.',
     notYours: 'Sesi ini milik akun lain.',
   },

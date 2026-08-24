@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 
+import { useAuth } from '@/components/AuthProvider';
 import { Hint } from '@/components/Hint';
 import { Icon } from '@/components/Icon';
 import { canRecord, pickRecordingType, transcribe } from '@/lib/speech';
@@ -28,6 +29,7 @@ interface Props {
  * which is what keeps every session rule applying equally to both.
  */
 export function VoiceInput({ dict, onTranscript, disabled = false }: Props) {
+  const { authedFetch } = useAuth();
   const [recording, setRecording] = useState(false);
   const [working, setWorking] = useState(false);
   const [seconds, setSeconds] = useState(0);
@@ -126,7 +128,7 @@ export function VoiceInput({ dict, onTranscript, disabled = false }: Props) {
 
     setWorking(true);
     try {
-      const text = await transcribe(recorded);
+      const text = await transcribe(recorded, authedFetch);
       onTranscript(text);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : dict.voice.failed);

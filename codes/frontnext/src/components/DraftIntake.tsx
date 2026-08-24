@@ -66,7 +66,10 @@ export function DraftIntake({ dict, locale, embedded = false }: Props) {
     try {
       const form = new FormData();
       form.append('file', file, file.name);
-      const response = await fetch('/api/drafts/extract', { method: 'POST', body: form });
+      const response = await auth.authedFetch('/api/drafts/extract', {
+        method: 'POST',
+        body: form,
+      });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error ?? dict.intake.uploadFailed);
 
@@ -91,7 +94,7 @@ export function DraftIntake({ dict, locale, embedded = false }: Props) {
     }, STAGE_INTERVAL_MS);
 
     try {
-      const response = await fetch('/api/sessions/start', {
+      const response = await auth.authedFetch('/api/sessions/start', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

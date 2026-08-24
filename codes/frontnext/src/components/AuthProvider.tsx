@@ -11,6 +11,7 @@ import {
 } from 'firebase/auth';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 
+import { SIGNED_IN_HINT_COOKIE } from '@/lib/auth-cookie';
 import type { FirebaseConfig } from '@/lib/firebase-config';
 
 interface AuthState {
@@ -30,6 +31,15 @@ interface AuthState {
   enabled: boolean;
   signIn: () => Promise<void>;
   signOut: () => Promise<void>;
+  /**
+   * `fetch`, with one retry after refreshing the credential.
+   *
+   * An ID token lasts an hour, and the cookie carrying it expires a little
+   * sooner. Anything can therefore meet a 401 partway through a defense, at
+   * which point a single forced token refresh fixes it. Without this the
+   * student loses the answer they just wrote to a message about signing in.
+   */
+  authedFetch: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
 }
 
 const AuthContext = createContext<AuthState>({
@@ -39,10 +49,18 @@ const AuthContext = createContext<AuthState>({
   enabled: false,
   signIn: async () => {},
   signOut: async () => {},
+  authedFetch: (input, init) => fetch(input, init),
 });
 
 export function useAuth(): AuthState {
   return useContext(AuthContext);
+}
+
+/** The credential-free marker the server reads to pick a first paint. */
+function markSignedIn(signedIn: boolean) {
+  document.cookie = signedIn
+    ? `${SIGNED_IN_HINT_COOKIE}=1; path=/; max-age=31536000; samesite=lax`
+    : `${SIGNED_IN_HINT_COOKIE}=; path=/; max-age=0; samesite=lax`;
 }
 
 function appFor(config: FirebaseConfig): FirebaseApp {
@@ -96,8 +114,10 @@ export function AuthProvider({
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ token }),
           });
+          markSignedIn(true);
         } else {
           await fetch('/api/auth/session', { method: 'DELETE' });
+          markSignedIn(false);
         }
       } catch {
         // The cookie could not be synced. The next token refresh tries again,
@@ -120,12 +140,56 @@ export function AuthProvider({
 
   const signOut = useCallback(async () => {
     if (!config) return;
+    // Cleared here as well as in the listener. Sign-out has to leave nothing
+    // behind even if the listener never runs, because the next person at this
+    // machine is the one who would find what it left.
+    markSignedIn(false);
     await firebaseSignOut(getAuth(appFor(config)));
   }, [config]);
 
+  /** Force a fresh ID token and put it back in the cookie. */
+  const refreshSession = useCallback(async (): Promise<boolean> => {
+    if (!config) return false;
+    const current = getAuth(appFor(config)).currentUser;
+    if (!current) return false;
+
+    try {
+      const token = await current.getIdToken(true);
+      const response = await fetch('/api/auth/session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token }),
+      });
+      return response.ok;
+    } catch {
+      return false;
+    }
+  }, [config]);
+
+  const authedFetch = useCallback(
+    async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+      const first = await fetch(input, init);
+      // Only 401 is retried, and only once. Anything else is a real answer, and
+      // a second attempt at a request the server understood would either repeat
+      // work or repeat a failure.
+      if (first.status !== 401) return first;
+      if (!(await refreshSession())) return first;
+      return fetch(input, init);
+    },
+    [refreshSession],
+  );
+
   const value = useMemo<AuthState>(
-    () => ({ user, ready, sessionReady, enabled: Boolean(config), signIn, signOut }),
-    [user, ready, sessionReady, config, signIn, signOut],
+    () => ({
+      user,
+      ready,
+      sessionReady,
+      enabled: Boolean(config),
+      signIn,
+      signOut,
+      authedFetch,
+    }),
+    [user, ready, sessionReady, config, signIn, signOut, authedFetch],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

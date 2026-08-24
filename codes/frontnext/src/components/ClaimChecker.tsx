@@ -1,10 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { AgentOverlay } from '@/components/AgentOverlay';
 import { AiWorking } from '@/components/AiWorking';
 import { AppHeader } from '@/components/AppHeader';
+import { useAuth } from '@/components/AuthProvider';
 import { Hint } from '@/components/Hint';
 import { Icon } from '@/components/Icon';
 import type { Dictionary, Locale } from '@/lib/i18n';
@@ -46,11 +47,24 @@ interface Props {
 }
 
 export function ClaimChecker({ dict, locale }: Props) {
+  const { authedFetch } = useAuth();
   const [claim, setClaim] = useState('');
   const [source, setSource] = useState({ title: '', authors: '', year: '', doi: '', text: '' });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [result, setResult] = useState<ClaimSupportResult | null>(null);
+
+  // Signing out clears the screen here too. What is on it is a passage from
+  // someone's manuscript and a judgment about their citation, and leaving it
+  // for whoever sits down next is the same mistake as leaving a defense open.
+  const { ready: authReady, enabled: authEnabled, user } = useAuth();
+  useEffect(() => {
+    if (!authEnabled || !authReady || user) return;
+    setClaim('');
+    setSource({ title: '', authors: '', year: '', doi: '', text: '' });
+    setResult(null);
+    setError('');
+  }, [authEnabled, authReady, user]);
 
   const ready = claim.trim().length >= 15 && source.text.trim().length > 0 && !busy;
 
@@ -59,7 +73,7 @@ export function ClaimChecker({ dict, locale }: Props) {
     setError('');
     setResult(null);
     try {
-      const response = await fetch('/api/claims/check', {
+      const response = await authedFetch('/api/claims/check', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ claim, source }),

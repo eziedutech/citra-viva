@@ -1,5 +1,5 @@
 import { HomeShell } from '@/components/HomeShell';
-import { hasSessionCookie } from '@/lib/auth-cookie';
+import { looksSignedIn } from '@/lib/auth-cookie';
 import { dictionaryFor } from '@/lib/i18n';
 import { currentLocale } from '@/lib/locale';
 
@@ -12,7 +12,7 @@ export default async function HomePage() {
   // Which door to render before any JavaScript runs. Firebase resolves in the
   // browser, and waiting for it would mean serving a blank frame to every
   // first-time visitor, which is the one visitor whose first paint matters.
-  const signedIn = await hasSessionCookie();
+  const signedIn = await looksSignedIn();
 
   return (
     <main className="min-h-dvh bg-[color:var(--color-canvas)]">

@@ -44,12 +44,22 @@ function extensionFor(mimeType: string): string {
   return 'webm';
 }
 
-export async function transcribe(recording: Blob): Promise<string> {
+/**
+ * `fetch`, supplied by the caller.
+ *
+ * Both of these are handed the authenticating fetch from the auth provider, so
+ * a recording made just after a token expired is retried rather than lost. A
+ * spoken answer can be several minutes of someone's effort, and asking them to
+ * say it again because of a clock is the wrong way to fail.
+ */
+export type Fetcher = (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
+
+export async function transcribe(recording: Blob, send: Fetcher = fetch): Promise<string> {
   const form = new FormData();
   const type = recording.type || 'audio/webm';
   form.append('file', recording, `answer.${extensionFor(type)}`);
 
-  const response = await fetch('/api/speech/transcribe', { method: 'POST', body: form });
+  const response = await send('/api/speech/transcribe', { method: 'POST', body: form });
   const data = await response.json();
   if (!response.ok) throw new Error(data.error ?? 'The recording could not be transcribed.');
   return String(data.text ?? '');
@@ -62,8 +72,8 @@ export async function transcribe(recording: Blob): Promise<string> {
  * pins its blob in memory for the life of the document, and a defense plays
  * many of these.
  */
-export async function speak(text: string): Promise<string> {
-  const response = await fetch('/api/speech/say', {
+export async function speak(text: string, send: Fetcher = fetch): Promise<string> {
+  const response = await send('/api/speech/say', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ text }),
