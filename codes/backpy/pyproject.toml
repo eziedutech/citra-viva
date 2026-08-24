@@ -29,6 +29,13 @@ adk = [
 [dependency-groups]
 dev = [
     "pytest>=8.3",
+    # The ADK agent definitions are part of the architecture, so the test suite
+    # has to exercise them rather than take them on trust. Only `google-adk` is
+    # needed to build and validate an agent; the heavier `adk` extra above adds
+    # Agent Runtime, which is a deployment target rather than a test dependency.
+    # The runtime image is built with --no-dev, so none of this ships.
+    "google-adk>=2.7",
+
     "pytest-asyncio>=0.25",
     "ruff>=0.9",
     "httpx>=0.28",

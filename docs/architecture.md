@@ -103,6 +103,10 @@ The Draft Analyzer is split in two:
 
 Both go through the same `build_weakness_map()`, so the validation rules cannot drift apart between the API path and the ADK path.
 
+That claim is exercised rather than asserted. `tests/test_adk_agents.py` builds every one of the five agents, checks that each refuses transfer to parent and peers and carries a structured schema with no tools, and then feeds the ADK route material that has to be refused: a finding quoting a sentence absent from the draft, a question citing a finding that does not exist, a gap recorded before any chance to clarify, a summary that drops a recorded gap, and a claim of support with no verifiable passage. Every one is refused on the framework path exactly as it is on the direct one. `scripts/run_adk_agent.py` runs the whole thing against the live model for the end-to-end proof.
+
+One practical note that cost real time to find. ADK does not accept a client; it builds its own from process environment variables, while configuration here lives in a `.env` file that pydantic-settings reads into an object and never publishes. An ADK run inside a fully configured project therefore reported "No API key was provided" and linked to the Gemini Developer API, having silently fallen back to a different product. `app/llm/adk_env.py` copies the settings across before an agent runs, and leaves anything already set in the environment alone, since a deployment that sets them means it.
+
 The payoff is testing. The entire unit suite runs with a fake runner: no network, no credentials, no spend, and no failures caused by quota or region. Tests that need the real model are isolated in `test_draft_analyzer_live.py` and skipped unless `CITRA_RUN_LIVE_TESTS=1` is set.
 
 ## Handling a model that is confidently wrong

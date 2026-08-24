@@ -443,6 +443,7 @@ adk = [
 
 [package.dev-dependencies]
 dev = [
+    { name = "google-adk" },
     { name = "httpx" },
     { name = "pytest" },
     { name = "pytest-asyncio" },
@@ -471,6 +472,7 @@ provides-extras = ["adk"]
 
 [package.metadata.requires-dev]
 dev = [
+    { name = "google-adk", specifier = ">=2.7" },
     { name = "httpx", specifier = ">=0.28" },
     { name = "pytest", specifier = ">=8.3" },
     { name = "pytest-asyncio", specifier = ">=0.25" },

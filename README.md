@@ -146,10 +146,16 @@ Leave `GOOGLE_CLOUD_LOCATION` at `global`. Recent Gemini models are served from 
 cd codes/backpy && uv sync
 ```
 
-The ADK layer is optional and only needed when deploying the agent to Agent Runtime:
+The ADK layer ships as an optional extra. Install it to run the agent tests and the live ADK check, and to deploy to Agent Runtime:
 
 ```bash
 cd codes/backpy && uv sync --extra adk
+```
+
+Run one agent through the framework end to end, against the live model:
+
+```bash
+cd codes/backpy && uv run python ../../scripts/run_adk_agent.py
 ```
 
 ### 5. Run the tests

@@ -74,12 +74,23 @@ Return JSON matching the provided schema. Nothing else.
 """
 
 
-def build_prompt(draft_text: str) -> str:
+def build_user_message(draft_text: str) -> str:
+    """The manuscript as it is handed to the model, without the instruction.
+
+    Split out because the two routes need different halves. A direct
+    `generate_content` call carries the instruction in the same string, while an
+    ADK agent already holds it in `instruction=` and would otherwise be given it
+    twice. Keeping the wording in one place means the two routes cannot drift
+    apart in how the manuscript is presented to the model.
+    """
     return (
-        f"{SYSTEM_INSTRUCTION}\n\n"
         "## Research draft\n\n"
         "<draft>\n"
         f"{draft_text}\n"
         "</draft>\n\n"
         "Produce the Weakness Map now."
     )
+
+
+def build_prompt(draft_text: str) -> str:
+    return f"{SYSTEM_INSTRUCTION}\n\n{build_user_message(draft_text)}"
