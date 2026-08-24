@@ -87,7 +87,7 @@ export function SessionRecovery({ dict }: { dict: Dictionary }) {
     return (
       <main className="grid min-h-dvh place-items-center bg-[color:var(--color-canvas)] px-6">
         <div className="text-center">
-          <Wordmark height={24} className="mx-auto mb-4" />
+          <Wordmark height={40} className="mx-auto mb-4" />
           <p className="text-caption text-[color:var(--color-ink-400)]">{dict.auth.restoring}</p>
         </div>
       </main>

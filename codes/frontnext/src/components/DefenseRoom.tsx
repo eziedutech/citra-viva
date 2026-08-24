@@ -144,10 +144,10 @@ export function DefenseRoom({ initial, dict, locale }: Props) {
 
   return (
     <div className="app-shell">
-      <header className="flex h-14 items-center justify-between border-b border-[color:var(--color-line)] bg-[color:var(--color-surface)] px-5">
+      <header className="flex h-16 items-center justify-between border-b border-[color:var(--color-line)] bg-[color:var(--color-surface)] px-5">
         <div className="flex items-center gap-3">
           <Link href="/" className="flex items-center">
-            <Wordmark height={22} />
+            <Wordmark height={40} />
           </Link>
           <span className="text-caption text-[color:var(--color-ink-400)]">/</span>
           <span className="text-body-sm text-[color:var(--color-ink-600)]">

@@ -150,9 +150,9 @@ export function HistorySidebar({ dict, locale }: Props) {
       aria-label={dict.workspace.history}
       className="grid min-h-0 grid-rows-[auto_auto_1fr_auto] border-r border-[color:var(--color-line)] bg-[color:var(--color-surface)]"
     >
-      <div className="flex h-14 items-center border-b border-[color:var(--color-line)] px-4">
+      <div className="flex h-16 items-center border-b border-[color:var(--color-line)] px-4">
         <Link href="/" className="flex items-center">
-          <Wordmark height={22} />
+          <Wordmark height={40} />
         </Link>
       </div>
 

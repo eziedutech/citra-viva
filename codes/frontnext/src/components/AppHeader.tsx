@@ -32,7 +32,7 @@ export function AppHeader({ dict, locale, current }: Props) {
       href={href}
       aria-current={active ? 'page' : undefined}
       className={[
-        'text-caption flex h-14 items-center border-b-2 px-1 transition-colors duration-150',
+        'text-caption flex h-16 items-center border-b-2 px-1 transition-colors duration-150',
         active
           ? 'border-[color:var(--color-primary-500)] text-[color:var(--color-ink-900)]'
           : 'border-transparent text-[color:var(--color-ink-600)] hover:text-[color:var(--color-ink-900)]',
@@ -44,9 +44,9 @@ export function AppHeader({ dict, locale, current }: Props) {
 
   return (
     <header className="sticky top-0 z-40 border-b border-[color:var(--color-line)] bg-[color:var(--color-surface)]">
-      <div className="mx-auto flex h-14 w-full max-w-[1120px] items-center gap-8 px-6">
+      <div className="mx-auto flex h-16 w-full max-w-[1120px] items-center gap-8 px-6">
         <Link href="/" className="flex shrink-0 items-center">
-          <Wordmark height={22} />
+          <Wordmark height={40} />
         </Link>
 
         <nav aria-label={dict.nav.label} className="flex items-center gap-6">

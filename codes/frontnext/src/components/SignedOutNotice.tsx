@@ -32,7 +32,7 @@ export function SignedOutNotice({ dict, reason }: Props) {
   return (
     <main className="grid min-h-dvh place-items-center bg-[color:var(--color-canvas)] px-6">
       <div className="w-full max-w-[46ch] border border-[color:var(--color-line)] bg-[color:var(--color-surface)] p-8">
-        <Wordmark height={24} className="mb-6" />
+        <Wordmark height={40} className="mb-6" />
 
         <h1 className="text-h2 mb-3">
           {locked ? dict.auth.lockedTitle : dict.auth.signedOutTitle}

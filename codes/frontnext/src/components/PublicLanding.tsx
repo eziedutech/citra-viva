@@ -155,8 +155,8 @@ export function PublicLanding({ dict, locale }: Props) {
   return (
     <div className="flex min-h-dvh flex-col">
       <header className="border-b border-[color:var(--color-line)] bg-[color:var(--color-surface)]">
-        <div className="mx-auto flex h-14 w-full max-w-[1180px] items-center px-6">
-          <Wordmark height={26} />
+        <div className="mx-auto flex h-16 w-full max-w-[1180px] items-center px-6">
+          <Wordmark height={40} />
           <span className="ml-auto flex items-center gap-4">
             <Link
               href="/panduan"
