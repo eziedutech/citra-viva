@@ -51,16 +51,29 @@ export async function transcribe(recording: Blob, send: Fetcher = fetch): Promis
  * The caller owns the returned object URL and must revoke it: one of these
  * pins its blob for the life of the document, and a defense produces many.
  */
-export function audioUrlFrom(base64: string, mimeType: string): string {
+/** Base64 to raw bytes, which is what the browser cache stores. */
+export function bytesFrom(base64: string): ArrayBuffer {
   const binary = atob(base64);
   const bytes = new Uint8Array(binary.length);
   for (let index = 0; index < binary.length; index += 1) {
     bytes[index] = binary.charCodeAt(index);
   }
+  return bytes.buffer;
+}
+
+export function urlFromBytes(bytes: ArrayBuffer, mimeType: string): string {
   return URL.createObjectURL(new Blob([bytes], { type: mimeType || 'audio/wav' }));
 }
 
-export async function speak(text: string, send: Fetcher = fetch): Promise<string> {
+export function audioUrlFrom(base64: string, mimeType: string): string {
+  return urlFromBytes(bytesFrom(base64), mimeType);
+}
+
+/** Synthesise a line and return its bytes, so the caller can keep them. */
+export async function speakBytes(
+  text: string,
+  send: Fetcher = fetch,
+): Promise<{ bytes: ArrayBuffer; mime: string }> {
   const response = await send('/api/speech/say', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -69,11 +82,13 @@ export async function speak(text: string, send: Fetcher = fetch): Promise<string
   const data = await response.json();
   if (!response.ok) throw new Error(data.error ?? 'The question could not be read aloud.');
 
-  const binary = atob(String(data.audio_base64 ?? ''));
-  const bytes = new Uint8Array(binary.length);
-  for (let index = 0; index < binary.length; index += 1) {
-    bytes[index] = binary.charCodeAt(index);
-  }
+  return {
+    bytes: bytesFrom(String(data.audio_base64 ?? '')),
+    mime: String(data.mime_type ?? 'audio/wav'),
+  };
+}
 
-  return URL.createObjectURL(new Blob([bytes], { type: data.mime_type || 'audio/wav' }));
+export async function speak(text: string, send: Fetcher = fetch): Promise<string> {
+  const { bytes, mime } = await speakBytes(text, send);
+  return urlFromBytes(bytes, mime);
 }

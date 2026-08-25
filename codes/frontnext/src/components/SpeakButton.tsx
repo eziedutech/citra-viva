@@ -5,7 +5,8 @@ import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '@/components/AuthProvider';
 import { Icon } from '@/components/Icon';
 import type { Dictionary } from '@/lib/i18n';
-import { audioUrlFrom, speak } from '@/lib/speech';
+import { bytesFrom, speakBytes, urlFromBytes } from '@/lib/speech';
+import { recallVoice, rememberVoice } from '@/lib/voice-cache';
 
 interface Props {
   /** Examiner text, exactly as it stands in the transcript. */
@@ -69,11 +70,31 @@ export function SpeakButton({ text, dict, audio = null, autoPlay = false }: Prop
 
     setBusy(true);
     try {
-      // Made during the wait the student already had, so there is no second
-      // one here. Fetching is the fallback for a turn that arrived without it.
-      const source = audio?.base64
-        ? audioUrlFrom(audio.base64, audio.mime)
-        : await speak(text, authedFetch);
+      // Three places the audio can come from, cheapest first.
+      //
+      // The browser's own store is tried before anything else, because it is
+      // the only one that survives a refresh: the server caches speech in the
+      // memory of whichever container answered, and that service scales to
+      // zero and runs several instances, so a replay often lands somewhere
+      // that never made this line and pays for it again.
+      let bytes: ArrayBuffer;
+      let mime: string;
+
+      const remembered = await recallVoice(text);
+      if (remembered) {
+        ({ bytes, mime } = remembered);
+      } else if (audio?.base64) {
+        // Made during the wait the student already had, so there is no second
+        // one here.
+        bytes = bytesFrom(audio.base64);
+        mime = audio.mime || 'audio/wav';
+        void rememberVoice(text, bytes, mime);
+      } else {
+        ({ bytes, mime } = await speakBytes(text, authedFetch));
+        void rememberVoice(text, bytes, mime);
+      }
+
+      const source = urlFromBytes(bytes, mime);
       url.current = source;
 
       const element = new Audio(source);
