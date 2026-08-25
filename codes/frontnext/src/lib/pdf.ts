@@ -84,10 +84,26 @@ export async function downloadReportPdf(
     logoData(),
   ]);
 
-  const container = (fonts as { default?: unknown }).default ?? fonts;
-  (pdfMake as unknown as { addVirtualFileSystem: (vfs: unknown) => void }).addVirtualFileSystem(
-    container,
-  );
+  // The font module exports a container, not a file system.
+  //
+  // It is shaped { vfs, fonts }, and addVirtualFileSystem wants the vfs alone.
+  // Handing it the whole container throws a TypeError about the argument type,
+  // which is caught upstream and shown as "the PDF could not be built": the
+  // export failed for a reason that had nothing to do with the report.
+  const module_ = fonts as { default?: unknown };
+  const container = (module_.default ?? fonts) as {
+    vfs?: unknown;
+    fonts?: unknown;
+  };
+
+  const engine = pdfMake as unknown as {
+    addVirtualFileSystem: (vfs: unknown) => void;
+    fonts?: unknown;
+    createPdf: (definition: unknown) => { download: (name: string) => void };
+  };
+
+  engine.addVirtualFileSystem(container.vfs ?? container);
+  if (container.fonts) engine.fonts = container.fonts;
 
   const assessment = summary.assessment;
   const advices = dict.slideover.score.advices as Record<string, string>;
@@ -270,7 +286,5 @@ export async function downloadReportPdf(
     content,
   };
 
-  (pdfMake as unknown as { createPdf: (definition: unknown) => { download: (name: string) => void } })
-    .createPdf(document)
-    .download(`citra-viva-${session.session_id}.pdf`);
+  engine.createPdf(document).download(`citra-viva-${session.session_id}.pdf`);
 }
