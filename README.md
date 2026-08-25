@@ -66,7 +66,7 @@ Built for the **All Things Agentic Hackathon** (Google and Devpost), category *C
 | Field | Answer |
 |---|---|
 | **Category** | Collaborative Partner |
-| **Model** | `gemini-3.5-flash`, on the Gemini Enterprise Agent Platform (formerly Vertex AI) |
+| **Model** | `gemini-3.7-flash`, on the Gemini Enterprise Agent Platform (formerly Vertex AI) |
 | **Google agent framework** | **Google ADK** and the **Google GenAI SDK** |
 | **Google Cloud services** | Cloud Run, Firestore, Firebase Authentication, Cloud Trace, Cloud Build, Artifact Registry |
 | **Additional Google AI models** | `gemini-2.5-flash-tts` for the examiner's voice, `gemini-live-2.5-flash-native-audio` for streaming transcription of the student's |
@@ -80,7 +80,7 @@ Compliance with the three the rules require: Gemini 3.5 or newer, at least one G
 
 | Google technology | Used while building it | Used inside the application |
 |---|---|---|
-| **Gemini 3.5 Flash** | Prompts were tuned against the live model through `scripts/run_draft_analyzer.py`, `scripts/run_viva_session.py`, and four gated live test files. A prompt cannot be developed against anything but real output | The reasoning behind all five agents. Structured JSON, global endpoint |
+| **Gemini 3.7 Flash** | Prompts were tuned against the live model through `scripts/run_draft_analyzer.py`, `scripts/run_viva_session.py`, and four gated live test files. A prompt cannot be developed against anything but real output | The reasoning behind all five agents. Structured JSON, global endpoint |
 | **Gemini 2.5 Flash TTS** | Measured directly, which is how a phrase in our own prompt was found to be making the voice read at 13.7 seconds where 8.1 was correct | The examiner's voice, synthesised alongside the question rather than after it |
 | **Gemini Live 2.5 Flash Native Audio** | Four of its behaviours were established by testing rather than documentation, including that automatic turn detection silently truncates a long answer | Streaming transcription of a spoken answer, over a WebSocket, while it is being spoken |
 | **Google ADK** | The framework that enforced the architecture while it was being written. The no-handoff rule is an ADK flag, held in place by 24 tests on every change, and `scripts/run_adk_agent.py` exists solely to prove the ADK path runs end to end against the live model | Declares all five agents as `LlmAgent` with a bound `output_schema`, and refuses transfer between them |
@@ -176,7 +176,7 @@ flowchart TD
     QS -.-> GEM
     EX -.-> GEM
     SR -.-> GEM
-    GEM["Gemini 3.5 Flash<br/>Gemini Enterprise Agent Platform"]
+    GEM["Gemini 3.7 Flash<br/>Gemini Enterprise Agent Platform"]
 
     ORCH <-->|"session state, manuscript, weakness profile"| FS[("Firestore")]
     ORCH -.->|"one span per agent call"| OT["Cloud Trace"]
@@ -217,7 +217,7 @@ The practical value is containment. A misbehaving agent cannot recruit another o
 
 | Component | Choice |
 |---|---|
-| Model | `gemini-3.5-flash` on **Gemini Enterprise Agent Platform** (formerly Vertex AI), global endpoint |
+| Model | `gemini-3.7-flash` on **Gemini Enterprise Agent Platform** (formerly Vertex AI), global endpoint |
 | Agent framework | **Google ADK** for the agent definitions, **Google GenAI SDK** for the serving path |
 | Backend | Python 3.12, FastAPI, Pydantic v2, managed with `uv` |
 | Frontend | Next.js 16, React 19, Tailwind 4, TypeScript |
@@ -371,7 +371,7 @@ gcloud projects add-iam-policy-binding YOUR_PROJECT_ID --member="serviceAccount:
 Deploy the API:
 
 ```bash
-cd codes/backpy && gcloud run deploy citra-viva-api --source . --region=asia-southeast2 --allow-unauthenticated --memory=1Gi --timeout=600 --set-env-vars="GOOGLE_CLOUD_PROJECT=YOUR_PROJECT_ID,GOOGLE_CLOUD_LOCATION=global,GOOGLE_GENAI_USE_VERTEXAI=true,GEMINI_MODEL=gemini-3.5-flash,GEMINI_VOICE_MODEL=gemini-2.5-flash-tts,GEMINI_LIVE_MODEL=gemini-live-2.5-flash-native-audio,GEMINI_LIVE_LOCATION=us-central1"
+cd codes/backpy && gcloud run deploy citra-viva-api --source . --region=asia-southeast2 --allow-unauthenticated --memory=1Gi --timeout=600 --set-env-vars="GOOGLE_CLOUD_PROJECT=YOUR_PROJECT_ID,GOOGLE_CLOUD_LOCATION=global,GOOGLE_GENAI_USE_VERTEXAI=true,GEMINI_MODEL=gemini-3.7-flash,GEMINI_VOICE_MODEL=gemini-2.5-flash-tts,GEMINI_LIVE_MODEL=gemini-live-2.5-flash-native-audio,GEMINI_LIVE_LOCATION=us-central1"
 ```
 
 Then the web app, pointing at the API URL the previous command printed:

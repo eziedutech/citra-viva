@@ -22,7 +22,7 @@ class Settings(BaseSettings):
     google_genai_use_vertexai: bool = True
 
     # Model
-    gemini_model: str = "gemini-3.5-flash"
+    gemini_model: str = "gemini-3.7-flash"
     gemini_temperature: float = 0.2
     gemini_max_output_tokens: int = 16384
     gemini_max_retries: int = 4

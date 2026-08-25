@@ -10,6 +10,9 @@ interface Props {
   progress: QuestionProgress[];
   currentIndex: number;
   dict: Dictionary;
+  /** The question the student is looking at, shared with the other panels. */
+  selectedQuestionId?: string;
+  onSelectQuestion?: (questionId: string) => void;
 }
 
 /**
@@ -19,7 +22,14 @@ interface Props {
  * that is still ahead cannot be clicked: the point of a defense is that the
  * student does not get to see what is coming.
  */
-export function QuestionSidebar({ questions, progress, currentIndex, dict }: Props) {
+export function QuestionSidebar({
+  questions,
+  progress,
+  currentIndex,
+  dict,
+  selectedQuestionId = '',
+  onSelectQuestion,
+}: Props) {
   return (
     <nav
       aria-label={dict.sidebar.plan}
@@ -39,15 +49,24 @@ export function QuestionSidebar({ questions, progress, currentIndex, dict }: Pro
             const active = index === currentIndex;
             const gap = Boolean(state?.gap_recorded);
 
-            return (
-              <li key={question.id}>
+            const selected = question.id === selectedQuestionId;
+            // A question still ahead stays unreachable. Being able to click
+            // into what has not been asked yet would let a student read the
+            // examination in advance, which is the one thing this plan must
+            // never allow.
+            const reachable = Boolean(onSelectQuestion) && (done || active);
+
+            const body = (
                 <div
                   aria-current={active ? 'step' : undefined}
                   className={[
-                    'flex min-h-10 items-start gap-3 px-3 py-2 transition-colors duration-150',
-                    active
-                      ? 'border-l-2 border-[color:var(--color-primary-500)] bg-[color:var(--color-primary-100)]'
-                      : 'border-l-2 border-transparent',
+                    'flex min-h-10 w-full items-start gap-3 px-3 py-2 text-left transition-colors duration-150',
+                    selected
+                      ? 'border-l-2 border-[color:var(--color-primary-700)] bg-[color:var(--color-primary-100)]'
+                      : active
+                        ? 'border-l-2 border-[color:var(--color-primary-500)] bg-[color:var(--color-primary-100)]'
+                        : 'border-l-2 border-transparent',
+                    reachable && !selected ? 'hover:bg-[color:var(--color-hover)]' : '',
                     !done && !active ? 'text-[color:var(--color-ink-400)]' : '',
                   ].join(' ')}
                 >
@@ -106,6 +125,22 @@ export function QuestionSidebar({ questions, progress, currentIndex, dict }: Pro
                     ) : null}
                   </span>
                 </div>
+            );
+
+            return (
+              <li key={question.id}>
+                {reachable ? (
+                  <button
+                    type="button"
+                    onClick={() => onSelectQuestion?.(selected ? '' : question.id)}
+                    aria-pressed={selected}
+                    className="block w-full"
+                  >
+                    {body}
+                  </button>
+                ) : (
+                  body
+                )}
               </li>
             );
           })}

@@ -39,6 +39,7 @@ from app.models.session import (
 )
 from app.models.weakness_map import AnalysisResult
 from app.observability import agent_span, record
+from app.scoring import assess_session
 from app.storage.draft_store import DraftStore, InMemoryDraftStore
 from app.storage.firestore import save_weakness_map
 from app.storage.session_store import (
@@ -374,6 +375,8 @@ class Orchestrator:
                 timestamp=datetime.now(UTC),
                 evaluated_strength=evaluation.strength.value,
                 decision=evaluation.decision.value,
+                criteria_met=list(evaluation.criteria_met),
+                criteria_missed=list(evaluation.criteria_missed),
             )
         )
         if state.is_finished():
@@ -460,6 +463,12 @@ class Orchestrator:
         summary.rubric_revealed_for = [
             item.question_id for item in state.progress if item.rubric_revealed
         ]
+
+        # Computed here rather than asked of the reflection agent, and that is
+        # the point: the number comes from what the examiner recorded turn by
+        # turn, so the same transcript always produces the same score and every
+        # part of it can be traced to an answer that was actually judged.
+        summary.assessment = assess_session(state)
 
         state.summary = summary
         state.status = SessionStatus.COMPLETED

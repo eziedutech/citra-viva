@@ -207,6 +207,42 @@ const en = {
     patterns: 'Patterns carried into your next session',
     patternsHelp: 'Paste these when starting your next session so they are tested first.',
     closingRemark: 'Examiner closing',
+    score: {
+      heading: 'Practice indicator',
+      outOf: '{score} out of {maximum}',
+      hint:
+        'Worked out from what the examiner recorded during the session, not asked of a model. The same transcript always gives the same number, and every part of it is shown below. It is a practice indicator, not a mark for your research and not a prediction of your real result.',
+      scored: '{count} question(s) scored',
+      unanswered: '{count} not reached, left out rather than counted as zero',
+      breakdown: 'How it was worked out',
+      weight: 'weight {weight}',
+      base: 'judged {strength}, worth {base}',
+      advice: 'What to work on',
+      adviceHint:
+        'Each line counts something the examiner wrote down during the session, so you can find every one of them in the transcript.',
+      advices: {
+        close_the_gaps:
+          '{count} point(s) ended undefended. Those are listed above, and they are the most concrete thing to prepare before the next session.',
+        answer_or_concede:
+          '{count} answer(s) were judged evasive. Saying plainly that you do not know scores higher here than talking around the point, and it reads better in a real viva too.',
+        answer_the_question_asked:
+          'You were offered a clarification {count} time(s), which happens when an answer addresses something other than what was asked. Read the question back to yourself before answering.',
+        try_without_the_rubric:
+          'You revealed the marking scheme on {count} question(s). Try the next session without it and see which of those still hold.',
+        lead_with_the_limitation:
+          'You held {count} point(s), but only after being pressed. Naming the limitation yourself, before you are asked, is what an examiner is listening for.',
+        weakest_question: 'Start with this one. It cost the most.',
+        held_throughout:
+          'All {count} question(s) held. Carry the patterns below into a harder draft rather than repeating this one.',
+      },
+    },
+    judgments: {
+      heading: 'Every question, as it was judged',
+      current: 'Being examined now',
+      pending: 'Not yet judged',
+      empty: 'Judgments appear here as each question closes.',
+    },
+    print: 'Save as PDF',
     severity: { high: 'High', medium: 'Medium', low: 'Low' },
     strength: {
       strong: 'Held',
@@ -615,7 +651,7 @@ const en = {
           },
           {
             title: 'The models',
-            body: 'Gemini 3.5 Flash does the reasoning. Two further Gemini models handle voice: one speaks the examiner’s questions, one transcribes your answer while you are still speaking.',
+            body: 'Gemini 3.7 Flash does the reasoning. Two further Gemini models handle voice: one speaks the examiner’s questions, one transcribes your answer while you are still speaking.',
           },
           {
             title: 'Where it runs',
@@ -1026,6 +1062,42 @@ const id: Dictionary = {
     patterns: 'Pola yang dibawa ke sesi berikutnya',
     patternsHelp: 'Tempelkan poin ini saat memulai sesi berikutnya agar diuji lebih dulu.',
     closingRemark: 'Penutup penguji',
+    score: {
+      heading: 'Indikator latihan',
+      outOf: '{score} dari {maximum}',
+      hint:
+        'Dihitung dari apa yang dicatat penguji selama sesi, bukan diminta ke model. Transkrip yang sama selalu menghasilkan angka yang sama, dan seluruh hitungannya ditampilkan di bawah. Ini indikator latihan, bukan nilai untuk riset Anda dan bukan ramalan hasil sidang sebenarnya.',
+      scored: '{count} pertanyaan dinilai',
+      unanswered: '{count} tidak sempat ditanyakan, dikeluarkan dari hitungan alih-alih dihitung nol',
+      breakdown: 'Cara menghitungnya',
+      weight: 'bobot {weight}',
+      base: 'dinilai {strength}, bernilai {base}',
+      advice: 'Yang perlu ditingkatkan',
+      adviceHint:
+        'Setiap baris menghitung sesuatu yang dicatat penguji selama sesi, jadi Anda bisa menemukan semuanya di transkrip.',
+      advices: {
+        close_the_gaps:
+          '{count} poin berakhir tanpa pembelaan. Semuanya tercantum di atas, dan itu hal paling konkret untuk disiapkan sebelum sesi berikutnya.',
+        answer_or_concede:
+          '{count} jawaban dinilai mengelak. Mengatakan terus terang bahwa Anda belum tahu bernilai lebih tinggi di sini daripada berputar di sekitar poinnya, dan itu juga lebih baik di sidang sungguhan.',
+        answer_the_question_asked:
+          'Anda diberi kesempatan memperjelas sebanyak {count} kali, dan itu terjadi ketika jawaban menyasar hal lain dari yang ditanyakan. Baca ulang pertanyaannya sebelum menjawab.',
+        try_without_the_rubric:
+          'Anda membuka skema penilaian pada {count} pertanyaan. Coba sesi berikutnya tanpa itu dan lihat mana yang masih bertahan.',
+        lead_with_the_limitation:
+          'Anda mempertahankan {count} poin, tetapi baru setelah didesak. Menyebut sendiri keterbatasannya sebelum ditanya adalah yang justru dicari penguji.',
+        weakest_question: 'Mulai dari yang ini. Paling mahal biayanya.',
+        held_throughout:
+          'Seluruh {count} pertanyaan bertahan. Bawa pola di bawah ke draf yang lebih berat, bukan mengulang yang ini.',
+      },
+    },
+    judgments: {
+      heading: 'Setiap pertanyaan, sebagaimana dinilai',
+      current: 'Sedang diuji',
+      pending: 'Belum dinilai',
+      empty: 'Penilaian muncul di sini setiap kali satu pertanyaan selesai.',
+    },
+    print: 'Simpan sebagai PDF',
     severity: { high: 'Tinggi', medium: 'Sedang', low: 'Rendah' },
     strength: {
       strong: 'Bertahan',
@@ -1434,7 +1506,7 @@ const id: Dictionary = {
           },
           {
             title: 'Modelnya',
-            body: 'Gemini 3.5 Flash yang melakukan penalaran. Dua model Gemini lain menangani suara: satu membacakan pertanyaan penguji, satu mentranskrip jawaban Anda sementara Anda masih bicara.',
+            body: 'Gemini 3.7 Flash yang melakukan penalaran. Dua model Gemini lain menangani suara: satu membacakan pertanyaan penguji, satu mentranskrip jawaban Anda sementara Anda masih bicara.',
           },
           {
             title: 'Berjalan di mana',

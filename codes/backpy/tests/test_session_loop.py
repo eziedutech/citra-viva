@@ -467,3 +467,22 @@ def test_the_weakness_map_travels_with_the_session():
     # error, it simply has no answer.
     assert state.finding_for("") is None
     assert state.finding_for("W99") is None
+
+def test_each_examiner_turn_keeps_how_that_answer_was_judged():
+    """So a finished session can show every judgment, not only the last one.
+
+    Without this the interface can only display the evaluation still sitting in
+    component state, and every earlier question looks as though it was never
+    judged at all.
+    """
+    runner = ScriptedRunner([evaluation()])
+    orchestrator = Orchestrator(runner=runner)
+    orchestrator.start_session(DRAFT, session_id="s-criteria")
+    orchestrator.submit_answer("s-criteria", "Jawaban pertama.")
+
+    state = orchestrator.load_session("s-criteria")
+    examiner = [turn for turn in state.transcript if turn.role == "examiner"]
+    judged = [turn for turn in examiner if turn.evaluated_strength]
+
+    assert judged, "the examiner turn should carry its own judgement"
+    assert judged[-1].criteria_met or judged[-1].criteria_missed

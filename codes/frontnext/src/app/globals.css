@@ -356,3 +356,46 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Printing the report, which is how it becomes a PDF.
+ *
+ * No PDF library. The browser already has a typesetter and a PDF writer, and
+ * using them means the printed report inherits this design system instead of
+ * whatever a bundled library decides fonts should look like.
+ *
+ * Visibility rather than display, because collapsing the ancestors would take
+ * the report's own layout down with them. */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  .print-report,
+  .print-report * {
+    visibility: visible;
+  }
+
+  .print-report {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    padding: 0;
+    overflow: visible;
+  }
+
+  /* The workings are collapsed on screen because they are long. On paper there
+   * is nowhere to click, so a report that printed without them would be the
+   * number without its evidence. */
+  .print-report details > *:not(summary) {
+    display: block !important;
+  }
+
+  .print-report summary {
+    list-style: none;
+    font-weight: 500;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+}

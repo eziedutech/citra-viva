@@ -4,10 +4,13 @@ import type { SessionState, SessionSummary } from '@/lib/types';
 /**
  * The session, as a document the student keeps.
  *
- * Markdown rather than PDF, and built in the browser from what is already on
- * screen rather than asked of the server. A report a student cannot take with
- * them is a report they will read once; one that opens in the editor they write
- * their thesis in is one they can work against.
+ * Markdown, built in the browser from what is already on screen rather than
+ * asked of the server. A report a student cannot take with them is a report
+ * they will read once; one that opens in the editor they write their thesis in
+ * is one they can work against. A PDF is offered separately, through the
+ * browser's own print dialogue, because the two are for different readers:
+ * this one is pasted back into the next session, that one is handed to a
+ * supervisor.
  *
  * Everything here is copied, never rewritten. The examiner's words, the
  * student's answers, and the quoted passages appear exactly as they do in the
@@ -35,6 +38,39 @@ export function buildReportMarkdown(
     }
   }
   lines.push('');
+
+  // The indicator goes near the top, with its workings, because a report that
+  // states a number and explains it three pages later is a report that gets
+  // quoted without the explanation.
+  const assessment = summary.assessment;
+  if (assessment) {
+    lines.push(`## ${dict.slideover.score.heading}`);
+    lines.push('');
+    lines.push(`**${assessment.score.toFixed(2)} / ${assessment.maximum.toFixed(2)}**`);
+    lines.push('');
+    lines.push(fill(dict.slideover.score.scored, { count: assessment.questions_scored }));
+    lines.push('');
+
+    if (assessment.advice.length > 0) {
+      const advices = dict.slideover.score.advices as Record<string, string>;
+      lines.push(`### ${dict.slideover.score.advice}`);
+      lines.push('');
+      for (const item of assessment.advice) {
+        lines.push(`- ${fill(advices[item.code] ?? item.code, { count: item.count })}`);
+      }
+      lines.push('');
+    }
+
+    if (assessment.breakdown.length > 0) {
+      lines.push(`### ${dict.slideover.score.breakdown}`);
+      lines.push('');
+      for (const item of assessment.breakdown) {
+        lines.push(`- **${item.points.toFixed(2)}** ${item.question}`);
+        for (const line of item.deductions) lines.push(`  - ${line}`);
+      }
+      lines.push('');
+    }
+  }
 
   const section = (title: string, items: string[], empty = '') => {
     lines.push(`## ${title}`);

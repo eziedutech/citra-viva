@@ -13,6 +13,7 @@ from enum import StrEnum
 
 from pydantic import BaseModel, Field
 
+from app.models.assessment import SessionAssessment
 from app.models.question_strategy import PlannedQuestion
 from app.models.weakness_map import WeaknessFinding
 
@@ -90,6 +91,15 @@ class TranscriptTurn(BaseModel):
     evaluated_strength: str = ""
     decision: str = ""
 
+    # Carried on the turn so a finished session can show how each answer was
+    # judged, not only the most recent one. Both default to empty, so sessions
+    # recorded before this existed still load and simply show less.
+    #
+    # `reasoning` is deliberately not among them. It is written for the
+    # examiner rather than the student, and this project keeps it that way.
+    criteria_met: list[str] = Field(default_factory=list)
+    criteria_missed: list[str] = Field(default_factory=list)
+
 
 class QuestionProgress(BaseModel):
     """How far the examination of one planned question has gone.
@@ -134,6 +144,14 @@ class SessionSummary(BaseModel):
             "Questions where the student opened the marking criteria before "
             "answering. Filled from the session record by code, never by the "
             "model, so it cannot be flattered away."
+        ),
+    )
+    assessment: SessionAssessment | None = Field(
+        default=None,
+        description=(
+            "The 4.00 indicator, computed from this transcript. Optional "
+            "because sessions closed before scoring existed do not carry one, "
+            "and a missing score is not a score of zero."
         ),
     )
 

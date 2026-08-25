@@ -97,6 +97,8 @@ export interface TranscriptTurn {
   timestamp: string | null;
   evaluated_strength: string;
   decision: string;
+  criteria_met?: string[];
+  criteria_missed?: string[];
 }
 
 export interface QuestionProgress {
@@ -110,12 +112,39 @@ export interface QuestionProgress {
   closed: boolean;
 }
 
+export interface QuestionScore {
+  question_id: string;
+  question: string;
+  weight: number;
+  base: number;
+  deductions: string[];
+  points: number;
+  strength: string;
+}
+
+/** What to work on, named by a code the interface turns into a sentence. */
+export interface Advice {
+  code: string;
+  count: number;
+  question_id: string;
+}
+
+export interface SessionAssessment {
+  score: number;
+  maximum: number;
+  questions_scored: number;
+  questions_unanswered: number;
+  breakdown: QuestionScore[];
+  advice: Advice[];
+}
+
 export interface SessionSummary {
   strong_points: string[];
   remaining_gaps: string[];
   recurring_gap_patterns: string[];
   closing_remark: string;
   rubric_revealed_for: string[];
+  assessment: SessionAssessment | null;
 }
 
 export interface SessionState {

@@ -66,6 +66,17 @@ export function DefenseRoom({ initial, dict, locale }: Props) {
     mime: string;
   } | null>(null);
   const [voiceNote, setVoiceNote] = useState(false);
+
+  /**
+   * The question the student is looking at, shared by all three panels.
+   *
+   * Empty means they are following the defense rather than reading back over
+   * it, which is the ordinary case: nothing is highlighted and the room behaves
+   * as it always did. Selecting one lights up its turns in the transcript and
+   * opens its judgement on the right, so a question, what was said about it,
+   * and how it was judged can be read as one thing instead of three.
+   */
+  const [selectedQuestionId, setSelectedQuestionId] = useState('');
   const transcriptEnd = useRef<HTMLDivElement>(null);
   const answerBox = useRef<HTMLTextAreaElement>(null);
 
@@ -282,6 +293,13 @@ export function DefenseRoom({ initial, dict, locale }: Props) {
           progress={session.progress}
           currentIndex={session.current_index}
           dict={dict}
+          selectedQuestionId={selectedQuestionId}
+          onSelectQuestion={(id) => {
+            setSelectedQuestionId(id);
+            // Selecting a question is a request to see how it went, so the
+            // panel that answers that is the one brought forward.
+            if (id) setTab('evaluation');
+          }}
         />
 
         <main className="grid min-h-0 grid-rows-[1fr_auto] bg-[color:var(--color-canvas)]">
@@ -294,11 +312,20 @@ export function DefenseRoom({ initial, dict, locale }: Props) {
               {session.transcript.map((turn, index) => (
                 <article
                   key={`${index}-${turn.text.slice(0, 24)}`}
-                  className={
+                  className={[
                     turn.role === 'examiner'
                       ? 'border-l-2 border-[color:var(--color-ai)] bg-[color:var(--color-surface)] p-4'
-                      : 'border border-[color:var(--color-line)] bg-[color:var(--color-primary-050)] p-4'
-                  }
+                      : 'border border-[color:var(--color-line)] bg-[color:var(--color-primary-050)] p-4',
+                    // Dimmed rather than hidden. Everything said stays readable,
+                    // because a transcript that removes what is not selected is
+                    // no longer the record it is supposed to be.
+                    selectedQuestionId && turn.question_id !== selectedQuestionId
+                      ? 'opacity-40 transition-opacity duration-150'
+                      : 'transition-opacity duration-150',
+                    selectedQuestionId && turn.question_id === selectedQuestionId
+                      ? 'ring-1 ring-[color:var(--color-primary-500)]'
+                      : '',
+                  ].join(' ')}
                 >
                   <p
                     className={[
@@ -522,6 +549,8 @@ export function DefenseRoom({ initial, dict, locale }: Props) {
           finished={finished}
           closing={closing}
           onClose={() => void closeSession()}
+          selectedQuestionId={selectedQuestionId}
+          onSelectQuestion={setSelectedQuestionId}
           activeTab={tab}
           onTabChange={setTab}
           dict={dict}

@@ -4,10 +4,11 @@ import { useEffect, useRef, useState } from 'react';
 
 import { Hint } from '@/components/Hint';
 import { Icon } from '@/components/Icon';
-import type { Dictionary, Locale } from '@/lib/i18n';
+import { fill, type Dictionary, type Locale } from '@/lib/i18n';
 import { buildReportMarkdown, downloadReport } from '@/lib/report';
 import type {
   AnswerEvaluation,
+  SessionAssessment,
   SessionState,
   SessionSummary,
   WeaknessFinding,
@@ -100,6 +101,142 @@ function FindingCard({
   );
 }
 
+/**
+ * Every question that has been judged, not only the most recent one.
+ *
+ * The panel used to hold a single evaluation in component state, so each new
+ * answer erased the one before it and a finished session looked as though only
+ * its last question had ever been examined. The judgements were never lost:
+ * they were written onto the transcript as they happened, which is where these
+ * come from.
+ *
+ * The question being examined now is open. The rest are closed, because a
+ * finished question is a reference rather than something to read again.
+ */
+function JudgmentHistory({
+  session,
+  selected,
+  onSelect,
+  dict,
+}: {
+  session: SessionState;
+  selected: string;
+  onSelect: (questionId: string) => void;
+  dict: Dictionary;
+}) {
+  const strengths = dict.slideover.strength as Record<string, string>;
+  const decisions = dict.slideover.decision as Record<string, string>;
+
+  // The last judged examiner turn for each question, which is the judgement
+  // that stood when the question closed.
+  const judged = new Map<string, (typeof session.transcript)[number]>();
+  for (const turn of session.transcript) {
+    if (turn.role === 'examiner' && turn.evaluated_strength && turn.question_id) {
+      judged.set(turn.question_id, turn);
+    }
+  }
+
+  const rows = session.questions.filter((question) => judged.has(question.id));
+  if (rows.length === 0) {
+    return (
+      <p className="text-body-sm text-[color:var(--color-ink-600)]">
+        {dict.slideover.judgments.empty}
+      </p>
+    );
+  }
+
+  return (
+    <section>
+      <h4 className="text-caption mb-2 font-medium text-[color:var(--color-ink-600)]">
+        {dict.slideover.judgments.heading}
+      </h4>
+
+      <ul className="space-y-2">
+        {rows.map((question, index) => {
+          const turn = judged.get(question.id);
+          const open = question.id === selected;
+          return (
+            <li
+              key={question.id}
+              id={`judgment-${question.id}`}
+              className={[
+                'border transition-colors duration-150',
+                open
+                  ? 'border-[color:var(--color-primary-500)] bg-[color:var(--color-surface)]'
+                  : 'border-[color:var(--color-line)]',
+              ].join(' ')}
+            >
+              <button
+                type="button"
+                onClick={() => onSelect(open ? '' : question.id)}
+                aria-expanded={open}
+                className="flex w-full items-center gap-2 px-3 py-2 text-left"
+              >
+                <span className="text-micro w-5 shrink-0 tabular-nums text-[color:var(--color-ink-400)]">
+                  {String(index + 1).padStart(2, '0')}
+                </span>
+                <span className="text-body-sm flex-1 line-clamp-2">{question.question}</span>
+                <span className="text-micro shrink-0 rounded-[var(--radius-chip)] bg-[color:var(--color-tint-ai)] px-2 py-[2px] text-[color:var(--color-ai)]">
+                  {strengths[turn?.evaluated_strength ?? ''] ?? turn?.evaluated_strength}
+                </span>
+                <Icon name={open ? 'chevronUp' : 'chevronDown'} size={15} />
+              </button>
+
+              {open && turn ? (
+                <div className="border-t border-[color:var(--color-line)] px-3 py-3">
+                  <p className="text-micro mb-2 text-[color:var(--color-ink-400)]">
+                    {decisions[turn.decision] ?? turn.decision}
+                  </p>
+
+                  {(turn.criteria_met ?? []).length > 0 ? (
+                    <>
+                      <h5 className="text-caption mb-1 font-medium text-[color:var(--color-success)]">
+                        {dict.slideover.criteriaMet}
+                      </h5>
+                      <ul className="text-body-sm mb-3 space-y-1">
+                        {(turn.criteria_met ?? []).map((item) => (
+                          <li key={item} className="flex gap-2">
+                            <Icon
+                              name="check"
+                              size={16}
+                              className="mt-[4px] shrink-0 text-[color:var(--color-success)]"
+                            />
+                            <span>{item}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </>
+                  ) : null}
+
+                  {(turn.criteria_missed ?? []).length > 0 ? (
+                    <>
+                      <h5 className="text-caption mb-1 font-medium text-[color:var(--color-warning)]">
+                        {dict.slideover.criteriaMissed}
+                      </h5>
+                      <ul className="text-body-sm space-y-1">
+                        {(turn.criteria_missed ?? []).map((item) => (
+                          <li key={item} className="flex gap-2">
+                            <Icon
+                              name="alert"
+                              size={16}
+                              className="mt-[4px] shrink-0 text-[color:var(--color-warning)]"
+                            />
+                            <span>{item}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </>
+                  ) : null}
+                </div>
+              ) : null}
+            </li>
+          );
+        })}
+      </ul>
+    </section>
+  );
+}
+
 function EvaluationPanel({
   evaluation,
   dict,
@@ -177,6 +314,97 @@ function EvaluationPanel({
   );
 }
 
+/**
+ * The 4.00 indicator, with its arithmetic left open.
+ *
+ * The number is shown large because it is what a student looks for, and the
+ * workings are shown underneath because a number handed over without them is
+ * not something anyone can argue with. Everything here arrived computed from
+ * the transcript; nothing on this panel was generated.
+ */
+function AssessmentPanel({
+  assessment,
+  dict,
+}: {
+  assessment: SessionAssessment;
+  dict: Dictionary;
+}) {
+  const advices = dict.slideover.score.advices as Record<string, string>;
+  // The backend may name a strength this build does not know, so the lookup is
+  // widened and falls back to the raw value rather than rendering nothing.
+  const strengths = dict.slideover.strength as Record<string, string>;
+
+  return (
+    <section className="border border-[color:var(--color-line)] bg-[color:var(--color-surface)] p-4">
+      <h4 className="text-caption mb-1 flex items-center gap-[6px] font-medium text-[color:var(--color-ink-600)]">
+        {dict.slideover.score.heading}
+        <Hint text={dict.slideover.score.hint} align="center" />
+      </h4>
+
+      <p className="mb-1">
+        <span className="text-display tabular-nums text-[color:var(--color-primary-700)]">
+          {assessment.score.toFixed(2)}
+        </span>
+        <span className="text-body-sm ml-2 text-[color:var(--color-ink-400)]">
+          / {assessment.maximum.toFixed(2)}
+        </span>
+      </p>
+
+      <p className="text-micro mb-4 text-[color:var(--color-ink-400)]">
+        {fill(dict.slideover.score.scored, { count: assessment.questions_scored })}
+        {assessment.questions_unanswered > 0
+          ? ` · ${fill(dict.slideover.score.unanswered, {
+              count: assessment.questions_unanswered,
+            })}`
+          : ''}
+      </p>
+
+      {assessment.advice.length > 0 ? (
+        <div className="mb-4 border-l-2 border-[color:var(--color-primary-500)] bg-[color:var(--color-primary-050)] py-2 pl-3">
+          <h5 className="text-caption mb-1 flex items-center gap-[6px] font-medium text-[color:var(--color-primary-700)]">
+            {dict.slideover.score.advice}
+            <Hint text={dict.slideover.score.adviceHint} align="center" />
+          </h5>
+          <ul className="text-body-sm space-y-1">
+            {assessment.advice.map((item) => (
+              <li key={item.code + item.question_id}>
+                {fill(advices[item.code] ?? item.code, { count: item.count })}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+
+      <details>
+        <summary className="text-caption cursor-pointer text-[color:var(--color-ink-600)]">
+          {dict.slideover.score.breakdown}
+        </summary>
+        <ul className="mt-2 space-y-3">
+          {assessment.breakdown.map((item) => (
+            <li key={item.question_id} className="border-t border-[color:var(--color-line)] pt-2">
+              <p className="text-body-sm mb-1">{item.question}</p>
+              <p className="text-micro text-[color:var(--color-ink-400)]">
+                {fill(dict.slideover.score.base, {
+                  strength: strengths[item.strength] ?? item.strength,
+                  base: item.base.toFixed(2),
+                })}
+                {' · '}
+                {fill(dict.slideover.score.weight, { weight: item.weight.toFixed(1) })}
+              </p>
+              {item.deductions.map((line) => (
+                <p key={line} className="text-micro text-[color:var(--color-warning)]">
+                  {line}
+                </p>
+              ))}
+              <p className="text-caption tabular-nums">{item.points.toFixed(2)}</p>
+            </li>
+          ))}
+        </ul>
+      </details>
+    </section>
+  );
+}
+
 function ReportPanel({
   summary,
   session,
@@ -215,8 +443,12 @@ function ReportPanel({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="print-report space-y-6">
       <AiLabel hint={dict.slideover.hints.report}>{dict.slideover.reportIntro}</AiLabel>
+
+      {summary.assessment ? (
+        <AssessmentPanel assessment={summary.assessment} dict={dict} />
+      ) : null}
 
       <section>
         <h4 className="text-caption mb-2 font-medium text-[color:var(--color-success)]">
@@ -290,16 +522,29 @@ function ReportPanel({
         </section>
       ) : null}
 
-      <section className="border-t border-[color:var(--color-line)] pt-4">
+      <section className="no-print flex gap-2 border-t border-[color:var(--color-line)] pt-4">
         <button
           type="button"
           onClick={() =>
             downloadReport(session, buildReportMarkdown(session, summary, dict, locale))
           }
-          className="text-body-sm flex h-10 w-full items-center justify-center gap-2 rounded-[var(--radius-action)] border border-[color:var(--color-line)] px-4 transition-colors duration-150 hover:bg-[color:var(--color-hover)]"
+          className="text-body-sm flex h-10 flex-1 items-center justify-center gap-2 rounded-[var(--radius-action)] border border-[color:var(--color-line)] px-4 transition-colors duration-150 hover:bg-[color:var(--color-hover)]"
         >
           <Icon name="file" size={16} />
           {dict.report.download}
+        </button>
+
+        {/* The browser's own print dialogue, which writes a PDF. Both are
+            offered because they are not the same thing: Markdown is what gets
+            pasted back into the next session, and a PDF is what gets handed to
+            a supervisor. */}
+        <button
+          type="button"
+          onClick={() => window.print()}
+          className="text-body-sm flex h-10 flex-1 items-center justify-center gap-2 rounded-[var(--radius-action)] border border-[color:var(--color-line)] px-4 transition-colors duration-150 hover:bg-[color:var(--color-hover)]"
+        >
+          <Icon name="book" size={16} />
+          {dict.slideover.print}
         </button>
       </section>
 
@@ -326,6 +571,9 @@ interface Props {
   activeFindingId?: string;
   /** A finding the student asked to see, from the transcript. */
   focusFindingId?: string;
+  /** The question the student is looking at, shared across the three panels. */
+  selectedQuestionId?: string;
+  onSelectQuestion?: (questionId: string) => void;
   evaluation: AnswerEvaluation | null;
   summary: SessionSummary | null;
   finished: boolean;
@@ -342,6 +590,8 @@ export function Slideover({
   findings,
   activeFindingId = '',
   focusFindingId = '',
+  selectedQuestionId = '',
+  onSelectQuestion = () => {},
   evaluation,
   summary,
   finished,
@@ -402,7 +652,17 @@ export function Slideover({
         ) : null}
 
         {activeTab === 'evaluation' ? (
-          <EvaluationPanel evaluation={evaluation} dict={dict} />
+          <div className="space-y-6">
+            {/* The answer just judged, in full. The history underneath carries
+                every question that closed before it. */}
+            <EvaluationPanel evaluation={evaluation} dict={dict} />
+            <JudgmentHistory
+              session={session}
+              selected={selectedQuestionId}
+              onSelect={onSelectQuestion}
+              dict={dict}
+            />
+          </div>
         ) : null}
 
         {activeTab === 'report' ? (
