@@ -113,6 +113,20 @@ function FindingCard({
  * The question being examined now is open. The rest are closed, because a
  * finished question is a reference rather than something to read again.
  */
+/** How a judgement should look, which is not the same as who produced it. */
+function chipFor(strength: string): string {
+  if (strength === 'strong') {
+    return 'bg-[color:var(--color-tint-ok)] text-[color:var(--color-success)]';
+  }
+  if (strength === 'partial') {
+    return 'bg-[color:var(--color-tint-warn)] text-[color:var(--color-warning)]';
+  }
+  if (strength === 'weak' || strength === 'evasive') {
+    return 'bg-[color:var(--color-tint-danger)] text-[color:var(--color-danger)]';
+  }
+  return 'bg-[color:var(--color-tint-ai)] text-[color:var(--color-ai)]';
+}
+
 function JudgmentHistory({
   session,
   selected,
@@ -177,7 +191,16 @@ function JudgmentHistory({
                   {String(index + 1).padStart(2, '0')}
                 </span>
                 <span className="text-body-sm flex-1 line-clamp-2">{question.question}</span>
-                <span className="text-micro shrink-0 rounded-[var(--radius-chip)] bg-[color:var(--color-tint-ai)] px-2 py-[2px] text-[color:var(--color-ai)]">
+                <span
+                  className={[
+                    'text-micro shrink-0 rounded-[var(--radius-chip)] px-2 py-[2px]',
+                    // Coloured by the judgement rather than by whose output it
+                    // is. Every chip in the purple AI tint made a weak answer
+                    // look exactly like one that held, which is the real reason
+                    // a finished session read as uniformly positive.
+                    chipFor(turn?.evaluated_strength ?? ''),
+                  ].join(' ')}
+                >
                   {strengths[turn?.evaluated_strength ?? ''] ?? turn?.evaluated_strength}
                 </span>
                 <Icon name={open ? 'chevronUp' : 'chevronDown'} size={15} />
