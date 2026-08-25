@@ -16,6 +16,9 @@ export async function POST(request: NextRequest) {
       recurring_gaps: body.recurring_gaps ?? [],
       user_id: body.user_id ?? 'web-user',
       persist: false,
+      // Synthesised during the minute the planning already takes, so the
+      // opening question can be heard the moment the room opens.
+      speak: body.speak === true,
     });
     return NextResponse.json(data);
   } catch (error) {

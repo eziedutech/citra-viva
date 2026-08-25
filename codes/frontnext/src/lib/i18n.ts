@@ -738,6 +738,9 @@ const en = {
     silent:
       'The microphone was open but no sound reached the page. Check that the right input device is selected and that the browser is not muted, then record again.',
     level: 'Input level',
+    cancel: 'Discard',
+    cancelHint:
+      'Throw the recording away without transcribing it. Nothing is sent and nothing is judged, so a microphone left open by mistake costs nothing.',
     failed: 'The recording could not be transcribed.',
     playFailed: 'That could not be read aloud.',
     transcriptAdded:
@@ -1554,6 +1557,9 @@ const id: Dictionary = {
     silent:
       'Mikrofon terbuka tetapi tidak ada suara yang sampai ke halaman ini. Periksa perangkat masukan yang terpilih dan pastikan peramban tidak dibisukan, lalu rekam lagi.',
     level: 'Tingkat masukan',
+    cancel: 'Buang',
+    cancelHint:
+      'Buang rekaman tanpa mentranskripkannya. Tidak ada yang dikirim dan tidak ada yang dinilai, jadi mikrofon yang tidak sengaja terbuka tidak berbiaya apa pun.',
     failed: 'Rekaman gagal ditranskripkan.',
     playFailed: 'Bagian ini gagal dibacakan.',
     transcriptAdded:

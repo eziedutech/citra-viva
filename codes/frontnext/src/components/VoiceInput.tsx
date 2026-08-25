@@ -62,6 +62,13 @@ export function VoiceInput({
   const recorder = useRef<Recorder | null>(null);
   const live = useRef<Awaited<ReturnType<typeof openLiveTranscription>> | null>(null);
 
+  // Set when the student discards, and read after every await in `finish`.
+  // Cancelling cannot reach into a request already in flight, so the guard is
+  // on what happens to the result rather than on the request itself: a
+  // transcript that arrives after a discard is dropped instead of appearing in
+  // the answer box a second after the student decided against it.
+  const discarded = useRef(false);
+
   // Checked after mount, not during render: these APIs do not exist on the
   // server, and microphone access needs a secure origin, which the rendering
   // process cannot know about.
@@ -91,6 +98,31 @@ export function VoiceInput({
       live.current = null;
     };
   }, []);
+
+  /**
+   * Throw the recording away, transcribing nothing.
+   *
+   * This exists because of the case where the microphone is open and nobody is
+   * speaking. Stopping in that state runs the whole pipeline to arrive at an
+   * error about silence, which reads as the examiner being confused rather than
+   * as the student having changed their mind. Discarding says the second thing.
+   *
+   * No error is shown afterwards. Deciding not to speak is not a failure.
+   */
+  function discard() {
+    discarded.current = true;
+
+    recorder.current?.cancel();
+    recorder.current = null;
+    live.current?.abandon();
+    live.current = null;
+
+    setRecording(false);
+    setWorking(false);
+    onWorkingChange?.(false);
+    setLevel(0);
+    setError('');
+  }
 
   async function finish() {
     const active = recorder.current;
@@ -132,6 +164,7 @@ export function VoiceInput({
       if (streamed) {
         try {
           const text = await streamed.finish();
+          if (discarded.current) return;
           if (text) {
             onTranscript(text);
             return;
@@ -141,9 +174,15 @@ export function VoiceInput({
         }
       }
 
-      onTranscript(await transcribe(wav, authedFetch));
+      const uploaded = await transcribe(wav, authedFetch);
+      if (discarded.current) return;
+      onTranscript(uploaded);
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : dict.voice.failed);
+      // A discard tears the recorder and the socket down underneath this, so
+      // whatever it threw is the consequence of a decision, not a fault.
+      if (!discarded.current) {
+        setError(caught instanceof Error ? caught.message : dict.voice.failed);
+      }
     } finally {
       setWorking(false);
       onWorkingChange?.(false);
@@ -198,6 +237,7 @@ export function VoiceInput({
 
   async function begin() {
     setError('');
+    discarded.current = false;
     try {
       const streaming = await openLive();
 
@@ -240,6 +280,22 @@ export function VoiceInput({
         <Icon name={recording ? 'square' : 'mic'} size={16} />
         {working ? dict.voice.transcribing : recording ? dict.voice.stop : dict.voice.speak}
       </button>
+
+      {/* Offered the whole time the microphone is open, and while a transcript
+          is still being waited for. Deliberately quiet: it sits beside the
+          action rather than competing with it, because stopping is the usual
+          intent and discarding is the escape. */}
+      {recording || working ? (
+        <button
+          type="button"
+          onClick={discard}
+          title={dict.voice.cancelHint}
+          className="text-caption flex h-9 items-center gap-2 rounded-[var(--radius-action)] border border-[color:var(--color-line)] px-3 text-[color:var(--color-ink-600)] transition-colors duration-150 hover:border-[color:var(--color-danger)] hover:text-[color:var(--color-danger)]"
+        >
+          <Icon name="trash" size={15} />
+          {dict.voice.cancel}
+        </button>
+      ) : null}
 
       {recording ? (
         <span className="text-micro flex items-center gap-2 text-[color:var(--color-danger)]">
