@@ -77,6 +77,24 @@ export function DefenseRoom({ initial, dict, locale }: Props) {
    * and how it was judged can be read as one thing instead of three.
    */
   const [selectedQuestionId, setSelectedQuestionId] = useState('');
+
+  // Selecting a question dims the rest of the transcript, and dimming alone is
+  // disorienting: the turn that stayed lit is often off screen, so the student
+  // is left facing a greyed page with no idea where the answer went. Bringing
+  // it into view is what makes the highlight legible rather than alarming.
+  useEffect(() => {
+    if (!selectedQuestionId) return;
+
+    const turn = document.getElementById(`turn-${selectedQuestionId}`);
+    turn?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+    // The judgement for the same question, on the right. Nudged rather than
+    // centred, because that panel is short and centring would push its heading
+    // off the top.
+    document
+      .getElementById(`judgment-${selectedQuestionId}`)
+      ?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }, [selectedQuestionId]);
   const transcriptEnd = useRef<HTMLDivElement>(null);
   const answerBox = useRef<HTMLTextAreaElement>(null);
 
@@ -312,6 +330,17 @@ export function DefenseRoom({ initial, dict, locale }: Props) {
               {session.transcript.map((turn, index) => (
                 <article
                   key={`${index}-${turn.text.slice(0, 24)}`}
+                  // Only the first turn of a question carries the id, so
+                  // scrolling lands on where the question was asked rather than
+                  // on the last thing said about it.
+                  id={
+                    turn.question_id &&
+                    session.transcript.findIndex(
+                      (other) => other.question_id === turn.question_id,
+                    ) === index
+                      ? `turn-${turn.question_id}`
+                      : undefined
+                  }
                   className={[
                     turn.role === 'examiner'
                       ? 'border-l-2 border-[color:var(--color-ai)] bg-[color:var(--color-surface)] p-4'
