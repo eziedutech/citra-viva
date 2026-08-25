@@ -108,10 +108,10 @@ The application is free to use and requires no credentials from us.
 
 To see the agents work without the interface at all, the fastest route is [step 7](#7-run-a-full-mock-defense-from-the-terminal): one command takes a raw draft to a closing report against the live model.
 
-To check this README rather than read it, run [`scripts/prove.py`](scripts/prove.py). It proves each claim in order and prints the real result: the model in use, that all five agents are ADK agents with transfer refused both ways, the four defense agents running live on a real draft, the citation checker, the 4.00 indicator computed from the transcript they just produced, the revisions serving traffic, and the reasoning chain read back out of Cloud Trace.
+To check this README rather than read it, run [`scripts/prove.py`](scripts/prove.py). It proves each claim in order and prints the real result: the model in use, that all five agents are ADK agents with transfer refused both ways, the four defense agents running live on a real draft, the citation checker, the 4.00 indicator computed from the transcript they just produced, the revisions serving traffic, and the reasoning chain read back out of Cloud Trace. It runs from any directory in any shell, and puts itself into the backend's environment rather than asking you to.
 
 ```bash
-ENABLE_CLOUD_TRACE=true uv run --project codes/backpy python scripts/prove.py
+python scripts/prove.py --trace
 ```
 
 ---

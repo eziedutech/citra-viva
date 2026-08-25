@@ -1,13 +1,14 @@
 """Run every claim this project makes, and print what actually happened.
 
-Run it through the backend's environment, from anywhere:
+Run it from anywhere, in any shell:
 
-    uv run --project codes/backpy python scripts/prove.py
-    uv run --project codes/backpy python scripts/prove.py --quick
+    python scripts/prove.py --trace
+    python scripts/prove.py --quick
 
-Plain `python scripts/prove.py` cannot work: the project's dependencies live in
-the backend's virtual environment, not in the system interpreter. The script
-says so rather than failing with an import traceback.
+The dependencies live in the backend's environment rather than in the system
+interpreter, so the script puts itself there by re-running through uv. Tracing
+is a flag rather than an environment variable, because setting one of those is
+written differently in every shell.
 
 Written to be run on camera in one take. Every section does a real thing and
 prints its real result: no fixtures, no mocks, and nothing asserted that was not
@@ -31,6 +32,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import shutil
 import subprocess
 import sys
 import time
@@ -43,26 +45,55 @@ sys.path.insert(0, str(BACKEND))
 
 
 def _require_backend_environment() -> None:
-    """Fail with an instruction instead of a traceback.
+    """Put this script into the environment it needs, rather than asking.
 
-    Running this with the system interpreter is the obvious thing to try and
-    cannot work, because the dependencies are installed into the backend's
-    environment. An import error names a package; it does not tell anybody what
-    to run instead.
+    The dependencies live in the backend's virtual environment, so running this
+    with the system interpreter cannot work. Telling somebody to type a longer
+    command instead is a poor answer: the right invocation differs by shell, and
+    the relative path in it depends on which directory they happen to be in.
+
+    So it re-runs itself through uv, with paths resolved from this file rather
+    than from the working directory. A marker in the environment stops that
+    becoming a loop if the second attempt is also short of something.
     """
     try:
         import pydantic_settings  # noqa: F401
     except ModuleNotFoundError:
+        pass
+    else:
+        return
+
+    if os.environ.get("CITRA_PROVE_REEXEC"):
         print(
-            "This needs the backend's environment, which has the project's\n"
-            "dependencies installed. From the repository root, run:\n"
-            "\n"
-            "    uv run --project codes/backpy python scripts/prove.py\n"
-            "\n"
-            "Add --quick to skip the live model calls.",
+            "The backend environment is missing its dependencies.\n"
+            f"Install them with:  uv sync --project {BACKEND}",
             file=sys.stderr,
         )
-        raise SystemExit(2) from None
+        raise SystemExit(2)
+
+    uv = shutil.which("uv")
+    if uv is None:
+        print(
+            "This needs the backend's environment, and uv is not on PATH.\n"
+            "Install uv from https://docs.astral.sh/uv/ and run this again.",
+            file=sys.stderr,
+        )
+        raise SystemExit(2)
+
+    print("Running through the backend environment.\n", file=sys.stderr)
+    completed = subprocess.run(
+        [
+            uv,
+            "run",
+            "--project",
+            str(BACKEND),
+            "python",
+            str(Path(__file__).resolve()),
+            *sys.argv[1:],
+        ],
+        env={**os.environ, "CITRA_PROVE_REEXEC": "1"},
+    )
+    raise SystemExit(completed.returncode)
 
 
 _require_backend_environment()
@@ -407,7 +438,18 @@ def main() -> int:
         action="store_true",
         help="Skip the live model calls and prove only what needs no network.",
     )
+    parser.add_argument(
+        "--trace",
+        action="store_true",
+        help="Export spans to Cloud Trace and read the chain back at the end.",
+    )
     arguments = parser.parse_args()
+
+    # A flag rather than an environment variable, because setting one of those
+    # is written differently in every shell, and this is meant to be run by
+    # somebody following a README rather than debugging their prompt.
+    if arguments.trace:
+        os.environ["ENABLE_CLOUD_TRACE"] = "true"
 
     os.chdir(BACKEND)
 
