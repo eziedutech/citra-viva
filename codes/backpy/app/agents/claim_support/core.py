@@ -20,6 +20,8 @@ honest and a manufactured judgment is not.
 
 from __future__ import annotations
 
+import logging
+
 from app.agents.claim_support.prompt import build_prompt
 from app.common.text import parse_json_object, verify_quote
 from app.llm.client import ModelRunner
@@ -30,6 +32,8 @@ from app.models.claim_support import (
     SupportVerdict,
 )
 from app.observability import agent_span, record
+
+logger = logging.getLogger(__name__)
 
 MIN_CLAIM_CHARS = 15
 
@@ -149,5 +153,14 @@ def check_claim_support(
             span,
             verdict=result.check.verdict.value,
             rules_applied=len(result.adjustments),
+        )
+
+        # Logged like the other four. Without this the citation checker is the
+        # one agent invisible in the service logs, and somebody watching a run
+        # sees four agents in a system described as having five.
+        logger.info(
+            "claim_support finished: verdict %s, %d rules applied",
+            result.check.verdict.value,
+            len(result.adjustments),
         )
         return result
