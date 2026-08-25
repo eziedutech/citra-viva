@@ -377,6 +377,17 @@ class Orchestrator:
                 rules_applied=len(adjustments),
             )
 
+        # Logged like the others, because this is the agent that runs on every
+        # answer and it was the only one saying nothing. A watcher following a
+        # live defense saw the preparation and the report, and silence through
+        # the part that is actually the defense.
+        logger.info(
+            "examiner_session finished: %s judged %s, decision %s",
+            question.id,
+            evaluation.strength.value,
+            evaluation.decision.value,
+        )
+
         self._apply_decision(state, progress, evaluation)
 
         state.transcript.append(
