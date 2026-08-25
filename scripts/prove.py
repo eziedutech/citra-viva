@@ -1,7 +1,13 @@
 """Run every claim this project makes, and print what actually happened.
 
-    uv run python ../../scripts/prove.py          # from codes/backpy
-    uv run python ../../scripts/prove.py --quick  # skip the live model calls
+Run it through the backend's environment, from anywhere:
+
+    uv run --project codes/backpy python scripts/prove.py
+    uv run --project codes/backpy python scripts/prove.py --quick
+
+Plain `python scripts/prove.py` cannot work: the project's dependencies live in
+the backend's virtual environment, not in the system interpreter. The script
+says so rather than failing with an import traceback.
 
 Written to be run on camera in one take. Every section does a real thing and
 prints its real result: no fixtures, no mocks, and nothing asserted that was not
@@ -34,6 +40,32 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 BACKEND = ROOT / "codes" / "backpy"
 sys.path.insert(0, str(BACKEND))
+
+
+def _require_backend_environment() -> None:
+    """Fail with an instruction instead of a traceback.
+
+    Running this with the system interpreter is the obvious thing to try and
+    cannot work, because the dependencies are installed into the backend's
+    environment. An import error names a package; it does not tell anybody what
+    to run instead.
+    """
+    try:
+        import pydantic_settings  # noqa: F401
+    except ModuleNotFoundError:
+        print(
+            "This needs the backend's environment, which has the project's\n"
+            "dependencies installed. From the repository root, run:\n"
+            "\n"
+            "    uv run --project codes/backpy python scripts/prove.py\n"
+            "\n"
+            "Add --quick to skip the live model calls.",
+            file=sys.stderr,
+        )
+        raise SystemExit(2) from None
+
+
+_require_backend_environment()
 
 API = "https://citra-viva-api-40911677848.asia-southeast2.run.app"
 WEB = "https://citra-viva-web-40911677848.asia-southeast2.run.app"
