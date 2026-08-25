@@ -47,6 +47,7 @@ Built for the **All Things Agentic Hackathon** (Google and Devpost), category *C
 - [The Question Strategy Agent](#the-question-strategy-agent)
 - [The Examiner Session Agent](#the-examiner-session-agent)
 - [The Session Reflection Agent](#the-session-reflection-agent)
+- [Scoring a defense](#scoring-a-defense)
 - [The Claim-Support Checker](#the-claim-support-checker)
 - [Voice](#voice)
 - [Cross-session memory](#cross-session-memory)
@@ -107,6 +108,12 @@ The application is free to use and requires no credentials from us.
 
 To see the agents work without the interface at all, the fastest route is [step 7](#7-run-a-full-mock-defense-from-the-terminal): one command takes a raw draft to a closing report against the live model.
 
+To check this README rather than read it, run [`scripts/prove.py`](scripts/prove.py). It proves each claim in order and prints the real result: the model in use, that all five agents are ADK agents with transfer refused both ways, the four defense agents running live on a real draft, the citation checker, the 4.00 indicator computed from the transcript they just produced, the revisions serving traffic, and the reasoning chain read back out of Cloud Trace.
+
+```bash
+cd codes/backpy && ENABLE_CLOUD_TRACE=true uv run python ../../scripts/prove.py
+```
+
 ---
 
 ## The problem
@@ -136,7 +143,7 @@ It also mutates data rather than reading it. A manuscript goes in as unstructure
 
 **The agent never writes the student's argument for them.** It asks, it challenges, and it records. It never supplies the defense.
 
-That is inherited from CITRA's *Integrity First* principle, and it is enforced in the schema rather than left to good intentions: there is no "suggested fix" field and no "replacement sentence" field anywhere in the Weakness Map. There is also no pass/fail verdict and no research quality score, because a machine should not hand down a judgment it cannot trace to evidence.
+That is inherited from CITRA's *Integrity First* principle, and it is enforced in the schema rather than left to good intentions: there is no "suggested fix" field and no "replacement sentence" field anywhere in the Weakness Map. There is no pass mark, and no judgement of the research itself. A session does end with an indicator on the 4.00 scale, and the distinction that makes it defensible is that it scores the defense rather than the thesis, and that it is computed from the record rather than asked of a model. See [Scoring a defense](#scoring-a-defense).
 
 The same rule decided a feature that was proposed and refused. Answer recommendations, behind a button, would have been easy to build and would have destroyed the product: a student who can see a suggested answer before replying is not defending anything. What shipped instead is the marking scheme. The student may reveal what a good answer *would need to contain*, never what to say, and the reveal is recorded in the transcript so it appears in the report.
 
@@ -459,7 +466,7 @@ Every rejected finding is **recorded with its reason** in the `dropped` field ra
 
 ### What is deliberately absent
 
-- No pass/fail verdict and no research quality score. Only individual findings, each tied to evidence.
+- No pass/fail verdict and no mark for the research. Only individual findings, each tied to evidence. The 4.00 indicator produced at the end of a session scores how the defense went, and is computed from the transcript rather than asked of a model.
 - No "suggested fix" field. The agent states what is weak and what must be defended, never the defense itself.
 - No mechanical citation verification (Crossref or OpenAlex DOI matching). That module belongs to a separate project outside this hackathon and is deliberately out of scope.
 
@@ -518,6 +525,30 @@ The session loop is in the Orchestrator, not in the agent. Every turn reads the 
 
 ---
 
+## Scoring a defense
+
+A session ends with an indicator on the **4.00 scale**, the one most faculties use. The product still refuses to grade research, and that rule survives here because of where the number comes from.
+
+**The model never produces a score.** Every input was already written into the session while the defense was running: how each answer was judged, how many times the student was pressed, whether a clarification was offered, whether the marking scheme was revealed, and whether the point ended undefended. This is arithmetic on that record and nothing else.
+
+Three properties follow, and they are the entire reason for doing it this way.
+
+| | |
+|---|---|
+| **Reproducible** | The same transcript gives the same number, on any machine, with no model call |
+| **Traceable** | Every point can be pointed at a specific judged answer |
+| **Checkable** | The workings travel with the total, so a student argues with a line rather than with a figure |
+
+Questions are weighted by the severity of the finding they attacked. Severity is documented throughout this project as a claim about how hard an examiner will press, never about the quality of the work, so a high severity question counts for more because failing to defend an obvious attack matters more.
+
+**Advice is derived the same way.** Each line counts something the examiner recorded, so all of it can be found in the transcript. It is returned as codes and counts rather than sentences, because the sentence has to be in the language the student is reading and the scoring layer has no business deciding that. A defense that held throughout is told so, rather than given something invented to improve.
+
+**Pasting is recorded and never scored.** Blocking paste is unenforceable, and it would stop the legitimate case: quoting your own manuscript to defend a point is what a good answer does. Deducting for it would punish that same case. So the count is kept, shown at the end with the note that it costs nothing, and left out of the arithmetic. There is nobody to deceive here anyway, since the report is private to the student who wrote it. The risk is arriving at a real defense believing you were ready, and the remedy for that is a record rather than a lock.
+
+Implemented in [`codes/backpy/app/scoring/assessment.py`](codes/backpy/app/scoring/assessment.py), with 30 tests whose arithmetic is worked out by hand rather than copied from a run.
+
+---
+
 ## The Session Reflection Agent
 
 Input: a finished transcript. Output: what held, what is still undefended, and the recurring habits behind the gaps.
@@ -532,7 +563,7 @@ Restoration always uses the examiner's own words, captured at the moment the poi
 
 `recurring_gap_patterns` is the field that makes the next session sharper than this one. It is written to be recognisable in a different manuscript months later, so "treats correlational findings as causal when writing conclusions" rather than "question 3 was weak".
 
-The report can be downloaded as Markdown from the session, so it survives the browser it was made in.
+The report downloads as a formatted PDF, with the logo, the indicator and its workings, and the full transcript. Markdown is offered alongside it, because the two are for different readers: one is handed to a supervisor, the other is pasted back into the next session.
 
 ---
 
@@ -740,6 +771,7 @@ codes/backpy/                     Python backend
   .env.example, Dockerfile, pyproject.toml
 docs/                             architecture notes and the architecture diagram
 scripts/                          tooling outside the application
+  prove.py                        runs every claim in this README and prints what happened
 ```
 
 ---

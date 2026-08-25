@@ -447,6 +447,14 @@ const en = {
             body: 'One question allows at most two follow-ups and one clarification. That limit is enforced in code, not asked of the model, so an examination cannot circle a single point until you give up.',
           },
           {
+            title: 'Click a question to follow it across the panels',
+            body: 'Selecting a question you have already been asked scrolls the transcript to where it was put, dims the turns belonging to other questions, and opens its judgement on the right. Questions still ahead of you cannot be selected, for the same reason they stay locked.',
+          },
+          {
+            title: 'Pasting is recorded, not blocked',
+            body: 'You can paste into the answer box, and quoting your own manuscript is a good way to defend a point. How much arrived that way is counted and shown in the report. It does not affect your score. It is there because in the room there will be nothing to paste from.',
+          },
+          {
             title: 'Nothing depends on this tab',
             body: 'Every turn is written to storage as it is judged. Close the tab mid-defense, come back tomorrow on another machine, and it resumes at the question it stopped on.',
           },
@@ -472,6 +480,10 @@ const en = {
           {
             title: 'Watch the level meter',
             body: 'Bars move beside the timer while you speak. If they stay still, no audio is reaching the page, which is almost always the wrong microphone being selected somewhere. A recording that arrives silent is refused rather than sent.',
+          },
+          {
+            title: 'You can throw a recording away',
+            body: 'Discard stops the recording and transcribes nothing. Use it when the microphone was open and you were not ready: nothing is sent, nothing is judged, and no error is shown, because deciding not to speak is not a failure.',
           },
           {
             title: 'The transcript is yours to correct first',
@@ -516,12 +528,20 @@ const en = {
             body: 'Every point recorded as a gap, described as a gap and never as a fix. Being told what to say would defeat the exercise.',
           },
           {
+            title: 'An indicator on the 4.00 scale',
+            body: 'Computed from what the examiner recorded turn by turn, never asked of a model: how each answer was judged, how often you were pressed, whether you were offered a clarification, whether you revealed the marking scheme, and whether the point ended undefended. Questions weigh more when the weakness behind them was one an examiner would press hardest on. The same transcript always gives the same number, and the workings are shown beside it so you can see which question cost what.',
+          },
+          {
+            title: 'What to work on',
+            body: 'Each line counts something written down during the session, so you can find every one of them in the transcript. If the whole defense held, it says that instead of inventing something to improve.',
+          },
+          {
             title: 'Patterns for next time',
             body: 'The habits behind the individual gaps. Paste them into the unresolved weaknesses field when you start your next session and they will be tested first.',
           },
           {
             title: 'Take it with you',
-            body: 'The report downloads as a plain Markdown file that opens in any editor. Nothing about reading it later depends on this service still being here.',
+            body: 'One button produces a formatted PDF with the report and the full transcript, which is the version to hand to a supervisor. Markdown is offered underneath for the version you paste back into your next session. Nothing about reading either of them later depends on this service still being here.',
           },
         ],
       },
@@ -609,7 +629,7 @@ const en = {
           },
           {
             title: 'It will not grade your research',
-            body: 'There is no score and no pass mark. Severity describes how hard an examiner is likely to press, which is a claim about examiners, not about the quality of your work.',
+            body: 'The session ends with an indicator on the 4.00 scale, and it scores how the defense went, never the thesis. There is no pass mark and no judgement of your research. Severity describes how hard an examiner is likely to press, which is a claim about examiners rather than about the quality of your work, and it is used only to decide which questions count for more.',
           },
           {
             title: 'It will not override the model quietly',
@@ -1309,6 +1329,14 @@ const id: Dictionary = {
             body: 'Satu pertanyaan mengizinkan paling banyak dua pendalaman dan satu klarifikasi. Batas itu ditegakkan di kode, bukan diminta kepada model, sehingga ujian tidak mungkin mengitari satu poin sampai Anda menyerah.',
           },
           {
+            title: 'Klik satu pertanyaan untuk menelusurinya di ketiga panel',
+            body: 'Memilih pertanyaan yang sudah pernah ditanyakan akan menggulirkan transkrip ke tempat pertanyaan itu diajukan, meredupkan giliran milik pertanyaan lain, dan membuka penilaiannya di kanan. Pertanyaan yang masih di depan tidak bisa dipilih, dengan alasan yang sama seperti mengapa ia tetap terkunci.',
+          },
+          {
+            title: 'Menempel dicatat, bukan diblokir',
+            body: 'Anda boleh menempel ke kotak jawaban, dan mengutip naskah sendiri adalah cara yang baik untuk mempertahankan poin. Berapa banyak yang masuk lewat tempelan dihitung dan ditampilkan di laporan. Itu tidak memengaruhi skor Anda. Gunanya karena di ruang sidang nanti tidak ada yang bisa ditempel.',
+          },
+          {
             title: 'Tidak ada yang bergantung pada tab ini',
             body: 'Setiap giliran ditulis ke penyimpanan begitu dinilai. Tutup tab di tengah sidang, kembali besok di mesin lain, dan ia melanjutkan dari pertanyaan tempat ia berhenti.',
           },
@@ -1334,6 +1362,10 @@ const id: Dictionary = {
           {
             title: 'Perhatikan meter tingkat suara',
             body: 'Batang di samping penghitung waktu bergerak saat Anda bicara. Kalau diam saja, tidak ada audio yang sampai ke halaman, dan itu hampir selalu berarti mikrofon yang salah sedang terpilih di suatu tempat. Rekaman yang sampai dalam keadaan senyap ditolak, bukan dikirim.',
+          },
+          {
+            title: 'Rekaman bisa dibuang',
+            body: 'Tombol Buang menghentikan rekaman dan tidak mentranskripkan apa pun. Pakai kalau mikrofon terlanjur terbuka sementara Anda belum siap: tidak ada yang dikirim, tidak ada yang dinilai, dan tidak ada pesan galat, karena memutuskan untuk tidak jadi bicara bukan kegagalan.',
           },
           {
             title: 'Transkripnya Anda koreksi dulu',
@@ -1378,12 +1410,20 @@ const id: Dictionary = {
             body: 'Setiap poin yang tercatat sebagai celah, digambarkan sebagai celah dan tidak pernah sebagai perbaikan. Diberi tahu apa yang harus dikatakan justru menggagalkan latihannya.',
           },
           {
+            title: 'Indikator pada skala 4,00',
+            body: 'Dihitung dari apa yang dicatat penguji giliran demi giliran, tidak pernah diminta ke model: bagaimana tiap jawaban dinilai, seberapa sering Anda didesak, apakah Anda diberi kesempatan memperjelas, apakah Anda membuka skema penilaian, dan apakah poinnya berakhir tanpa pembelaan. Pertanyaan berbobot lebih besar kalau kelemahan di baliknya adalah yang paling keras akan ditekan penguji. Transkrip yang sama selalu memberi angka yang sama, dan hitungannya ditampilkan di sebelahnya supaya Anda bisa melihat pertanyaan mana yang memakan berapa.',
+          },
+          {
+            title: 'Yang perlu ditingkatkan',
+            body: 'Setiap baris menghitung sesuatu yang tercatat selama sesi, jadi Anda bisa menemukan semuanya di transkrip. Kalau seluruh pembelaan bertahan, ia mengatakan itu alih-alih mengarang sesuatu untuk diperbaiki.',
+          },
+          {
             title: 'Pola untuk lain kali',
             body: 'Kebiasaan di balik celah-celah itu. Tempelkan ke kolom kelemahan yang belum selesai saat Anda memulai sesi berikutnya, dan itulah yang akan diuji lebih dulu.',
           },
           {
             title: 'Bawa pulang',
-            body: 'Laporannya diunduh sebagai berkas Markdown biasa yang terbuka di editor mana pun. Kemampuan Anda membacanya nanti tidak bergantung pada layanan ini masih ada atau tidak.',
+            body: 'Satu tombol menghasilkan PDF terformat berisi laporan dan transkrip lengkap, dan itulah versi yang diserahkan ke pembimbing. Markdown tersedia di bawahnya untuk versi yang Anda tempel kembali ke sesi berikutnya. Kemampuan Anda membaca keduanya nanti tidak bergantung pada layanan ini masih ada atau tidak.',
           },
         ],
       },
@@ -1471,7 +1511,7 @@ const id: Dictionary = {
           },
           {
             title: 'Ia tidak akan menilai mutu riset Anda',
-            body: 'Tidak ada skor dan tidak ada batas lulus. Tingkat keparahan menggambarkan seberapa keras penguji kemungkinan akan menekan, dan itu pernyataan tentang penguji, bukan tentang mutu pekerjaan Anda.',
+            body: 'Sesi berakhir dengan indikator skala 4,00, dan yang dinilainya adalah jalannya pembelaan, bukan tesisnya. Tidak ada batas lulus dan tidak ada penghakiman atas riset Anda. Tingkat keparahan menggambarkan seberapa keras penguji kemungkinan akan menekan, yaitu pernyataan tentang penguji dan bukan tentang mutu pekerjaan Anda, dan itu hanya dipakai untuk menentukan pertanyaan mana yang berbobot lebih.',
           },
           {
             title: 'Ia tidak akan menimpa model diam-diam',
