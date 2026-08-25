@@ -492,6 +492,25 @@ function ReportPanel({
   dict: Dictionary;
   locale: Locale;
 }) {
+  const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState('');
+
+  async function exportPdf() {
+    if (!summary) return;
+    setExporting(true);
+    setExportError('');
+    try {
+      const { downloadReportPdf } = await import('@/lib/pdf');
+      await downloadReportPdf(session, summary, dict, locale);
+    } catch {
+      // The Markdown export is still there underneath, so this is a setback
+      // rather than a dead end, and it is named as one.
+      setExportError(dict.report.pdfFailed);
+    } finally {
+      setExporting(false);
+    }
+  }
+
   if (!summary) {
     return (
       <div>
@@ -592,30 +611,38 @@ function ReportPanel({
         </section>
       ) : null}
 
-      <section className="no-print flex gap-2 border-t border-[color:var(--color-line)] pt-4">
+      <section className="no-print border-t border-[color:var(--color-line)] pt-4">
+        {/* One button, and it produces the file. The print dialogue worked and
+            asked a student to find a menu item, pick a destination, and hope
+            the margins came out right, for something they may be handing to a
+            supervisor. */}
+        <button
+          type="button"
+          disabled={exporting}
+          onClick={() => void exportPdf()}
+          className="text-body-sm flex h-10 w-full items-center justify-center gap-2 rounded-[var(--radius-action)] bg-[color:var(--color-primary-700)] px-4 font-medium text-white transition-colors duration-150 hover:bg-[color:var(--color-primary-900)] disabled:bg-[color:var(--color-ink-400)]"
+        >
+          <Icon name="file" size={16} />
+          {exporting ? dict.report.preparing : dict.report.downloadPdf}
+        </button>
+
+        {/* Markdown stays, quieter. The two are for different readers: this one
+            is pasted back into the next session, the PDF is handed over. */}
         <button
           type="button"
           onClick={() =>
             downloadReport(session, buildReportMarkdown(session, summary, dict, locale))
           }
-          className="text-body-sm flex h-10 flex-1 items-center justify-center gap-2 rounded-[var(--radius-action)] border border-[color:var(--color-line)] px-4 transition-colors duration-150 hover:bg-[color:var(--color-hover)]"
+          className="text-caption mt-2 flex h-9 w-full items-center justify-center gap-2 text-[color:var(--color-ink-600)] underline underline-offset-2"
         >
-          <Icon name="file" size={16} />
           {dict.report.download}
         </button>
 
-        {/* The browser's own print dialogue, which writes a PDF. Both are
-            offered because they are not the same thing: Markdown is what gets
-            pasted back into the next session, and a PDF is what gets handed to
-            a supervisor. */}
-        <button
-          type="button"
-          onClick={() => window.print()}
-          className="text-body-sm flex h-10 flex-1 items-center justify-center gap-2 rounded-[var(--radius-action)] border border-[color:var(--color-line)] px-4 transition-colors duration-150 hover:bg-[color:var(--color-hover)]"
-        >
-          <Icon name="book" size={16} />
-          {dict.slideover.print}
-        </button>
+        {exportError ? (
+          <p role="alert" className="text-caption mt-2 text-[color:var(--color-danger)]">
+            {exportError}
+          </p>
+        ) : null}
       </section>
 
       {summary.closing_remark ? (
