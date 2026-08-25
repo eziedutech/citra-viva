@@ -67,6 +67,9 @@ export function DefenseRoom({ initial, dict, locale }: Props) {
   } | null>(null);
   const [voiceNote, setVoiceNote] = useState(false);
 
+  /** Characters pasted into the answer now being written. Reset with it. */
+  const [pasted, setPasted] = useState(0);
+
   /**
    * The question the student is looking at, shared by all three panels.
    *
@@ -164,6 +167,8 @@ export function DefenseRoom({ initial, dict, locale }: Props) {
     };
     setSession((current) => ({ ...current, transcript: [...current.transcript, optimistic] }));
     setAnswer('');
+    // Belongs to the answer that was just sent, not to the next one.
+    setPasted(0);
     setVoiceNote(false);
 
     try {
@@ -172,7 +177,7 @@ export function DefenseRoom({ initial, dict, locale }: Props) {
         headers: { 'Content-Type': 'application/json' },
         // The voice is asked for only when it will be heard, so nobody pays
         // for audio that plays to a switched-off speaker.
-        body: JSON.stringify({ answer: text, speak: readAloud }),
+        body: JSON.stringify({ answer: text, speak: readAloud, pasted_characters: pasted }),
       });
       const data = await response.json();
 
@@ -534,6 +539,16 @@ export function DefenseRoom({ initial, dict, locale }: Props) {
                       ref={answerBox}
                       value={answer}
                       onChange={(event) => setAnswer(event.target.value)}
+                      // Counted, not blocked. Blocking paste is unenforceable
+                      // and would stop the legitimate case, which is quoting
+                      // your own manuscript to defend a point. What is worth
+                      // having is the count, shown back at the end: in the room
+                      // there will be nothing to paste from.
+                      onPaste={(event) =>
+                        setPasted(
+                          (current) => current + event.clipboardData.getData('text').length,
+                        )
+                      }
                       onKeyDown={(event) => {
                         if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) {
                           event.preventDefault();

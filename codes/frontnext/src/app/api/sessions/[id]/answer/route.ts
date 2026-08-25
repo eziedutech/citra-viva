@@ -23,6 +23,7 @@ export async function POST(
     const data = await post<SessionTurnResult>(`/api/sessions/${id}/answer`, {
       answer: body.answer ?? '',
       speak: body.speak === true,
+      pasted_characters: Number(body.pasted_characters) || 0,
     });
     return NextResponse.json(data);
   } catch (error) {

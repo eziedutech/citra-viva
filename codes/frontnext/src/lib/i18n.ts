@@ -231,6 +231,8 @@ const en = {
           'You revealed the marking scheme on {count} question(s). Try the next session without it and see which of those still hold.',
         lead_with_the_limitation:
           'You held {count} point(s), but only after being pressed. Naming the limitation yourself, before you are asked, is what an examiner is listening for.',
+        answered_from_elsewhere:
+          '{count} answer(s) contained text you pasted in. That is not counted against your score, and quoting your own manuscript is a good way to defend a point. It is worth knowing all the same: in the room there will be nothing to paste from.',
         weakest_question: 'Start with this one. It cost the most.',
         held_throughout:
           'All {count} question(s) held. Carry the patterns below into a harder draft rather than repeating this one.',
@@ -1091,6 +1093,8 @@ const id: Dictionary = {
           'Anda membuka skema penilaian pada {count} pertanyaan. Coba sesi berikutnya tanpa itu dan lihat mana yang masih bertahan.',
         lead_with_the_limitation:
           'Anda mempertahankan {count} poin, tetapi baru setelah didesak. Menyebut sendiri keterbatasannya sebelum ditanya adalah yang justru dicari penguji.',
+        answered_from_elsewhere:
+          '{count} jawaban memuat teks yang Anda tempel. Itu tidak mengurangi skor Anda, dan mengutip naskah sendiri justru cara yang baik untuk mempertahankan poin. Tetap layak diketahui: di ruang sidang nanti tidak ada yang bisa ditempel.',
         weakest_question: 'Mulai dari yang ini. Paling mahal biayanya.',
         held_throughout:
           'Seluruh {count} pertanyaan bertahan. Bawa pola di bawah ke draf yang lebih berat, bukan mengulang yang ini.',

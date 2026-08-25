@@ -100,6 +100,15 @@ class TranscriptTurn(BaseModel):
     criteria_met: list[str] = Field(default_factory=list)
     criteria_missed: list[str] = Field(default_factory=list)
 
+    # How much of a student's answer arrived by paste rather than by typing.
+    #
+    # Recorded, never blocked, and never scored. Blocking is unenforceable and
+    # would stop the legitimate case, which is quoting your own manuscript to
+    # defend a point. Scoring it would punish that same case. What it is worth
+    # is telling somebody, at the end, how much of their practice was written
+    # somewhere else, because in the room they will not be able to paste.
+    pasted_characters: int = 0
+
 
 class QuestionProgress(BaseModel):
     """How far the examination of one planned question has gone.

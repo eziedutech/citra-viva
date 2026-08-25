@@ -295,7 +295,13 @@ class Orchestrator:
         self.store.delete(session_id)
         logger.info("Session %s deleted at the owner's request.", session_id)
 
-    def submit_answer(self, session_id: str, answer: str, actor_id: str = "") -> SessionTurnResult:
+    def submit_answer(
+        self,
+        session_id: str,
+        answer: str,
+        actor_id: str = "",
+        pasted_characters: int = 0,
+    ) -> SessionTurnResult:
         """Judge one answer and advance the session.
 
         The whole session is read from storage at the start and written back at
@@ -336,7 +342,13 @@ class Orchestrator:
         self.store.save(state)
         state.transcript.append(
             TranscriptTurn(
-                role="student", text=answer.strip(), question_id=question.id, timestamp=now
+                role="student",
+                text=answer.strip(),
+                question_id=question.id,
+                timestamp=now,
+                # Bounded by the answer itself: a client reporting more pasted
+                # characters than it sent is reporting something impossible.
+                pasted_characters=max(0, min(pasted_characters, len(answer.strip()))),
             )
         )
 

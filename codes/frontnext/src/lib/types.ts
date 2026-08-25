@@ -99,6 +99,7 @@ export interface TranscriptTurn {
   decision: string;
   criteria_met?: string[];
   criteria_missed?: string[];
+  pasted_characters?: number;
 }
 
 export interface QuestionProgress {

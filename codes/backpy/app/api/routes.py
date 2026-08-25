@@ -173,6 +173,15 @@ class ExtractDraftResponse(BaseModel):
 
 class AnswerRequest(BaseModel):
     answer: str = Field(description="What the student said.")
+    pasted_characters: int = Field(
+        default=0,
+        ge=0,
+        description=(
+            "How much of this answer arrived by paste. Reported by the client, "
+            "so it is a note rather than a measurement: it is recorded, shown "
+            "back to the student at the end, and never scored."
+        ),
+    )
     speak: bool = Field(
         default=False,
         description=(
@@ -402,7 +411,12 @@ def answer_endpoint(
     them a second one after the words have already appeared.
     """
     with _translated_errors():
-        turn = _orchestrator().submit_answer(session_id, request.answer, actor_id=user.uid)
+        turn = _orchestrator().submit_answer(
+            session_id,
+            request.answer,
+            actor_id=user.uid,
+            pasted_characters=request.pasted_characters,
+        )
 
     if request.speak and turn.examiner_says:
         spoken = _spoken(turn.examiner_says)

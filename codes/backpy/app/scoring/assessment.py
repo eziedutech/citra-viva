@@ -121,6 +121,21 @@ def _advice_from(state: SessionState, breakdown: list[QuestionScore], score: flo
             Advice(code="weakest_question", question_id=weakest.question_id, count=1)
         )
 
+    # Counted from the transcript, and deliberately not scored.
+    #
+    # Pasting is not cheating: quoting your own manuscript to defend a point is
+    # exactly what a good answer does. What it is worth saying is how much of
+    # the practice was written somewhere else, because in the room there is
+    # nothing to paste from. Deducting for it would punish the honest use, and
+    # blocking it would be unenforceable theatre.
+    pasted = [
+        turn
+        for turn in state.transcript
+        if turn.role == "student" and turn.pasted_characters > 0
+    ]
+    if pasted:
+        advice.append(Advice(code="answered_from_elsewhere", count=len(pasted)))
+
     if not advice and score >= SOLID_SCORE:
         advice.append(Advice(code="held_throughout", count=len(breakdown)))
 

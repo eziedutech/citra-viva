@@ -409,3 +409,45 @@ def test_an_unfinished_session_gets_no_advice_it_cannot_support():
     state = session([question("Q1")], [QuestionProgress(question_id="Q1")])
 
     assert assess_session(state).advice == []
+
+
+# --- pasted answers: recorded, never scored ---------------------------------
+
+
+def pasted_session(pasted: int, strength: str = "strong"):
+    """A session with one answer, some of it pasted."""
+    from app.models.session import TranscriptTurn
+
+    state = session(
+        [question("Q1")], [QuestionProgress(question_id="Q1", final_strength=strength)]
+    )
+    state.transcript = [
+        TranscriptTurn(
+            role="student",
+            text="An answer of some length.",
+            question_id="Q1",
+            pasted_characters=pasted,
+        )
+    ]
+    return state
+
+
+def test_pasting_is_reported():
+    """The point of recording it: telling somebody at the end."""
+    assert "answered_from_elsewhere" in codes(pasted_session(40))
+
+
+def test_pasting_does_not_cost_a_single_point():
+    """Quoting your own manuscript to defend a point is what a good answer does.
+
+    Deducting for a paste would punish exactly that, which is why this is a
+    note in the report and never a number in the score.
+    """
+    typed = assess_session(pasted_session(0)).score
+    pasted = assess_session(pasted_session(200)).score
+
+    assert typed == pasted == MAXIMUM
+
+
+def test_an_answer_typed_out_is_not_reported_as_pasted():
+    assert "answered_from_elsewhere" not in codes(pasted_session(0))
