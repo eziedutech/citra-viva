@@ -32,6 +32,7 @@ SERVICE = "citra-viva-api"
 # check or a line about the framework, and neither is what somebody watching
 # a defense wants on screen.
 INTERESTING = (
+    "extract finished",
     "draft_analyzer",
     "question_strategy",
     "examiner_session",
@@ -45,6 +46,9 @@ INTERESTING = (
 )
 
 LABELS = {
+    # Not an agent. Listed here so an upload, which is a real action somebody
+    # waits on, is visible rather than silent.
+    "extract finished": ("-", "reads the file into text, no model involved"),
     "draft_analyzer": ("1", "reads the manuscript, maps where it gives way"),
     "question_strategy": ("2", "turns that map into an examination"),
     "examiner_session": ("3", "judges the answer, decides what to ask next"),

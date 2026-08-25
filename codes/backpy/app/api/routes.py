@@ -279,6 +279,17 @@ async def extract_draft_endpoint(
     except ExtractionError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
+    # Logged because uploading is something a person does and waits on, and
+    # until now it produced nothing at all in the service logs: no agent runs
+    # here, no model is called, so anybody watching saw silence during a real
+    # action and had no way to tell it apart from nothing happening.
+    logger.info(
+        "extract finished: %d characters from %d page(s), %d note(s)",
+        len(extracted.text),
+        extracted.page_count,
+        len(extracted.notes),
+    )
+
     return ExtractDraftResponse(
         text=extracted.text,
         page_count=extracted.page_count,
