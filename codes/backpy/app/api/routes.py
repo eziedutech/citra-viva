@@ -31,7 +31,6 @@ from app.models.session import (
     SessionTurnResult,
 )
 from app.models.weakness_map import AnalysisResult
-from app.observability import agent_span, record
 from app.orchestrator.orchestrator import Orchestrator
 from app.speech.cache import cache_speech, get_cached_speech
 from app.speech.voice import SpeechError, speak_text, transcribe_answer
@@ -488,20 +487,10 @@ def check_claim_endpoint(request: CheckClaimRequest, user: CurrentUser) -> Claim
     marks a citation wrong on its own: a negative verdict has to come with a
     question the author can answer.
     """
+    # The span for this lives in the agent itself, so a trace shows it whether
+    # it was reached through here or called directly.
     with _translated_errors():
-        with agent_span(
-            "agent.claim_support",
-            claim_characters=len(request.claim),
-            source_characters=len(request.source.text),
-        ) as span:
-            result = check_claim_support(request.claim, request.source)
-            # The verdict, never the claim or the source text.
-            record(
-                span,
-                verdict=result.check.verdict.value,
-                rules_applied=len(result.adjustments),
-            )
-            return result
+        return check_claim_support(request.claim, request.source)
 
 
 @router.get("/api/sessions", response_model=SessionHistoryResponse)

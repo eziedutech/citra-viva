@@ -29,6 +29,7 @@ from app.models.claim_support import (
     ClaimSupportResult,
     SupportVerdict,
 )
+from app.observability import agent_span, record
 
 MIN_CLAIM_CHARS = 15
 
@@ -129,5 +130,24 @@ def check_claim_support(
         if part
     )
     prompt = build_prompt(claim.strip(), source.title, meta, source.text.strip())
-    raw = runner(prompt=prompt, response_schema=ClaimSupportCheck)
-    return build_check(parse_json_object(raw), source, model_name)
+
+    # Traced here rather than at the endpoint, because this agent is also
+    # called directly, and a span that only exists on the HTTP path leaves the
+    # fifth agent missing from a trace of a run that plainly included it.
+    #
+    # The attributes are the verdict and how many rules overrode it. Never the
+    # claim itself and never the source text, for the same reason as everywhere
+    # else here: a trace is readable by a wider audience than a session is.
+    with agent_span(
+        "agent.claim_support",
+        claim_characters=len(claim.strip()),
+        source_characters=len(source.text.strip()),
+    ) as span:
+        raw = runner(prompt=prompt, response_schema=ClaimSupportCheck)
+        result = build_check(parse_json_object(raw), source, model_name)
+        record(
+            span,
+            verdict=result.check.verdict.value,
+            rules_applied=len(result.adjustments),
+        )
+        return result

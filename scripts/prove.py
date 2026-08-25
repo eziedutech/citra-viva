@@ -31,6 +31,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import logging
 import os
 import shutil
 import subprocess
@@ -452,6 +453,12 @@ def main() -> int:
         os.environ["ENABLE_CLOUD_TRACE"] = "true"
 
     os.chdir(BACKEND)
+
+    # The SDK prints a recommendation about automatic function calling on every
+    # generate_content, which lands in the middle of a section and belongs to
+    # nobody reading this. It is advice about an API this project does not use.
+    logging.getLogger("google_genai.models").setLevel(logging.ERROR)
+    logging.getLogger("google.genai.models").setLevel(logging.ERROR)
 
     print(RULE)
     print("CITRA Viva: proving the claims, one at a time")
