@@ -45,8 +45,12 @@ const en = {
         body: 'Questions are ordered by how hard a committee is likely to press. Weaknesses you left unresolved in an earlier session are asked about first.',
       },
       {
-        title: 'It judges, then reports',
-        body: 'Each answer is weighed against what the question was asking for. The report separates what you held from what is still open, in the examiner’s own words.',
+        title: 'It judges every answer',
+        body: 'Each answer is weighed against what the question was asking for, and the examiner decides in the same breath what to say next: press harder, allow a clarification, or move on.',
+      },
+      {
+        title: 'It reports what held',
+        body: 'The closing report separates what you defended from what is still open, in the examiner’s own words, and ends with an indicator on the 4.00 scale computed from the transcript.',
       },
     ],
     familyTitle: 'A companion to CITRA',
@@ -927,8 +931,12 @@ const id: Dictionary = {
         body: 'Pertanyaan diurutkan menurut seberapa keras penguji biasanya menekan. Kelemahan yang belum Anda selesaikan di sesi sebelumnya ditanyakan lebih dulu.',
       },
       {
-        title: 'Menilai, lalu menyusun laporan',
-        body: 'Tiap jawaban ditimbang terhadap apa yang sebenarnya diminta pertanyaan. Laporan memisahkan yang berhasil Anda pertahankan dari yang masih terbuka, dengan kata-kata penguji sendiri.',
+        title: 'Menilai setiap jawaban',
+        body: 'Tiap jawaban ditimbang terhadap apa yang sebenarnya diminta pertanyaan, dan penguji sekaligus memutuskan langkah berikutnya: menekan lebih dalam, memberi kesempatan memperjelas, atau berpindah.',
+      },
+      {
+        title: 'Melaporkan apa yang bertahan',
+        body: 'Laporan memisahkan yang berhasil Anda pertahankan dari yang masih terbuka, dengan kata-kata penguji sendiri, dan berakhir dengan indikator skala 4,00 yang dihitung dari transkripnya.',
       },
     ],
     familyTitle: 'Pendamping CITRA',

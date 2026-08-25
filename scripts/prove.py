@@ -399,8 +399,13 @@ def prove_trace(trace_id: str) -> None:
     url = f"https://cloudtrace.googleapis.com/v1/projects/citra-viva/traces/{trace_id}"
     request = urllib.request.Request(url, headers={"Authorization": f"Bearer {token}"})
 
-    # Cloud Trace indexes a moment behind the write, so a first read can miss.
-    for attempt in range(6):
+    # Cloud Trace indexes a moment behind the write, and the last span written
+    # is the one most likely to be missing. Reading until the count stops
+    # growing matters here: returning on the first non-empty answer showed the
+    # four defense agents and quietly dropped the citation checker, which had
+    # run seconds earlier and was still being indexed.
+    settled = 0
+    for attempt in range(8):
         try:
             with urllib.request.urlopen(request, timeout=30) as response:
                 payload = json.load(response)
@@ -408,6 +413,13 @@ def prove_trace(trace_id: str) -> None:
             payload = {}
 
         spans = payload.get("spans") or []
+
+        # Keep waiting while it is still filling in.
+        if spans and len(spans) > settled:
+            settled = len(spans)
+            time.sleep(6)
+            continue
+
         if spans:
             ok(f"trace {trace_id}")
             print()

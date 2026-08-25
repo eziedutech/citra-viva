@@ -189,7 +189,10 @@ export function PublicLanding({ dict, locale }: Props) {
               <Illustration />
             </div>
 
-            <ol className="grid gap-px border border-[color:var(--color-line)] bg-[color:var(--color-line)] sm:grid-cols-3">
+            {/* Two by two rather than a row of four. Four narrow columns would set
+                the step titles at a width where each one wraps, and these read as
+                a sequence, which a grid says better than a single line does. */}
+            <ol className="grid gap-px border border-[color:var(--color-line)] bg-[color:var(--color-line)] sm:grid-cols-2">
               {dict.landing.steps.map((step, index) => (
                 <li key={step.title} className="bg-[color:var(--color-surface)] p-4">
                   <p className="text-micro mb-2 text-[color:var(--color-ink-400)] tabular-nums">
