@@ -108,6 +108,62 @@ async function resample(samples: Float32Array, from: number): Promise<Float32Arr
   return (await offline.startRendering()).getChannelData(0);
 }
 
+/**
+ * Resample a stream that arrives in blocks, without drifting at the seams.
+ *
+ * The whole-buffer resampler above cannot be used here: called once per block
+ * it would restart at sample zero every time, and the small rounding error at
+ * each boundary accumulates into audible clicks and a slow drift out of time.
+ *
+ * So the read position is fractional and carries across calls, and the last
+ * sample of the previous block is kept to interpolate against. Linear
+ * interpolation is enough for speech at these rates, and it is cheap enough to
+ * run inside an audio callback, which a better filter would not be.
+ */
+function streamingResampler(from: number, to: number) {
+  const ratio = from / to;
+  let carry = 0;
+  let last = 0;
+  let primed = false;
+
+  return (input: Float32Array): Float32Array => {
+    if (from === to) return input;
+
+    // The previous block's final sample sits in front, so the first output
+    // sample of this block interpolates across the boundary rather than
+    // starting cold.
+    let source = input;
+    if (primed) {
+      source = new Float32Array(input.length + 1);
+      source[0] = last;
+      source.set(input, 1);
+    }
+
+    const limit = source.length - 1;
+    const out = new Float32Array(Math.ceil((limit - carry) / ratio) + 1);
+
+    let count = 0;
+    let position = carry;
+    while (position <= limit) {
+      const index = Math.floor(position);
+      const fraction = position - index;
+      const a = source[index];
+      const b = index + 1 <= limit ? source[index + 1] : a;
+      out[count] = a + (b - a) * fraction;
+      count += 1;
+      position += ratio;
+    }
+
+    // Whatever is left over is measured from the sample this block ends on,
+    // which is the same sample the next block will begin with.
+    carry = position - limit;
+    last = input[input.length - 1];
+    primed = true;
+
+    return out.subarray(0, count);
+  };
+}
+
 export interface Recording {
   wav: Blob;
   seconds: number;
@@ -142,9 +198,9 @@ export interface RecorderOptions {
   /** Called with the meter level, 0 to 1, as audio arrives. */
   onLevel?: (level: number) => void;
   /**
-   * Called with each frame as 16-bit PCM, for streaming it while it is spoken.
-   * Only fires when the browser agreed to capture at the target rate, because
-   * resampling every frame separately would drift at the seams.
+   * Called with each frame as 16 kHz 16-bit PCM, for streaming it while it is
+   * spoken. Fires whatever rate the device runs at: the frames are resampled
+   * on the way out by a resampler that carries its position between blocks.
    */
   onChunk?: (pcm: ArrayBuffer) => void;
 }
@@ -181,6 +237,9 @@ export async function startRecording(options: RecorderOptions = {}): Promise<Rec
   const silence = context.createGain();
   silence.gain.value = 0.0001;
 
+  // Built once, because it carries position between blocks.
+  const toTarget = streamingResampler(context.sampleRate, TARGET_SAMPLE_RATE);
+
   const chunks: Float32Array[] = [];
   let frames = 0;
   let peak = 0;
@@ -204,10 +263,19 @@ export async function startRecording(options: RecorderOptions = {}): Promise<Rec
     level = Math.max(block, level * 0.8);
     onLevel?.(level);
 
-    if (onChunk && context.sampleRate === TARGET_SAMPLE_RATE) {
-      const pcm = new Int16Array(input.length);
-      for (let index = 0; index < input.length; index += 1) {
-        const sample = Math.max(-1, Math.min(1, input[index]));
+    if (onChunk) {
+      // Resampled here rather than skipped.
+      //
+      // This used to stream only when the browser had agreed to open the
+      // context at 16 kHz. It often does not: most devices run at 44.1 or 48,
+      // and the request is a preference rather than a guarantee. On those
+      // machines nothing was ever streamed, the socket stayed empty, and the
+      // answer fell back to uploading the whole recording after the student
+      // had already stopped. The streaming existed and almost nobody got it.
+      const resampled = toTarget(input);
+      const pcm = new Int16Array(resampled.length);
+      for (let index = 0; index < resampled.length; index += 1) {
+        const sample = Math.max(-1, Math.min(1, resampled[index]));
         pcm[index] = sample < 0 ? sample * 0x8000 : sample * 0x7fff;
       }
       onChunk(pcm.buffer);
