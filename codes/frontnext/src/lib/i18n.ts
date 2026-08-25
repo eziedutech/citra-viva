@@ -241,6 +241,8 @@ const en = {
       current: 'Being examined now',
       pending: 'Not yet judged',
       empty: 'Judgments appear here as each question closes.',
+      noDetail:
+        'What this answer satisfied and left untouched was not recorded for this question. Absence here is not a pass: read the judgement above it.',
     },
     print: 'Save as PDF',
     severity: { high: 'High', medium: 'Medium', low: 'Low' },
@@ -1096,6 +1098,8 @@ const id: Dictionary = {
       current: 'Sedang diuji',
       pending: 'Belum dinilai',
       empty: 'Penilaian muncul di sini setiap kali satu pertanyaan selesai.',
+      noDetail:
+        'Apa yang dipenuhi dan apa yang terlewat tidak tercatat untuk pertanyaan ini. Ketiadaannya bukan berarti lulus: baca penilaian di atasnya.',
     },
     print: 'Simpan sebagai PDF',
     severity: { high: 'Tinggi', medium: 'Sedang', low: 'Rendah' },

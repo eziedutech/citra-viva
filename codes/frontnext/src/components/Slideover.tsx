@@ -235,6 +235,19 @@ function JudgmentHistory({
                     </>
                   ) : null}
 
+                  {/* Said out loud when the detail is missing.
+                      Without this, a question recorded before the criteria
+                      were kept shows only the points that were accepted, and a
+                      panel of nothing but ticks reads as a clean answer. The
+                      absence of a warning is not the same as there being
+                      nothing to warn about. */}
+                  {(turn.criteria_met ?? []).length === 0 &&
+                  (turn.criteria_missed ?? []).length === 0 ? (
+                    <p className="text-micro text-[color:var(--color-ink-400)]">
+                      {dict.slideover.judgments.noDetail}
+                    </p>
+                  ) : null}
+
                   {(turn.criteria_missed ?? []).length > 0 ? (
                     <>
                       <h5 className="text-caption mb-1 font-medium text-[color:var(--color-warning)]">
