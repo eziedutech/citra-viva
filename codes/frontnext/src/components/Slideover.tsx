@@ -154,6 +154,7 @@ function JudgmentHistory({
       <ul className="space-y-2">
         {rows.map((question, index) => {
           const turn = judged.get(question.id);
+          const state = session.progress.find((item) => item.question_id === question.id);
           const open = question.id === selected;
           return (
             <li
@@ -187,6 +188,32 @@ function JudgmentHistory({
                   <p className="text-micro mb-2 text-[color:var(--color-ink-400)]">
                     {decisions[turn.decision] ?? turn.decision}
                   </p>
+
+                  {/* What the examiner recorded against the question itself.
+                      Shown before the criteria because every session has it,
+                      including ones recorded before the criteria were kept on
+                      each turn, which would otherwise leave this panel with
+                      nothing in it but a decision. */}
+                  {(state?.defended_points ?? []).length > 0 ? (
+                    <ul className="text-body-sm mb-3 space-y-1">
+                      {(state?.defended_points ?? []).map((item) => (
+                        <li key={item} className="flex gap-2">
+                          <Icon
+                            name="check"
+                            size={16}
+                            className="mt-[4px] shrink-0 text-[color:var(--color-success)]"
+                          />
+                          <span>{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : null}
+
+                  {state?.gap_recorded ? (
+                    <p className="text-body-sm mb-3 border-l-2 border-[color:var(--color-warning)] bg-[color:var(--color-tint-warn)] py-2 pl-3">
+                      {state.gap_recorded}
+                    </p>
+                  ) : null}
 
                   {(turn.criteria_met ?? []).length > 0 ? (
                     <>
@@ -239,13 +266,20 @@ function JudgmentHistory({
 
 function EvaluationPanel({
   evaluation,
+  hasHistory,
   dict,
 }: {
   evaluation: AnswerEvaluation | null;
+  /** Whether the history below this panel has anything in it. */
+  hasHistory: boolean;
   dict: Dictionary;
 }) {
   if (!evaluation) {
-    return (
+    // Nothing at all to say, so say it. When the history below is populated,
+    // this panel keeps quiet instead: telling a student no answer has been
+    // judged yet, directly above a list of judged answers, reads as a fault in
+    // the page rather than as the note about the live turn that it is.
+    return hasHistory ? null : (
       <p className="text-body-sm text-[color:var(--color-ink-600)]">
         {dict.slideover.noEvaluation}
       </p>
@@ -655,7 +689,13 @@ export function Slideover({
           <div className="space-y-6">
             {/* The answer just judged, in full. The history underneath carries
                 every question that closed before it. */}
-            <EvaluationPanel evaluation={evaluation} dict={dict} />
+            <EvaluationPanel
+              evaluation={evaluation}
+              hasHistory={session.transcript.some(
+                (turn) => turn.role === 'examiner' && Boolean(turn.evaluated_strength),
+              )}
+              dict={dict}
+            />
             <JudgmentHistory
               session={session}
               selected={selectedQuestionId}
