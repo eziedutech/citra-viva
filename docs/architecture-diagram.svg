@@ -2423,6 +2423,16 @@ Q 953 2441 691 2322
 L 691 4666 
 z
 " transform="scale(0.015625)"/>
+     <path id="DejaVuSans-1a" d="M 525 4666 
+L 3525 4666 
+L 3525 4397 
+L 1831 0 
+L 1172 0 
+L 2766 4134 
+L 525 4134 
+L 525 4666 
+z
+" transform="scale(0.015625)"/>
      </defs>
      <use xlink:href="#DejaVuSans-18"/>
      <use xlink:href="#DejaVuSans-3" transform="translate(63.625 0)"/>
@@ -2587,7 +2597,7 @@ z
     </g>
    </g>
    <g id="text_25">
-    <!-- gemini-3.5-flash -->
+    <!-- gemini-3.7-flash -->
     <g style="fill: #7b4fbf" transform="translate(878.645843 152.904048) scale(0.11 -0.11)">
      <use xlink:href="#DejaVuSans-4a"/>
      <use xlink:href="#DejaVuSans-48" transform="translate(63.484375 0)"/>
@@ -2598,7 +2608,7 @@ z
      <use xlink:href="#DejaVuSans-10" transform="translate(341.359375 0)"/>
      <use xlink:href="#DejaVuSans-16" transform="translate(377.4375 0)"/>
      <use xlink:href="#DejaVuSans-11" transform="translate(441.0625 0)"/>
-     <use xlink:href="#DejaVuSans-18" transform="translate(472.84375 0)"/>
+     <use xlink:href="#DejaVuSans-1a" transform="translate(472.84375 0)"/>
      <use xlink:href="#DejaVuSans-10" transform="translate(536.46875 0)"/>
      <use xlink:href="#DejaVuSans-13b0" transform="translate(572.546875 0)"/>
      <use xlink:href="#DejaVuSans-44" transform="translate(635.53125 0)"/>

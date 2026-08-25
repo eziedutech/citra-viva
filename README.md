@@ -235,7 +235,7 @@ The practical value is containment. A misbehaving agent cannot recruit another o
 | Student's voice | `gemini-live-2.5-flash-native-audio`, streamed over a WebSocket |
 | Deployment | Cloud Run, two services, built by Cloud Build into Artifact Registry |
 | Observability | OpenTelemetry to Cloud Trace, one span per agent call, nested under the request |
-| Tests | pytest, 197 passing, including failure-path tests |
+| Tests | pytest, 244 passing offline, including failure-path tests, plus 4 live tests skipped by default |
 
 ---
 
