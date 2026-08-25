@@ -28,6 +28,7 @@ export type IconName =
   | 'square'
   | 'speaker'
   | 'plus'
+  | 'trash'
   | 'external'
   | 'help'
   | 'chevronUp'
@@ -113,6 +114,14 @@ const PATHS: Record<IconName, React.ReactNode> = {
   // and a pause glyph would promise a resume that does not exist.
   square: <rect x="6" y="6" width="12" height="12" rx="1" />,
   plus: <path d="M12 5v14M5 12h14" />,
+  trash: (
+    <>
+      <path d="M4 7h16" />
+      <path d="M10 11v6M14 11v6" />
+      <path d="M6 7l1 12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-12" />
+      <path d="M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+    </>
+  ),
   chevronUp: <polyline points="18 15 12 9 6 15" />,
   chevronDown: <polyline points="6 9 12 15 18 9" />,
   help: (

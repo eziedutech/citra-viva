@@ -80,6 +80,10 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     throw new ApiError(response.status, detail || response.statusText);
   }
 
+  // A 204 carries no body, and `JSON.parse('')` throws. Deleting something
+  // successfully must not surface as a parse error.
+  if (!text) return undefined as T;
+
   return JSON.parse(text) as T;
 }
 
@@ -105,4 +109,9 @@ export function postForm<T>(path: string, form: FormData): Promise<T> {
 
 export function get<T>(path: string): Promise<T> {
   return request<T>(path, { method: 'GET' });
+}
+
+/** Named `remove` because `delete` is a reserved word. */
+export function remove<T = void>(path: string): Promise<T> {
+  return request<T>(path, { method: 'DELETE' });
 }

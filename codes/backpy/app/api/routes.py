@@ -14,7 +14,7 @@ from collections.abc import Iterator
 from contextlib import contextmanager
 from typing import Annotated
 
-from fastapi import APIRouter, File, HTTPException, UploadFile
+from fastapi import APIRouter, File, HTTPException, Response, UploadFile
 from pydantic import BaseModel, Field
 
 from app.agents.claim_support import check_claim_support
@@ -509,3 +509,20 @@ def get_session_endpoint(session_id: str, user: CurrentUser) -> SessionState:
     """Read the full session state, including the transcript so far."""
     with _translated_errors():
         return _orchestrator().load_session(session_id, actor_id=user.uid)
+
+
+@router.delete("/api/sessions/{session_id}", status_code=204)
+def delete_session_endpoint(session_id: str, user: CurrentUser) -> Response:
+    """Delete a session and the manuscript kept with it.
+
+    Permanent, and deliberately so. The guide tells students their manuscript
+    is theirs, and a product that will not let somebody remove their own
+    unpublished thesis is not keeping that promise.
+
+    A session belonging to somebody else is refused as not-found, which is the
+    same answer they would get for reading it. Nothing here tells a stranger
+    whether the id they guessed is real.
+    """
+    with _translated_errors():
+        _orchestrator().delete_session(session_id, actor_id=user.uid)
+    return Response(status_code=204)

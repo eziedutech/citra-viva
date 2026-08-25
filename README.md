@@ -646,6 +646,8 @@ A session carries a student's manuscript and the map of where their argument giv
 
 **The comparison has no exemption for a session with no owner.** An earlier version let those through, so that sessions predating authentication would not be orphaned by it. That was affordable only while nobody real had used the service. The moment every visitor signs in, an ownerless document is one that anyone who guesses its id can open, and what it holds is somebody's unpublished manuscript. The loophole is closed, including for anyone who only wants to try the demo.
 
+**A session can be deleted, and deletion is real.** The session document and the manuscript stored with it are both removed, permanently, with no archive and no recovery on our side. The ownership check is the same one that guards reading, reused rather than reimplemented, and the manuscript is deleted first: if only one of the two can happen, the student's unpublished thesis is the one that must not survive.
+
 **The token never reaches any script on the page.** After sign-in the browser posts it to a route handler that stores it in an HttpOnly cookie, and everything else reads it from there: server rendered pages, route handlers, and the calls they forward. An injected script cannot read it, the session page can still render on the server, and no component has to remember to attach a header, which is how one endpoint ends up unauthenticated while the rest are fine.
 
 `AUTH_REQUIRED=false` turns the whole check off, so the test suite and a bare local backend run without a Firebase project. Every deployment sets it explicitly, because with it off a session id is the only thing standing between a stranger and someone's manuscript.

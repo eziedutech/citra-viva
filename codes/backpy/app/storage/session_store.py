@@ -29,6 +29,10 @@ class SessionStore(Protocol):
 
     def list_for_user(self, user_id: str, limit: int = 50) -> list[SessionDigest]: ...
 
+    def delete(self, session_id: str) -> None:
+        """Remove a session for good. Deleting one that is already gone is fine."""
+        ...
+
 
 class SessionNotFoundError(LookupError):
     """Raised when a session id does not exist."""
@@ -99,6 +103,11 @@ class InMemorySessionStore:
     def list_for_user(self, user_id: str, limit: int = 50) -> list[SessionDigest]:
         owned = [state for state in self._sessions.values() if state.user_id == user_id]
         return _newest_first(owned, limit)
+
+    def delete(self, session_id: str) -> None:
+        # Ownership is settled before this is called. A store deletes what it
+        # is told to delete, and deciding whose it was is not its job.
+        self._sessions.pop(session_id, None)
 
 
 class FirestoreSessionStore:
@@ -195,4 +204,19 @@ class FirestoreSessionStore:
         return _newest_first(
             [SessionState.model_validate(document.to_dict()) for document in documents],
             limit,
+        )
+
+    def delete(self, session_id: str) -> None:
+        """Remove the session document.
+
+        Deleting a document that is not there is a success in Firestore, which
+        is what makes a half-finished deletion safe to repeat. The endpoint
+        above this still answers a second delete with a not-found, because by
+        then the session really is gone; the tolerance here is for the store,
+        not a promise to the caller.
+        """
+        call_with_retry(
+            lambda: self.client.collection(COLLECTION_VIVA_SESSIONS)
+            .document(session_id)
+            .delete()
         )

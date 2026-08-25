@@ -45,6 +45,10 @@ class DraftStore(Protocol):
 
     def load(self, session_id: str, actor_id: str) -> str: ...
 
+    def delete(self, session_id: str) -> None:
+        """Remove the manuscript. Removing one already gone is not an error."""
+        ...
+
 
 class InMemoryDraftStore:
     """For tests and local runs, with the same ownership rule as the real one."""
@@ -66,6 +70,9 @@ class InMemoryDraftStore:
             # telling a stranger the document exists confirms the id is real.
             raise DraftNotFoundError(f"No manuscript was kept for session {session_id!r}.")
         return text
+
+    def delete(self, session_id: str) -> None:
+        self._drafts.pop(session_id, None)
 
 
 class FirestoreDraftStore:
@@ -110,3 +117,16 @@ class FirestoreDraftStore:
             raise DraftNotFoundError(f"No manuscript was kept for session {session_id!r}.")
 
         return str(data.get("text", ""))
+
+    def delete(self, session_id: str) -> None:
+        """Remove the manuscript document.
+
+        The manuscript is the part of a session a student is most likely to
+        want gone, so this runs whether or not the session document itself
+        still exists.
+        """
+        call_with_retry(
+            lambda: self.client.collection(COLLECTION_SESSION_DRAFTS)
+            .document(session_id)
+            .delete()
+        )

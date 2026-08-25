@@ -545,6 +545,10 @@ const en = {
             body: 'No session, finding, question, or report is visible to anyone else, and none of it is published anywhere.',
           },
           {
+            title: 'You can delete a session, and it is gone',
+            body: 'Deleting a session removes the session and the manuscript stored with it, permanently. Not hidden, not archived, and not recoverable by us afterwards. A product that tells you your unpublished thesis is yours has to let you take it back.',
+          },
+          {
             title: 'The sign-in gives us almost nothing',
             body: 'Sessions are keyed to the account identifier Google returns, not to your email address, because an email can change hands and an identifier cannot. There is no password here to lose, because there is no password here at all.',
           },
@@ -646,6 +650,11 @@ const en = {
     untitled: 'Untitled session',
     today: 'Today',
     yesterday: 'Yesterday',
+    deleteLabel: 'Delete the session "{name}"',
+    deleteConfirm: 'Delete',
+    deleteCancel: 'Keep',
+    deleting: 'Deleting',
+    deleteFailed: 'The session could not be deleted.',
     signedInAs: 'Signed in',
   },
 
@@ -1352,6 +1361,10 @@ const id: Dictionary = {
             body: 'Tidak ada sesi, temuan, pertanyaan, atau laporan yang terlihat oleh orang lain, dan tidak ada satu pun yang diterbitkan di mana pun.',
           },
           {
+            title: 'Anda bisa menghapus sesi, dan benar-benar hilang',
+            body: 'Menghapus sesi menghilangkan sesi itu beserta naskah yang tersimpan bersamanya, secara permanen. Bukan disembunyikan, bukan diarsipkan, dan tidak bisa kami kembalikan sesudahnya. Produk yang mengatakan tesis Anda yang belum terbit itu milik Anda harus mengizinkan Anda menariknya kembali.',
+          },
+          {
             title: 'Proses masuk memberi kami hampir tidak ada apa-apa',
             body: 'Sesi dikaitkan ke pengenal akun yang dikembalikan Google, bukan ke alamat surel Anda, karena surel bisa berpindah tangan dan pengenal tidak. Tidak ada kata sandi yang bisa hilang di sini, karena memang tidak ada kata sandi sama sekali.',
           },
@@ -1453,6 +1466,11 @@ const id: Dictionary = {
     untitled: 'Sesi tanpa judul',
     today: 'Hari ini',
     yesterday: 'Kemarin',
+    deleteLabel: 'Hapus sesi "{name}"',
+    deleteConfirm: 'Hapus',
+    deleteCancel: 'Batal',
+    deleting: 'Menghapus',
+    deleteFailed: 'Sesi tidak dapat dihapus.',
     signedInAs: 'Masuk sebagai',
   },
 

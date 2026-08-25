@@ -275,6 +275,25 @@ class Orchestrator:
             raise SessionNotFoundError(f"Session {session_id!r} does not exist.")
         return state
 
+    def delete_session(self, session_id: str, actor_id: str = "") -> None:
+        """Remove a session and the manuscript kept with it, for good.
+
+        The ownership check is `load_session`, unchanged and reused rather than
+        rewritten: it already refuses a session belonging to somebody else, and
+        refuses it as not-found so a stranger guessing ids learns nothing. A
+        second implementation of that rule is a second place for it to be wrong.
+
+        The manuscript goes first. If only one of the two deletions can happen,
+        the student's unpublished thesis is the one that must not survive, and
+        an orphaned session document holds a transcript of a defense they can
+        no longer open.
+        """
+        self.load_session(session_id, actor_id)
+
+        self.drafts.delete(session_id)
+        self.store.delete(session_id)
+        logger.info("Session %s deleted at the owner's request.", session_id)
+
     def submit_answer(self, session_id: str, answer: str, actor_id: str = "") -> SessionTurnResult:
         """Judge one answer and advance the session.
 
