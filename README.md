@@ -72,7 +72,7 @@ Built for the **All Things Agentic Hackathon** (Google and Devpost), category *C
 | **Model** | `gemini-3.7-flash`, on the Gemini Enterprise Agent Platform (formerly Vertex AI) |
 | **Google agent framework** | **Google ADK** and the **Google GenAI SDK** |
 | **Google Cloud services** | Cloud Run, Firestore, Firebase Authentication, Cloud Trace, Cloud Build, Artifact Registry |
-| **Additional Google AI models** | `gemini-2.5-flash-tts` for the examiner's voice, `gemini-live-2.5-flash-native-audio` for streaming transcription of the student's |
+| **Additional Google AI models** | `gemini-2.5-flash-tts` for the examiner's voice, `gemini-live-2.5-flash-native-audio` for streaming the student's while it is spoken, `gemini-3.5-flash` for transcribing a whole recording where streaming is unavailable |
 | **Project started** | 20 August 2026, inside the submission period. Planning and architecture first, so the first commit is dated 24 August |
 | **Hosted** | Yes, both the web app and the API |
 | **Repository** | Public |
@@ -86,6 +86,7 @@ Compliance with the three the rules require: Gemini 3.5 or newer, at least one G
 | **Gemini 3.7 Flash** | Prompts were tuned against the live model through `scripts/run_draft_analyzer.py`, `scripts/run_viva_session.py`, and four gated live test files. A prompt cannot be developed against anything but real output | The reasoning behind all five agents. Structured JSON, global endpoint |
 | **Gemini 2.5 Flash TTS** | Measured directly, which is how a phrase in our own prompt was found to be making the voice read at 13.7 seconds where 8.1 was correct | The examiner's voice, synthesised alongside the question rather than after it |
 | **Gemini Live 2.5 Flash Native Audio** | Four of its behaviours were established by testing rather than documentation, including that automatic turn detection silently truncates a long answer | Streaming transcription of a spoken answer, over a WebSocket, while it is being spoken |
+| **Gemini 3.5 Flash** | Established by direct test that it reads inline audio through `types.Part.from_bytes`, verbatim and complete on a 22 second recording, which is what made it safe to depend on as the fallback | Transcribes a whole uploaded recording. The path taken when a browser cannot open an audio context at 16 kHz, which is most of them |
 | **Google ADK** | The framework that enforced the architecture while it was being written. The no-handoff rule is an ADK flag, held in place by 24 tests on every change, and `scripts/run_adk_agent.py` exists solely to prove the ADK path runs end to end against the live model | Declares all five agents as `LlmAgent` with a bound `output_schema`, and refuses transfer between them |
 | **Google GenAI SDK** | Drove every development script and live test that called the model | The serving path. The FastAPI service calls the same prompts and schemas through `google-genai` |
 | **Cloud Build** | Literally the build system. 44 builds. There is no local Docker step in this project at all | Not at runtime |
