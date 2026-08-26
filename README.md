@@ -119,11 +119,15 @@ python scripts/prove.py --trace
 
 ---
 
+<div align="right"><a href="#table-of-contents">&#8593; Contents</a></div>
+
 ## The problem
 
 A thesis defense is the most consequential hour in a student's research life, and almost nothing exists to help them prepare for it. What is available is static, generic question banks that have never read the student's actual manuscript and never react to the quality of an answer.
 
 Students therefore walk into their defense having never been tested on the real weak point of their argument, which is precisely where the examiner will aim.
+
+<div align="right"><a href="#table-of-contents">&#8593; Contents</a></div>
 
 ## What CITRA Viva does
 
@@ -151,6 +155,8 @@ That is inherited from CITRA's *Integrity First* principle, and it is enforced i
 The same rule decided a feature that was proposed and refused. Answer recommendations, behind a button, would have been easy to build and would have destroyed the product: a student who can see a suggested answer before replying is not defending anything. What shipped instead is the marking scheme. The student may reveal what a good answer *would need to contain*, never what to say, and the reveal is recorded in the transcript so it appears in the report.
 
 ---
+
+<div align="right"><a href="#table-of-contents">&#8593; Contents</a></div>
 
 ## Architecture
 
@@ -241,6 +247,8 @@ The practical value is containment. A misbehaving agent cannot recruit another o
 | Tests | pytest, 244 passing offline, including failure-path tests, plus 4 live tests skipped by default |
 
 ---
+
+<div align="right"><a href="#table-of-contents">&#8593; Contents</a></div>
 
 ## Spin-up instructions
 
@@ -442,6 +450,8 @@ curl -s -X POST http://localhost:8080/api/sessions/SESSION_ID/close
 
 ---
 
+<div align="right"><a href="#table-of-contents">&#8593; Contents</a></div>
+
 ## The Draft Analyzer Agent
 
 Input: research draft text. Output: a **Weakness Map**, a list of the points an examiner will attack, each one anchored to a verbatim quote from the manuscript.
@@ -475,6 +485,8 @@ Every rejected finding is **recorded with its reason** in the `dropped` field ra
 
 ---
 
+<div align="right"><a href="#table-of-contents">&#8593; Contents</a></div>
+
 ## The Question Strategy Agent
 
 Input: a Weakness Map. Output: an ordered examination plan, five to eight questions including an opening and a closing.
@@ -500,6 +512,8 @@ Each question carries `evaluation_criteria`, describing what the Examiner Sessio
 The student may reveal it, deliberately, from a button. That is the compromise that replaced answer recommendations: it says what a good answer would need to *contain*, never what to say, and every reveal is recorded in the transcript so it appears in the closing report. Help that hides itself from the record is not help, it is a way to arrive at a real defense believing you were ready.
 
 ---
+
+<div align="right"><a href="#table-of-contents">&#8593; Contents</a></div>
 
 ## The Examiner Session Agent
 
@@ -528,6 +542,8 @@ The session loop is in the Orchestrator, not in the agent. Every turn reads the 
 
 ---
 
+<div align="right"><a href="#table-of-contents">&#8593; Contents</a></div>
+
 ## Scoring a defense
 
 A session ends with an indicator on the **4.00 scale**, the one most faculties use. The product still refuses to grade research, and that rule survives here because of where the number comes from.
@@ -552,6 +568,8 @@ Implemented in [`codes/backpy/app/scoring/assessment.py`](codes/backpy/app/scori
 
 ---
 
+<div align="right"><a href="#table-of-contents">&#8593; Contents</a></div>
+
 ## The Session Reflection Agent
 
 Input: a finished transcript. Output: what held, what is still undefended, and the recurring habits behind the gaps.
@@ -569,6 +587,8 @@ Restoration always uses the examiner's own words, captured at the moment the poi
 The report downloads as a formatted PDF, with the logo, the indicator and its workings, and the full transcript. Markdown is offered alongside it, because the two are for different readers: one is handed to a supervisor, the other is pasted back into the next session.
 
 ---
+
+<div align="right"><a href="#table-of-contents">&#8593; Contents</a></div>
 
 ## The Claim-Support Checker
 
@@ -590,6 +610,8 @@ Against the live model, the same source produces three different verdicts depend
 
 ---
 
+<div align="right"><a href="#table-of-contents">&#8593; Contents</a></div>
+
 ## Voice
 
 A defense is spoken, so this one is too. Voice is a **layer over the text loop, never a second pipeline**, and that decision is what keeps every session rule applying equally to a spoken answer and a typed one.
@@ -604,6 +626,8 @@ Four things about the Live API were established by testing rather than assumed, 
 
 ---
 
+<div align="right"><a href="#table-of-contents">&#8593; Contents</a></div>
+
 ## Cross-session memory
 
 The second mock defense is not the first one repeated.
@@ -613,6 +637,8 @@ When a session closes, the Session Reflection Agent returns recurring gap patter
 The managed Memory Bank service was examined and deliberately not adopted. It requires an Agent Engine resource, so using it would mean standing up infrastructure the product does not otherwise need. The deeper reason is that a free-form memory about a person is exactly the kind of unverifiable claim this product refuses everywhere else. The weakness profile is structured instead: every entry traces back to a specific finding in a specific manuscript, so it can be read, checked, and corrected.
 
 ---
+
+<div align="right"><a href="#table-of-contents">&#8593; Contents</a></div>
 
 ## Reading an uploaded manuscript
 
@@ -637,6 +663,8 @@ The uploaded file itself is read into memory and discarded, so no PDF or DOCX is
 It is stored rather than held for the length of a request because the student needs it during the defense. A question naming a passage is worth little if the manuscript it came from is in another window, so the room can open the submitted text beside the examination. That is also the copy every quote was verified against, which makes it the right copy to be reading.
 
 ---
+
+<div align="right"><a href="#table-of-contents">&#8593; Contents</a></div>
 
 ## The web interface
 
@@ -670,6 +698,8 @@ Three decisions are worth naming.
 
 ---
 
+<div align="right"><a href="#table-of-contents">&#8593; Contents</a></div>
+
 ## Identity, and who may open a session
 
 A session carries a student's manuscript and the map of where their argument gives way. Before sign-in existed, a guessed session id was enough to read both. For a product whose premise is research integrity that is not a missing feature, it is a contradiction, so it is closed.
@@ -688,6 +718,8 @@ A session carries a student's manuscript and the map of where their argument giv
 
 ---
 
+<div align="right"><a href="#table-of-contents">&#8593; Contents</a></div>
+
 ## State, concurrency, and failure tolerance
 
 **State lives outside the agent.** Session state is in Firestore, never in an agent's memory. A defense survives a restart, a redeploy, a closed tab, and a cold Cloud Run instance. It also means the reasoning loop is inspectable: the state of a session at any turn is a document you can read.
@@ -703,6 +735,8 @@ A session carries a student's manuscript and the map of where their argument giv
 The principle underneath all of it: *verify what can be verified, bound what cannot, and never let an unverifiable claim reach a place where being wrong would harm the student.*
 
 ---
+
+<div align="right"><a href="#table-of-contents">&#8593; Contents</a></div>
 
 ## Observability
 
@@ -737,6 +771,8 @@ gcloud run services update citra-viva-api --region=asia-southeast2 --update-env-
 ```
 
 ---
+
+<div align="right"><a href="#table-of-contents">&#8593; Contents</a></div>
 
 ## Repository layout
 
@@ -781,6 +817,8 @@ scripts/                          tooling outside the application
 
 ---
 
+<div align="right"><a href="#table-of-contents">&#8593; Contents</a></div>
+
 ## Disclosure
 
 CITRA Viva was built entirely within the Submission Period for this hackathon, starting 20 August 2026. The first four days went to planning and architecture, which is why the first commit is dated 24 August. No pre-existing code was incorporated.
@@ -793,9 +831,13 @@ That is a separate matter from the frameworks this project is built on. The agen
 
 Third-party dependencies are the ones declared in [`codes/backpy/pyproject.toml`](codes/backpy/pyproject.toml) and [`codes/frontnext/package.json`](codes/frontnext/package.json), each used under its own open source licence. No third-party data source is used: the only data the system reads is the manuscript the student supplies.
 
+<div align="right"><a href="#table-of-contents">&#8593; Contents</a></div>
+
 ## Developed by
 
 **EZI Edutech Dev** — https://www.eziedutech.dev/
+
+<div align="right"><a href="#table-of-contents">&#8593; Contents</a></div>
 
 ## License
 
