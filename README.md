@@ -119,7 +119,7 @@ python scripts/prove.py --trace
 
 ---
 
-<div align="right"><a href="#table-of-contents">&#8593; Contents</a></div>
+<div align="right"><a href="#table-of-contents">&#9650; Contents</a></div>
 
 ## The problem
 
@@ -127,7 +127,7 @@ A thesis defense is the most consequential hour in a student's research life, an
 
 Students therefore walk into their defense having never been tested on the real weak point of their argument, which is precisely where the examiner will aim.
 
-<div align="right"><a href="#table-of-contents">&#8593; Contents</a></div>
+<div align="right"><a href="#table-of-contents">&#9650; Contents</a></div>
 
 ## What CITRA Viva does
 
@@ -156,7 +156,7 @@ The same rule decided a feature that was proposed and refused. Answer recommenda
 
 ---
 
-<div align="right"><a href="#table-of-contents">&#8593; Contents</a></div>
+<div align="right"><a href="#table-of-contents">&#9650; Contents</a></div>
 
 ## Architecture
 
@@ -248,7 +248,7 @@ The practical value is containment. A misbehaving agent cannot recruit another o
 
 ---
 
-<div align="right"><a href="#table-of-contents">&#8593; Contents</a></div>
+<div align="right"><a href="#table-of-contents">&#9650; Contents</a></div>
 
 ## Spin-up instructions
 
@@ -450,7 +450,7 @@ curl -s -X POST http://localhost:8080/api/sessions/SESSION_ID/close
 
 ---
 
-<div align="right"><a href="#table-of-contents">&#8593; Contents</a></div>
+<div align="right"><a href="#table-of-contents">&#9650; Contents</a></div>
 
 ## The Draft Analyzer Agent
 
@@ -485,7 +485,7 @@ Every rejected finding is **recorded with its reason** in the `dropped` field ra
 
 ---
 
-<div align="right"><a href="#table-of-contents">&#8593; Contents</a></div>
+<div align="right"><a href="#table-of-contents">&#9650; Contents</a></div>
 
 ## The Question Strategy Agent
 
@@ -513,7 +513,7 @@ The student may reveal it, deliberately, from a button. That is the compromise t
 
 ---
 
-<div align="right"><a href="#table-of-contents">&#8593; Contents</a></div>
+<div align="right"><a href="#table-of-contents">&#9650; Contents</a></div>
 
 ## The Examiner Session Agent
 
@@ -542,7 +542,7 @@ The session loop is in the Orchestrator, not in the agent. Every turn reads the 
 
 ---
 
-<div align="right"><a href="#table-of-contents">&#8593; Contents</a></div>
+<div align="right"><a href="#table-of-contents">&#9650; Contents</a></div>
 
 ## Scoring a defense
 
@@ -568,7 +568,7 @@ Implemented in [`codes/backpy/app/scoring/assessment.py`](codes/backpy/app/scori
 
 ---
 
-<div align="right"><a href="#table-of-contents">&#8593; Contents</a></div>
+<div align="right"><a href="#table-of-contents">&#9650; Contents</a></div>
 
 ## The Session Reflection Agent
 
@@ -588,7 +588,7 @@ The report downloads as a formatted PDF, with the logo, the indicator and its wo
 
 ---
 
-<div align="right"><a href="#table-of-contents">&#8593; Contents</a></div>
+<div align="right"><a href="#table-of-contents">&#9650; Contents</a></div>
 
 ## The Claim-Support Checker
 
@@ -610,7 +610,7 @@ Against the live model, the same source produces three different verdicts depend
 
 ---
 
-<div align="right"><a href="#table-of-contents">&#8593; Contents</a></div>
+<div align="right"><a href="#table-of-contents">&#9650; Contents</a></div>
 
 ## Voice
 
@@ -626,7 +626,7 @@ Four things about the Live API were established by testing rather than assumed, 
 
 ---
 
-<div align="right"><a href="#table-of-contents">&#8593; Contents</a></div>
+<div align="right"><a href="#table-of-contents">&#9650; Contents</a></div>
 
 ## Cross-session memory
 
@@ -638,7 +638,7 @@ The managed Memory Bank service was examined and deliberately not adopted. It re
 
 ---
 
-<div align="right"><a href="#table-of-contents">&#8593; Contents</a></div>
+<div align="right"><a href="#table-of-contents">&#9650; Contents</a></div>
 
 ## Reading an uploaded manuscript
 
@@ -664,7 +664,7 @@ It is stored rather than held for the length of a request because the student ne
 
 ---
 
-<div align="right"><a href="#table-of-contents">&#8593; Contents</a></div>
+<div align="right"><a href="#table-of-contents">&#9650; Contents</a></div>
 
 ## The web interface
 
@@ -698,7 +698,7 @@ Three decisions are worth naming.
 
 ---
 
-<div align="right"><a href="#table-of-contents">&#8593; Contents</a></div>
+<div align="right"><a href="#table-of-contents">&#9650; Contents</a></div>
 
 ## Identity, and who may open a session
 
@@ -718,7 +718,7 @@ A session carries a student's manuscript and the map of where their argument giv
 
 ---
 
-<div align="right"><a href="#table-of-contents">&#8593; Contents</a></div>
+<div align="right"><a href="#table-of-contents">&#9650; Contents</a></div>
 
 ## State, concurrency, and failure tolerance
 
@@ -736,7 +736,7 @@ The principle underneath all of it: *verify what can be verified, bound what can
 
 ---
 
-<div align="right"><a href="#table-of-contents">&#8593; Contents</a></div>
+<div align="right"><a href="#table-of-contents">&#9650; Contents</a></div>
 
 ## Observability
 
@@ -772,7 +772,7 @@ gcloud run services update citra-viva-api --region=asia-southeast2 --update-env-
 
 ---
 
-<div align="right"><a href="#table-of-contents">&#8593; Contents</a></div>
+<div align="right"><a href="#table-of-contents">&#9650; Contents</a></div>
 
 ## Repository layout
 
@@ -817,7 +817,7 @@ scripts/                          tooling outside the application
 
 ---
 
-<div align="right"><a href="#table-of-contents">&#8593; Contents</a></div>
+<div align="right"><a href="#table-of-contents">&#9650; Contents</a></div>
 
 ## Disclosure
 
@@ -831,13 +831,13 @@ That is a separate matter from the frameworks this project is built on. The agen
 
 Third-party dependencies are the ones declared in [`codes/backpy/pyproject.toml`](codes/backpy/pyproject.toml) and [`codes/frontnext/package.json`](codes/frontnext/package.json), each used under its own open source licence. No third-party data source is used: the only data the system reads is the manuscript the student supplies.
 
-<div align="right"><a href="#table-of-contents">&#8593; Contents</a></div>
+<div align="right"><a href="#table-of-contents">&#9650; Contents</a></div>
 
 ## Developed by
 
 **EZI Edutech Dev** — https://www.eziedutech.dev/
 
-<div align="right"><a href="#table-of-contents">&#8593; Contents</a></div>
+<div align="right"><a href="#table-of-contents">&#9650; Contents</a></div>
 
 ## License
 
