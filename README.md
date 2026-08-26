@@ -14,6 +14,7 @@ Built for the **All Things Agentic Hackathon** (Google and Devpost), category *C
 | **Guide, no sign-in needed** | https://citra-viva-web-40911677848.asia-southeast2.run.app/panduan |
 | **API and interactive docs** | https://citra-viva-api-40911677848.asia-southeast2.run.app/docs |
 | **Architecture diagram** | [docs/architecture-diagram.png](docs/architecture-diagram.png) |
+| **Developed by** | [EZI Edutech Dev](https://www.eziedutech.dev/) |
 
 ---
 
@@ -58,6 +59,7 @@ Built for the **All Things Agentic Hackathon** (Google and Devpost), category *C
 - [Observability](#observability)
 - [Repository layout](#repository-layout)
 - [Disclosure](#disclosure)
+- [Developed by](#developed-by)
 - [License](#license)
 
 ---
@@ -789,6 +791,10 @@ Development used AI coding assistants, which the rules permit explicitly. Among 
 That is a separate matter from the frameworks this project is built on. The agent frameworks in the submission are Google ADK and the Google GenAI SDK, both of which can be pointed at line by line in this repository. Gemini models used through a coding assistant are not integrated into the product and are not claimed as such.
 
 Third-party dependencies are the ones declared in [`codes/backpy/pyproject.toml`](codes/backpy/pyproject.toml) and [`codes/frontnext/package.json`](codes/frontnext/package.json), each used under its own open source licence. No third-party data source is used: the only data the system reads is the manuscript the student supplies.
+
+## Developed by
+
+**EZI Edutech Dev** — https://www.eziedutech.dev/
 
 ## License
 
