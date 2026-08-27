@@ -230,6 +230,12 @@ class SessionHistoryResponse(BaseModel):
     sessions: list[SessionDigest] = Field(default_factory=list)
 
 
+class AccountDeletionResponse(BaseModel):
+    """What was removed, reported back to the person who asked for it."""
+
+    sessions_deleted: int = 0
+
+
 class CloseSessionResponse(BaseModel):
     session_id: str
     summary: SessionSummary
@@ -516,6 +522,27 @@ def list_sessions_endpoint(user: CurrentUser) -> SessionHistoryResponse:
         return SessionHistoryResponse(
             sessions=FirestoreSessionStore().list_for_user(user.uid)
         )
+
+
+@router.delete("/api/account", response_model=AccountDeletionResponse)
+def delete_account_endpoint(user: CurrentUser) -> AccountDeletionResponse:
+    """Erase everything this caller has here: every session, every manuscript,
+    every Weakness Map.
+
+    Declared before the session routes on purpose. `/api/account` would
+    otherwise be matched by `/api/sessions/{session_id}` only if the two ever
+    shared a prefix, and keeping account-level operations above the per-session
+    ones makes that impossible to introduce by accident later.
+
+    What this cannot do is delete the sign-in itself. This service verifies
+    Google ID tokens rather than holding Firebase admin credentials, so the
+    identity is removed by the browser after this returns. The order matters:
+    data first, identity second. Losing the identity first would leave a
+    student's manuscripts behind with no signed-in way to reach them.
+    """
+    with _translated_errors():
+        removed = _orchestrator().delete_account(actor_id=user.uid)
+    return AccountDeletionResponse(sessions_deleted=removed)
 
 
 @router.get("/api/sessions/{session_id}", response_model=SessionState)

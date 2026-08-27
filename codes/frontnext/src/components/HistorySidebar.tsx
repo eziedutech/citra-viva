@@ -5,6 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 
 import { useAuth } from '@/components/AuthProvider';
+import { DeleteAccount } from '@/components/DeleteAccount';
 import { Hint } from '@/components/Hint';
 import { Icon } from '@/components/Icon';
 import { LocaleSwitch } from '@/components/LocaleSwitch';
@@ -344,6 +345,8 @@ export function HistorySidebar({ dict, locale }: Props) {
         >
           {dict.auth.signOut}
         </button>
+
+        <DeleteAccount dict={dict} />
       </div>
     </nav>
   );

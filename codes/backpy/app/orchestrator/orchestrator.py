@@ -41,7 +41,7 @@ from app.models.weakness_map import AnalysisResult
 from app.observability import agent_span, record
 from app.scoring import assess_session
 from app.storage.draft_store import DraftStore, InMemoryDraftStore
-from app.storage.firestore import save_weakness_map
+from app.storage.firestore import delete_weakness_maps_for_user, save_weakness_map
 from app.storage.session_store import (
     InMemorySessionStore,
     SessionNotFoundError,
@@ -49,6 +49,10 @@ from app.storage.session_store import (
 )
 
 logger = logging.getLogger(__name__)
+
+# How many sessions one deletion pass takes. The listing is paged, so a student
+# with more than this simply takes another pass.
+MAX_DELETE_BATCH = 200
 
 
 @dataclass
@@ -294,6 +298,73 @@ class Orchestrator:
         self.drafts.delete(session_id)
         self.store.delete(session_id)
         logger.info("Session %s deleted at the owner's request.", session_id)
+
+    def delete_account(self, actor_id: str) -> int:
+        """Remove every session this student owns, and the manuscript kept with each.
+
+        Built out of `delete_session` rather than beside it. That path already
+        deletes the manuscript before the session and already refuses anything
+        belonging to somebody else, and a second implementation of either rule
+        is a second place for it to be wrong.
+
+        Ownership is the query, not a filter applied afterwards: `list_for_user`
+        is the only thing that decides what is in scope, so there is no path
+        through here that can reach another student's defense at all.
+
+        The listing is repeated rather than read once, because it returns at
+        most a page at a time. Deleting shrinks what the next call returns, so
+        the loop ends when nothing is left. A round that finds sessions but
+        deletes none of them would otherwise spin forever, so that ends it too.
+
+        Weakness Maps go too. They live in their own collection, outlive the
+        session that produced them, and every finding in one quotes the
+        manuscript word for word. Taking the sessions and leaving those behind
+        would keep a student's own sentences after they asked us to forget
+        them.
+
+        Nothing here is tolerant of a failed deletion. If the maps cannot be
+        removed, this raises rather than reporting a number, because a deletion
+        that reports success while the data survives is the worst outcome
+        available: the student stops looking.
+
+        Returns the number of sessions deleted, which the caller shows the
+        student. Somebody erasing their own work is owed a count of what went.
+        """
+        if not actor_id:
+            raise ValueError("Deleting an account requires knowing whose it is.")
+
+        deleted = 0
+        while True:
+            digests = self.store.list_for_user(actor_id, limit=MAX_DELETE_BATCH)
+            if not digests:
+                break
+
+            before = deleted
+            for digest in digests:
+                try:
+                    self.delete_session(digest.session_id, actor_id)
+                except SessionNotFoundError:
+                    # Already gone, which is the outcome this asked for. A
+                    # second tab doing the same thing is not an error.
+                    continue
+                deleted += 1
+
+            if deleted == before:
+                logger.warning(
+                    "Account deletion for %s stopped with %d sessions still listed.",
+                    actor_id,
+                    len(digests),
+                )
+                break
+
+        maps = delete_weakness_maps_for_user(actor_id, client=self.firestore_client)
+        logger.info(
+            "Account deletion for %s removed %d sessions and %d weakness maps.",
+            actor_id,
+            deleted,
+            maps,
+        )
+        return deleted
 
     def submit_answer(
         self,

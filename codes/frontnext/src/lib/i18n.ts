@@ -872,6 +872,17 @@ const en = {
       'A defense belongs to the account that started it. Sign in with that account and it opens where it stopped.',
     failed: 'Sign in failed.',
     notYours: 'This session belongs to a different account.',
+    deleteAccount: 'Delete my account',
+    deleteTitle: 'Delete everything, permanently',
+    deleteBody:
+      'This removes every defense you have run here, every manuscript you uploaded, and every weakness map made from them. It cannot be undone, and we keep no copy to restore.',
+    deleteConfirmLabel: 'Type DELETE to confirm',
+    deleteConfirmWord: 'DELETE',
+    deleteCancel: 'Keep my account',
+    deleting: 'Deleting',
+    deleteFailed: 'Nothing was deleted. Your work is still here, so you can try again.',
+    deleteDone: 'Everything has been deleted.',
+    deleteDoneCount: 'sessions removed, along with their manuscripts.',
   },
 
   errors: {
@@ -1758,6 +1769,17 @@ const id: Dictionary = {
       'Sebuah sidang adalah milik akun yang memulainya. Masuk dengan akun tersebut dan sidangnya terbuka dari tempatnya berhenti.',
     failed: 'Gagal masuk.',
     notYours: 'Sesi ini milik akun lain.',
+    deleteAccount: 'Hapus akun saya',
+    deleteTitle: 'Hapus semuanya, permanen',
+    deleteBody:
+      'Ini menghapus setiap sidang yang pernah Anda jalani di sini, setiap naskah yang Anda unggah, dan setiap peta kelemahan yang dibuat darinya. Tidak dapat dibatalkan, dan kami tidak menyimpan salinan untuk memulihkannya.',
+    deleteConfirmLabel: 'Ketik HAPUS untuk memastikan',
+    deleteConfirmWord: 'HAPUS',
+    deleteCancel: 'Pertahankan akun saya',
+    deleting: 'Sedang menghapus',
+    deleteFailed: 'Tidak ada yang terhapus. Pekerjaan Anda masih ada, jadi Anda bisa mencoba lagi.',
+    deleteDone: 'Semuanya telah dihapus.',
+    deleteDoneCount: 'sidang terhapus, berikut naskahnya.',
   },
 
   errors: {

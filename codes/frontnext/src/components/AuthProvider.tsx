@@ -3,8 +3,10 @@
 import { type FirebaseApp, getApps, initializeApp } from 'firebase/app';
 import {
   GoogleAuthProvider,
+  deleteUser,
   getAuth,
   onIdTokenChanged,
+  reauthenticateWithPopup,
   signInWithPopup,
   signOut as firebaseSignOut,
   type User as FirebaseUser,
@@ -32,6 +34,18 @@ interface AuthState {
   signIn: () => Promise<void>;
   signOut: () => Promise<void>;
   /**
+   * Delete everything this student has here, then the sign-in itself.
+   *
+   * Returns how many sessions went, so the interface can say what happened
+   * rather than assert that something did.
+   *
+   * Data goes first and the identity second, and the order is not arbitrary. If
+   * the identity went first, a failure partway would leave manuscripts behind
+   * with nobody able to sign in and reach them. This way a failure leaves an
+   * account that can try again.
+   */
+  deleteAccount: () => Promise<number>;
+  /**
    * `fetch`, with one retry after refreshing the credential.
    *
    * An ID token lasts an hour, and the cookie carrying it expires a little
@@ -49,6 +63,7 @@ const AuthContext = createContext<AuthState>({
   enabled: false,
   signIn: async () => {},
   signOut: async () => {},
+  deleteAccount: async () => 0,
   authedFetch: (input, init) => fetch(input, init),
 });
 
@@ -179,6 +194,43 @@ export function AuthProvider({
     [refreshSession],
   );
 
+  const deleteAccount = useCallback(async (): Promise<number> => {
+    const response = await authedFetch('/api/account', { method: 'DELETE' });
+    if (!response.ok) {
+      const body = await response.json().catch(() => null);
+      throw new Error(body?.error ?? 'Your work could not be deleted. Nothing was removed.');
+    }
+    const { sessions_deleted: deleted } = (await response.json()) as {
+      sessions_deleted: number;
+    };
+
+    // The data is gone by here. What remains is the sign-in, and Firebase
+    // refuses to delete one on an old credential. A student who signed in this
+    // morning would otherwise be told their deletion failed, when in fact
+    // everything they wanted removed already is.
+    if (config) {
+      const current = getAuth(appFor(config)).currentUser;
+      if (current) {
+        try {
+          await deleteUser(current);
+        } catch {
+          try {
+            await reauthenticateWithPopup(current, new GoogleAuthProvider());
+            await deleteUser(current);
+          } catch {
+            // The account outlives the data it held. Signing out is the honest
+            // end to this: their work is gone, and a signed-in empty account is
+            // not something to leave on screen.
+            await signOut();
+          }
+        }
+      }
+    }
+
+    markSignedIn(false);
+    return deleted;
+  }, [authedFetch, config, signOut]);
+
   const value = useMemo<AuthState>(
     () => ({
       user,
@@ -187,9 +239,10 @@ export function AuthProvider({
       enabled: Boolean(config),
       signIn,
       signOut,
+      deleteAccount,
       authedFetch,
     }),
-    [user, ready, sessionReady, config, signIn, signOut, authedFetch],
+    [user, ready, sessionReady, config, signIn, signOut, deleteAccount, authedFetch],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

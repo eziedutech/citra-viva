@@ -244,7 +244,7 @@ The practical value is containment. A misbehaving agent cannot recruit another o
 | Student's voice | `gemini-live-2.5-flash-native-audio`, streamed over a WebSocket |
 | Deployment | Cloud Run, two services, built by Cloud Build into Artifact Registry |
 | Observability | OpenTelemetry to Cloud Trace, one span per agent call, nested under the request |
-| Tests | pytest, 244 passing offline, including failure-path tests, plus 4 live tests skipped by default |
+| Tests | pytest, 252 passing offline, including failure-path tests, plus 4 live tests skipped by default |
 
 ---
 
@@ -711,6 +711,10 @@ A session carries a student's manuscript and the map of where their argument giv
 **The comparison has no exemption for a session with no owner.** An earlier version let those through, so that sessions predating authentication would not be orphaned by it. That was affordable only while nobody real had used the service. The moment every visitor signs in, an ownerless document is one that anyone who guesses its id can open, and what it holds is somebody's unpublished manuscript. The loophole is closed, including for anyone who only wants to try the demo.
 
 **A session can be deleted, and deletion is real.** The session document and the manuscript stored with it are both removed, permanently, with no archive and no recovery on our side. The ownership check is the same one that guards reading, reused rather than reimplemented, and the manuscript is deleted first: if only one of the two can happen, the student's unpublished thesis is the one that must not survive.
+
+**An account can be deleted, and that takes everything with it.** One request removes every session the student owns, every manuscript stored with those sessions, and every Weakness Map made from them. The maps matter here more than they look: they live in a different collection from the sessions and each finding quotes the manuscript word for word, so a deletion that took the sessions alone would leave a student's own sentences behind after they asked to be forgotten. Nothing in that path is tolerant of a failure. If any part cannot be removed the request fails and says so, because a deletion that reports success while the data survives is the one outcome that stops the student looking.
+
+The sign-in itself is deleted by the browser, after the data and never before. This service verifies Google ID tokens rather than holding Firebase admin credentials, so it cannot remove the identity itself; and were the order reversed, a failure partway would strand the manuscripts with nobody able to sign in and reach them. Signing in again afterwards produces a new account with nothing in it.
 
 **The token never reaches any script on the page.** After sign-in the browser posts it to a route handler that stores it in an HttpOnly cookie, and everything else reads it from there: server rendered pages, route handlers, and the calls they forward. An injected script cannot read it, the session page can still render on the server, and no component has to remember to attach a header, which is how one endpoint ends up unauthenticated while the rest are fine.
 

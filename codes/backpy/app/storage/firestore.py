@@ -57,3 +57,33 @@ def save_weakness_map(
     }
     db.collection(COLLECTION_RESEARCH_DRAFTS).document(draft_id).set(payload, merge=True)
     return draft_id
+
+
+def delete_weakness_maps_for_user(user_id: str, client: Any | None = None) -> int:
+    """Remove every Weakness Map belonging to one student.
+
+    These outlive the session that produced them, and each one carries findings
+    quoted word for word out of a manuscript. A deletion that took the sessions
+    and left these behind would leave a student's own sentences on our disks
+    after they asked us to forget them, which is not a deletion.
+
+    Ownership is the query. Nothing else decides what is in scope, so this
+    cannot reach a document belonging to somebody else.
+    """
+    from google.cloud.firestore_v1.base_query import FieldFilter
+
+    if not user_id:
+        raise ValueError("Deleting weakness maps requires knowing whose they are.")
+
+    db = client or get_firestore_client()
+    documents = (
+        db.collection(COLLECTION_RESEARCH_DRAFTS)
+        .where(filter=FieldFilter("user_id", "==", user_id))
+        .stream()
+    )
+
+    deleted = 0
+    for document in documents:
+        document.reference.delete()
+        deleted += 1
+    return deleted
