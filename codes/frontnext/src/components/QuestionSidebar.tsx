@@ -13,6 +13,8 @@ interface Props {
   /** The question the student is looking at, shared with the other panels. */
   selectedQuestionId?: string;
   onSelectQuestion?: (questionId: string) => void;
+  /** Set by the room, which decides whether this panel is on screen at all. */
+  className?: string;
 }
 
 /**
@@ -29,11 +31,15 @@ export function QuestionSidebar({
   dict,
   selectedQuestionId = '',
   onSelectQuestion,
+  className = '',
 }: Props) {
   return (
     <nav
       aria-label={dict.sidebar.plan}
-      className="panel-scroll border-r border-[color:var(--color-line)] bg-[color:var(--color-primary-050)]"
+      className={[
+        'panel-scroll border-[color:var(--color-line)] bg-[color:var(--color-primary-050)] lg:border-r',
+        className,
+      ].join(' ')}
       tabIndex={0}
     >
       <div className="px-5 py-4">

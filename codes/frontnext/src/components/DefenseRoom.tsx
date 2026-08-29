@@ -67,6 +67,17 @@ export function DefenseRoom({ initial, dict, locale }: Props) {
   } | null>(null);
   const [voiceNote, setVoiceNote] = useState(false);
 
+  /**
+   * Which of the three panels a narrow screen is showing.
+   *
+   * Three columns side by side need about seven hundred pixels before anything
+   * is readable, so on a phone they are one at a time instead. The defense is
+   * the default because it is the only one you cannot do without: the plan and
+   * the evidence are there to be consulted, and the exchange is the thing
+   * itself. Above lg this state is ignored and all three are on screen.
+   */
+  const [panel, setPanel] = useState<'plan' | 'defense' | 'evidence'>('defense');
+
   /** Characters pasted into the answer now being written. Reset with it. */
   const [pasted, setPasted] = useState(0);
 
@@ -251,18 +262,20 @@ export function DefenseRoom({ initial, dict, locale }: Props) {
 
   return (
     <div className="app-shell">
-      <header className="flex h-16 items-center justify-between border-b border-[color:var(--color-line)] bg-[color:var(--color-surface)] px-5">
+      <header className="flex h-16 items-center justify-between gap-3 border-b border-[color:var(--color-line)] bg-[color:var(--color-surface)] px-3 sm:px-5">
         <div className="flex items-center gap-3">
           <Link href="/" className="flex items-center">
             <Wordmark height={40} />
           </Link>
-          <span className="text-caption text-[color:var(--color-ink-400)]">/</span>
-          <span className="text-body-sm text-[color:var(--color-ink-600)]">
+          <span className="text-caption hidden text-[color:var(--color-ink-400)] sm:inline">
+            /
+          </span>
+          <span className="text-body-sm hidden text-[color:var(--color-ink-600)] sm:inline">
             {dict.room.breadcrumb}
           </span>
         </div>
 
-        <div className="flex items-center gap-5">
+        <div className="flex items-center gap-3 lg:gap-5">
           <span className="flex items-center gap-[6px]">
             <span className="text-body-sm text-[color:var(--color-ink-600)]">
               {fill(dict.room.questionProgress, {
@@ -272,20 +285,27 @@ export function DefenseRoom({ initial, dict, locale }: Props) {
             </span>
             <Hint text={dict.room.hints.progress} align="end" />
           </span>
-          <span className="flex items-center gap-[6px]">
+          {/* Dropped first on a narrow screen. The question counter beside it
+              carries the same reassurance in fewer characters. */}
+          <span className="hidden items-center gap-[6px] lg:flex">
             <span className="text-caption text-[color:var(--color-ink-400)]">
               {fill(dict.room.answersSaved, { count: answered })}
             </span>
             <Hint text={dict.room.hints.saved} align="end" />
           </span>
-          <label className="text-caption flex items-center gap-2 text-[color:var(--color-ink-600)]">
+          <label
+            className="text-caption flex items-center gap-2 text-[color:var(--color-ink-600)]"
+            title={dict.voice.readAloud}
+          >
             <input
               type="checkbox"
               checked={readAloud}
               onChange={(event) => setReadAloud(event.target.checked)}
               className="h-[14px] w-[14px] accent-[color:var(--color-ai)]"
             />
-            {dict.voice.readAloud}
+            {/* The switch matters on a phone; its label is what does not fit. */}
+            <span className="hidden md:inline">{dict.voice.readAloud}</span>
+            <Icon name="speaker" size={16} className="md:hidden" />
           </label>
           <AccountButton dict={dict} />
           <LocaleSwitch locale={locale} dict={dict} />
@@ -310,8 +330,39 @@ export function DefenseRoom({ initial, dict, locale }: Props) {
         dict={dict}
       />
 
-      <div className="grid min-h-0 grid-cols-[300px_1fr_400px]">
+      <div className="grid min-h-0 grid-rows-[auto_minmax(0,1fr)] lg:grid-cols-[300px_1fr_400px] lg:grid-rows-[minmax(0,1fr)]">
+        {/* Below lg only. Above it the three panels are all on screen and a
+            switcher would be an extra control that changes nothing. */}
+        <nav
+          aria-label={dict.room.panels.label}
+          className="flex border-b border-[color:var(--color-line)] bg-[color:var(--color-surface)] lg:hidden"
+        >
+          {(
+            [
+              ['plan', dict.room.panels.plan],
+              ['defense', dict.room.panels.defense],
+              ['evidence', dict.room.panels.evidence],
+            ] as const
+          ).map(([id, label]) => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => setPanel(id)}
+              aria-current={panel === id ? 'page' : undefined}
+              className={[
+                'text-caption flex-1 border-b-2 px-3 py-3 transition-colors duration-150',
+                panel === id
+                  ? 'border-[color:var(--color-primary-500)] text-[color:var(--color-primary-700)]'
+                  : 'border-transparent text-[color:var(--color-ink-600)]',
+              ].join(' ')}
+            >
+              {label}
+            </button>
+          ))}
+        </nav>
+
         <QuestionSidebar
+          className={panel === 'plan' ? 'lg:block' : 'hidden lg:block'}
           questions={session.questions}
           progress={session.progress}
           currentIndex={session.current_index}
@@ -320,13 +371,27 @@ export function DefenseRoom({ initial, dict, locale }: Props) {
           onSelectQuestion={(id) => {
             setSelectedQuestionId(id);
             // Selecting a question is a request to see how it went, so the
-            // panel that answers that is the one brought forward.
-            if (id) setTab('evaluation');
+            // panel that answers that is the one brought forward. On a narrow
+            // screen that means switching panel as well as tab, or the student
+            // taps a question and nothing appears to happen.
+            if (id) {
+              setTab('evaluation');
+              setPanel('evidence');
+            }
           }}
         />
 
-        <main className="grid min-h-0 grid-rows-[1fr_auto] bg-[color:var(--color-canvas)]">
-          <div className="panel-scroll px-8 py-6" tabIndex={0} aria-label={dict.room.transcriptLabel}>
+        <main
+          className={[
+            'grid min-h-0 grid-rows-[1fr_auto] bg-[color:var(--color-canvas)]',
+            panel === 'defense' ? 'lg:grid' : 'hidden lg:grid',
+          ].join(' ')}
+        >
+          <div
+            className="panel-scroll px-4 py-5 sm:px-8 sm:py-6"
+            tabIndex={0}
+            aria-label={dict.room.transcriptLabel}
+          >
             <div className="mx-auto max-w-[680px] space-y-5">
               <p className="text-micro flex items-center gap-[6px] text-[color:var(--color-ink-400)]">
                 {dict.room.transcriptLabel}
@@ -443,7 +508,7 @@ export function DefenseRoom({ initial, dict, locale }: Props) {
             </div>
           </div>
 
-          <div className="border-t border-[color:var(--color-line)] px-8 py-4">
+          <div className="border-t border-[color:var(--color-line)] px-4 py-3 sm:px-8 sm:py-4">
             <div className="mx-auto max-w-[680px]">
               {error ? (
                 <p
@@ -593,6 +658,7 @@ export function DefenseRoom({ initial, dict, locale }: Props) {
           finished={finished}
           closing={closing}
           onClose={() => void closeSession()}
+          className={panel === 'evidence' ? 'lg:grid' : 'hidden lg:grid'}
           selectedQuestionId={selectedQuestionId}
           onSelectQuestion={setSelectedQuestionId}
           activeTab={tab}

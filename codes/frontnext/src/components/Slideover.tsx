@@ -668,6 +668,8 @@ interface Props {
   activeFindingId?: string;
   /** A finding the student asked to see, from the transcript. */
   focusFindingId?: string;
+  /** Set by the room, which decides whether this panel is on screen at all. */
+  className?: string;
   /** The question the student is looking at, shared across the three panels. */
   selectedQuestionId?: string;
   onSelectQuestion?: (questionId: string) => void;
@@ -687,6 +689,7 @@ export function Slideover({
   findings,
   activeFindingId = '',
   focusFindingId = '',
+  className = '',
   selectedQuestionId = '',
   onSelectQuestion = () => {},
   evaluation,
@@ -708,7 +711,10 @@ export function Slideover({
   return (
     <aside
       aria-label={dict.slideover.label}
-      className="grid min-h-0 grid-rows-[auto_1fr] border-l border-[color:var(--color-line)] bg-[color:var(--color-surface)]"
+      className={[
+        'grid min-h-0 grid-rows-[auto_1fr] border-[color:var(--color-line)] bg-[color:var(--color-surface)] lg:border-l',
+        className,
+      ].join(' ')}
     >
       {/* The tab strip stays put; only the panel body scrolls, so reading a
           finding never moves the transcript in the middle. */}

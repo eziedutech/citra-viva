@@ -150,6 +150,12 @@ const en = {
     buildingReport: 'Writing the report',
     answerFailed: 'The answer could not be sent.',
     reportFailed: 'The report could not be written.',
+    panels: {
+      label: 'Which panel to show',
+      plan: 'Plan',
+      defense: 'Defense',
+      evidence: 'Evidence',
+    },
     adjustmentsTitle: 'Session rules applied over the model decision',
     hints: {
       progress: 'How far the examination plan has been worked through. A question can take several turns before it closes.',
@@ -1047,6 +1053,12 @@ const id: Dictionary = {
     buildingReport: 'Menyusun laporan',
     answerFailed: 'Jawaban gagal dikirim.',
     reportFailed: 'Laporan gagal disusun.',
+    panels: {
+      label: 'Panel yang ditampilkan',
+      plan: 'Rencana',
+      defense: 'Sidang',
+      evidence: 'Bukti',
+    },
     adjustmentsTitle: 'Aturan sesi yang diterapkan atas keputusan model',
     hints: {
       progress: 'Sejauh mana rencana pengujian telah dijalani. Satu pertanyaan bisa memakan beberapa giliran sebelum ditutup.',
